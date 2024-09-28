@@ -1,0 +1,88 @@
+pre[data-theme*=' '] {
+  background-color: var(--shiki-light-bg);
+}
+
+code[data-theme*=' '],
+code[data-theme*=' '] span {
+  color: var(--shiki-light);
+  @apply bg-transparent;
+}
+
+.dark {
+  code[data-theme*=' '],
+  code[data-theme*=' '] span {
+    color: var(--shiki-dark);
+  }
+
+  pre[data-theme*=' '] {
+    background-color: var(--shiki-dark-bg);
+  }
+}
+
+[data-rehype-pretty-code-figure] {
+  @apply relative text-white;
+}
+
+[data-rehype-pretty-code-figure] code {
+  @apply grid min-w-full break-words rounded-none border-0 bg-transparent p-0;
+  counter-reset: line;
+  box-decoration-break: clone;
+}
+
+[data-rehype-pretty-code-figure] [data-line] {
+  @apply inline-block min-h-[1rem] w-full px-4 py-0.5;
+}
+
+[data-rehype-pretty-code-figure] [data-line-numbers] [data-line] {
+  @apply px-2;
+}
+
+[data-rehype-pretty-code-figure] [data-line-numbers] > [data-line]::before {
+  @apply text-xs;
+  counter-increment: line;
+  content: counter(line);
+  display: inline-block;
+  width: 1.8rem;
+  margin-right: 1.4rem;
+  text-align: right;
+}
+
+[data-rehype-pretty-code-figure] [data-highlighted-line] {
+  @apply bg-zinc-100;
+}
+
+.dark [data-rehype-pretty-code-figure] [data-highlighted-line] {
+  @apply bg-zinc-700;
+}
+
+[data-rehype-pretty-code-figure] [data-highlighted-line] > span {
+  @apply relative;
+}
+
+[data-rehype-pretty-code-figure] [data-highlighted-chars] {
+  @apply rounded-md border-zinc-700/70 bg-zinc-700/50 p-1;
+}
+
+.dark [data-rehype-pretty-code-figure] [data-highlighted-chars] {
+  @apply bg-zinc-900;
+}
+
+[data-rehype-pretty-code-title] {
+  @apply mt-2 flex items-center justify-between rounded-tl-lg rounded-tr-lg bg-muted p-4 text-sm text-gray-500;
+}
+
+.dark [data-rehype-pretty-code-title] {
+  @apply mt-2 flex items-center justify-between rounded-tl-lg rounded-tr-lg bg-muted p-4 text-sm text-gray-50;
+}
+
+/* [data-rehype-pretty-code-title] + pre {
+  @apply mt-2;
+} */
+
+.mdx > .steps:first-child > h3:first-child {
+  @apply mt-0;
+}
+
+.steps > h3 {
+  @apply mb-4 mt-8 text-base font-semibold;
+}

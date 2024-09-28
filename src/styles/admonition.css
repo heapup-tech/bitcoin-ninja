@@ -1,0 +1,23 @@
+.admonition {
+  @apply mt-8 rounded-md border px-4 py-2 text-sm font-medium first:mt-0;
+}
+
+.admonition-tip {
+  @apply border-emerald-300 bg-emerald-100 text-emerald-600 dark:border-emerald-500 dark:bg-emerald-500/30 dark:text-emerald-400;
+}
+
+.admonition-note {
+  @apply border-blue-300 bg-blue-100 text-blue-600 dark:border-blue-500 dark:bg-blue-500/30 dark:text-blue-400;
+}
+
+.admonition-warning {
+  @apply border-yellow-300 bg-yellow-100 text-yellow-600 dark:border-yellow-500 dark:bg-yellow-500/30 dark:text-yellow-400;
+}
+
+.admonition-danger {
+  @apply border-red-300 bg-red-100 text-red-600 dark:border-red-500 dark:bg-red-500/30 dark:text-red-400;
+}
+
+[data-admonition-title] {
+  @apply text-base font-bold;
+}
