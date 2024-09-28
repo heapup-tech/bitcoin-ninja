@@ -1,0 +1,50 @@
+---
+title: Witness
+---
+
+交易的 `Witness` 字段是隔离见证(`Segwit`)交易的解锁脚本。其值为一个数组, 和交易输入一一对应。
+
+<br />
+
+<TransactionWitnessFieldsTable />
+
+和 `ScriptSig` 的区别在于 `Witness` 不需要解析, 存储的直接是入栈的数据。
+
+以下是一笔隔离见证交易:
+
+<TransactionSplitTab
+  hex='02000000000101a7feab592a7c739599e5e7115421322de641c83f28e9007dce7f292d44cf98e00100000000fdffffff026f266000000000001600149f8bfe00ffc11175fee19b06d989719c47974f2fd8d6000000000000160014fc9d1dd2daa1c63aa6061ddeabc828d5657b40080247304402206aa31c3857b99617c1ba9a5f0917c0709967bd8ecee74d2e631318e2177476fc0220522d89cf6e811d03950cf8808db78217335df536aa8dc21fb66b533aa8b7ac470121028591a6b6deff445a624a671f7f1035ffd858a947c0d9fbae0c4d40721a16ddabd32a0d00'
+  txid='6dc258e391fe2ec6055f0dd04f35fb3383d5f77c6e39f51d18c3c60685f8637a'
+/>
+
+只有一个交易输入, 其对应的 `Witness` 是:
+
+```json
+[
+  {
+    "stackItems": "02",
+    "0": {
+      "size": "47",
+      "item": "304402206aa31c3857b99617c1ba9a5f0917c0709967bd8ecee74d2e631318e2177476fc0220522d89cf6e811d03950cf8808db78217335df536aa8dc21fb66b533aa8b7ac4701"
+    },
+    "1": {
+      "size": "21",
+      "item": "028591a6b6deff445a624a671f7f1035ffd858a947c0d9fbae0c4d40721a16ddab"
+    }
+  }
+]
+```
+
+入栈的元素有两个。
+
+:::warning
+
+`Witness` 字段中每个元素最多包含 100 个堆栈项，每个堆栈项最多 80 字节。
+
+:::
+
+标准隔离见证锁定脚本都有其对应的固定格式的 `Witness` 数据:
+
+- [P2WPKH](/technical/script/p2wpkh)
+- [P2WSH](/technical/script/p2wsh)
+- [P2TR](/technical/script/p2tr)

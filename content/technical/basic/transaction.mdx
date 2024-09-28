@@ -1,0 +1,86 @@
+---
+title: 交易
+---
+
+比特币交易是指选择 `UTXO` 作为交易的输入, 并创建新的 `UTXO` 作为输出的过程。每一笔交易至少有一个输入和一个输出。
+
+一旦 `UTXO` 作为交易的输入被消费, 即会被销毁。
+
+## UTXO
+
+`UTXO` 全称叫**未花费的交易输出**(Unspent Transaction Output), 是比特币交易的基本单位。
+
+:::warning
+
+假设某地址下有 2 个 `UTXO`, 一个 `UTXO` 有 1 BTC, 另一个 `UTXO` 有 1.2 BTC, 当要转账 1.5 BTC 时, 需要将这 2 个 `UTXO` 作为输入, 并创建 2 个 `UTXO` 作为输出(假设无手续费损耗):
+
+- 输出到收款人的 `UTXO`, 价值 1.5 BTC
+- 找零的 `UTXO`, 价值 0.7 BTC
+
+:::
+
+每个 `UTXO` 都有下列字段:
+
+- `Amount` - 包含聪的数量
+- `ScriptPubKey Size` - `ScriptPubKey` 的字节长度
+- `ScriptPubKey` - 锁定的代码
+
+最重要的是 `ScriptPubKey` 字段, 表示通过何种脚本去锁定 `UTXO`。
+
+当要花费 `UTXO` 时, 需要提供一个解锁脚本。在隔离见证升级前, 解锁脚本是 `ScriptSig` 字段。隔离见证之后, 解锁脚本被移动到了 `Witness` 字段。
+
+:::note 锁
+
+如果把 `UTXO` 比作一次性的保险箱, 那么 `ScriptPubKey` 就是保险箱的锁, `ScriptSig` 或 `Witness` 就是开锁的钥匙。一旦保险箱的锁被打开过(被消费过), 那么这个保险箱则会被销毁。
+
+内置的锁有几种类型:
+
+- [P2PK](/technical/script/p2pk) - Pay to Public Key - 支付到公钥
+- [P2PKH](/technical/script/p2pkh) - Pay to Public Key Hash - 支付到公钥哈希
+- [P2MS](/technical/script/p2ms) - Pay to MultiSig - 支付到多重签名
+- [P2SH](/technical/script/p2sh) - Pay to Script Hash - 支付到脚本哈希
+- [P2WPKH](/technical/script/p2wpkh) - Pay to Witness Public Key Hash - 支付到隔离见证公钥哈希
+- [P2WSH](/technical/script/p2wsh) - Pay to Witness Script Hash - 支付到隔离见证脚本哈希
+- [P2TR](/technical/script/p2tr) - Pay to Taproot - 支付到 Taproot
+- [OP_RETURN](/technical/script/op-return) - 用于存储数据的锁, 不能被消费
+
+`UTXO` 实际上并没有归属权, 任何人都可以将其作为交易输入, 但要使交易有效必须要能够解开锁。
+
+:::
+
+## 执行脚本
+
+将解锁脚本和锁定脚本按顺序拼接在一起后执行, 如果最后执行栈中只剩 `OP_1` , 则认为交易有效, 否则无效。
+
+<ScriptStackSimulator txid='05d350c8a65010bbe9d220b2accd7601b4c6541b7c6d7f5ad451efbcc07f8d66' />
+
+上面示例模拟的是一个保险箱的解锁过程。
+
+## 交易结构
+
+比特币交易由固定的字段按顺序组成。
+
+<TransactionFieldsTable />
+
+- `Version` - 交易版本号, 用于区分不同的交易格式
+
+  - `0x00000001` - 旧版交易
+  - `0x00000002` - 支持相对时间锁
+
+- `Marker` - 表示交易是隔离见证交易, 必须为 `0x00`
+
+- `Flag` - 表示交易是隔离见证交易, 必须为 `0x01` 或更大的数
+
+- `Input Count` - 输入数量
+
+- `Inputs` - 输入列表。 见 [交易输入](/technical/transaction/input)
+
+- `Output Count` - 输出数量
+
+- `Outputs` - 输出列表。 见 [交易输出](/technical/transaction/output)
+
+- `Witness` - 见证数据, 仅隔离见证交易。详情见 [Witness](/technical/transaction/witness)
+
+- `Lock Time` - 锁定时间。见 [Locktime](/technical/transaction/locktime)
+
+<TransactionSpliter />

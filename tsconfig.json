@@ -2,6 +2,7 @@
   "compilerOptions": {
     "baseUrl": ".",
     "lib": ["dom", "dom.iterable", "esnext"],
+    "target": "esnext",
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
@@ -28,6 +29,7 @@
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts",
+    "src/types/**/*.d.ts",
     ".contentlayer/generated"
   ],
   "exclude": ["node_modules"]

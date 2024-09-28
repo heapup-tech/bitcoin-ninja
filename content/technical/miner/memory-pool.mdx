@@ -1,0 +1,198 @@
+---
+title: 内存池
+---
+
+<MempoolOverview />
+
+内存池 (mempool) 是交易的暂存区, 矿工挖矿时会从内存池选择交易打包进区块。**凡是进入内存池中的交易都是经过验证的有效的交易**。
+
+在节点收到一笔交易后, 首先会验证交易的有效性, 比如检查交易的签名是否正确、交易费率是否大于节点设置的费率、内存池中是否有花费相同输入的交易等。如果交易通过了验证, 则会被添加到内存池中并转发到已知的其它网络节点。
+
+:::warning
+
+内存池中的交易可以花费另一个仍在内存池中的交易的输出。但必须等待这个交易被打包进区块后, 才能挖矿这个新的交易。这两个交易可以称作父子交易。父交易必须先被打包, 子交易才能被打包。
+
+子交易也可以有子交易, 但是有一个限制：从初始的父交易开始, 最多只能有 25 个后代交易。
+
+:::
+
+如果一笔交易的手续费太低, 它可能永远不会被打包进区块。因为矿工会优先选择手续费高的交易。这种情况下, 交易会在内存池中停留一段时间, 然后被节点移出内存池。这个时间默认是 2 周。
+
+## 节点设置
+
+如果你本地正在运行一个 `bitcoin-core` 节点, 你可以在 `bitcoin.conf` 文件中配置内存池的一些参数:
+
+- `mempoolexpiry` - 内存池中交易的最大时间限制, 默认为 336小时(2周)
+- `maxmempool` - 设置内存池的最大大小, 默认 300 MB, 超过时会移除低费率的交易
+- `mempoolreplacement` - 设置内存池中交易的替换策略, 有以下取值:
+  - `1` - 默认值, 允许所有交易的替换
+  - `0` - 禁止替换
+  - `fee` - 只允许费率更高的替换
+  - `fee,output` - 只允许费率更高和添加新输出的替换
+- `mempoolminfee` - 设置内存池中交易的最低费用, 默认值为 0.00001, 表示 1 sat/byte (如果没有强制设置, 可能会自动调整)
+- `minmempoolfee` - 内存池中交易的最低费用, 默认值为 0.00001, 表示 1 sat/byte
+- `minrelaytxfee` - 设置节点接受的最低费用, 低于这个值将不会转发交易, 默认值为 0.00001, 表示 1 sat/byte
+- `limitancestorcount` - 交易有未确认祖先交易数量。默认值为 25
+- `limitancestorsize` - 交易有未确认祖先交易的总大小。默认值为 101000, 表示 101 kvB
+- `limitdescendantcount` - 交易有未确认后代交易数量。默认值为 25
+- `limitdescendantsize` - 交易有未确认后代交易的总大小。默认值为 101000, 表示 101 kvB
+
+## 相关RPC
+
+<RpcMethodTable
+  method='getmempoolinfo'
+  description='获取节点内存池信息'
+  returns={[
+    { name: 'loaded', type: 'boolean', description: '内存池是否已加载' },
+    { name: 'size', type: 'number', description: '内存池中交易数量' },
+    { name: 'bytes', type: 'number', description: '内存池中交易总大小' },
+    { name: 'usage', type: 'number', description: '内存池占用的内存大小' },
+    { name: 'maxmempool', type: 'number', description: '内存池的最大大小' },
+    {
+      name: 'mempoolminfee',
+      type: 'number',
+      description: '内存池中交易的最低费用'
+    },
+    {
+      name: 'minrelaytxfee',
+      type: 'number',
+      description: '节点接受的最低费用'
+    },
+    {
+      name: 'unbroadcastcount',
+      type: 'number',
+      description: '未广播的交易数量'
+    }
+  ]}
+/>
+
+<RpcMethodTable
+  method='getrawmempool'
+  description='获取内存池所有交易信息'
+  args={[
+    {
+      name: 'verbose',
+      type: 'boolean',
+      optional: true,
+      default: 'false',
+      description: '是否返回交易详情'
+    },
+    {
+      name: 'mempool_sequence',
+      type: 'boolean',
+      optional: true,
+      default: 'false',
+      description: '每次内存池状态改变都会自增的序列号'
+    }
+  ]}
+/>
+
+<RpcMethodTable
+  method='getmempoolentry'
+  description='获取内存池中某交易详情'
+  args={[
+    {
+      name: 'txid',
+      type: 'string',
+      description: '交易ID'
+    }
+  ]}
+  customReturnsTitle='重要返回值'
+  returns={[
+    {
+      name: 'vsize',
+      type: 'number',
+      description: '交易的虚拟大小'
+    },
+    {
+      name: 'weight',
+      type: 'number',
+      description: '交易的权重, witness 数据占 1/4, 其他数据占 1'
+    },
+    {
+      name: 'fee',
+      type: 'number',
+      description: '交易的手续费'
+    },
+    {
+      name: 'time',
+      type: 'number',
+      description: '交易进入内存池的时间'
+    },
+    {
+      name: 'height',
+      type: 'number',
+      description: '交易进入内存池时的区块高度'
+    },
+    {
+      name: 'depends',
+      type: 'array',
+      description: '交易的依赖交易'
+    },
+    {
+      name: 'spentby',
+      type: 'array',
+      description: '花费这笔交易输出的交易'
+    },
+    {
+      name: 'descendantcount',
+      type: 'number',
+      description: '交易的后代交易数量'
+    },
+    {
+      name: 'descendantsize',
+      type: 'number',
+      description: '交易的后代交易总大小'
+    },
+    {
+      name: 'ancestorcount',
+      type: 'number',
+      description: '交易的祖先交易数量'
+    },
+    {
+      name: 'ancestorsize',
+      type: 'number',
+      description: '交易的祖先交易总大小'
+    }
+  ]}
+/>
+
+<RpcMethodTable
+  method='getmempoolancestors'
+  description='获取内存池中特定交易的所有祖先交易信息'
+  args={[
+    {
+      name: 'txid',
+      type: 'string',
+      optional: false,
+      description: '交易ID'
+    },
+    {
+      name: 'verbose',
+      type: 'boolean',
+      optional: true,
+      default: 'false',
+      description: '是否返回交易详情'
+    }
+  ]}
+/>
+
+<RpcMethodTable
+  method='getmempooldescendants'
+  description='获取内存池中特定交易的所有后代交易信息'
+  args={[
+    {
+      name: 'txid',
+      type: 'string',
+      optional: false,
+      description: '交易ID'
+    },
+    {
+      name: 'verbose',
+      type: 'boolean',
+      optional: true,
+      default: 'false',
+      description: '是否返回交易详情'
+    }
+  ]}
+/>

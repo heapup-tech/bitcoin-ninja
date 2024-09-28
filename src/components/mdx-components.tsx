@@ -1,27 +1,128 @@
+import BlockHeaderHex from '@/components/blockchain/block-header-hex'
 import { CopyButton } from '@/components/copy-button'
 import FileIcon from '@/components/file-icon'
 import {
   Accordion,
   AccordionContent,
-  AccordionItem
+  AccordionItem,
+  AccordionTrigger
 } from '@/components/ui/accordion'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle
+} from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import manifest from '@/lib/material-icon'
 import { cn } from '@/lib/utils'
 import '@/styles/admonition.css'
 import '@/styles/mdx.css'
+import { GitHubLogoIcon } from '@radix-ui/react-icons'
 import { Info, Siren, Skull, TriangleAlert } from 'lucide-react'
 import { useMDXComponent } from 'next-contentlayer/hooks'
 import Link from 'next/link'
+import AsciiConverter from './blockchain/ascii-converter'
+import Base58AddressGenerator from './blockchain/base58-address-generator'
+import Bech32AddressGenerator from './blockchain/bech32-address-generator'
+import BitcoinChainTips from './blockchain/bitcoin-chaintips'
+import BitcoinOverview from './blockchain/bitcoin-overview'
+import BlockHex from './blockchain/block-hex'
+import BlockList from './blockchain/block-list'
+import BlockOverview from './blockchain/block-overview'
+import BlockStructure from './blockchain/block-structure'
+import BlockSubsidyCalculator from './blockchain/block-subsidy-calculator'
+import BlockTransaction from './blockchain/block-transaction'
+import ConvertTargetToBits from './blockchain/convert-target-to-bits'
+import HalvingTable from './blockchain/halving-table'
+import Hash160Calculator from './blockchain/hash160-calculator'
+import Hash256Calculator from './blockchain/hash256-calculator'
+import LegacyRawTransactionBuilder from './blockchain/legacy-raw-transaction-builder'
+import MempoolOverview from './blockchain/mempool-overview'
+import MerkleRootCalculator from './blockchain/merkle-root-calculator'
+import NetworkHashps from './blockchain/network-hashps'
+import PrivateKeyGenerator from './blockchain/private-key-generator'
+import PublicKeyGenerator from './blockchain/public-key-generator'
+import ReorganisationCalculator from './blockchain/reorganisation-calculator'
+import ReplaceBlockPowerTable from './blockchain/replace-block-power-table'
+import RpcMethodTable from './blockchain/rpc-method-table'
+import ScriptConverter from './blockchain/script-converter'
+import ScriptStackSimulator from './blockchain/script-stack-simulator'
+import ScriptOpcodes from './blockchain/scripts/opcode'
+import ScriptAsmTab from './blockchain/scripts/script-asm-tab'
+import SegwitRawTransactionBuilder from './blockchain/segwit-raw-transaction-builder'
+import TaprootAddressGenerator from './blockchain/taproot-address-generator'
+import TargetCalculator from './blockchain/target-calculator'
+import TransactionFieldsTable from './blockchain/transaction-fields-table'
+import TransactionHex from './blockchain/transaction-hex'
+import TransactionInputFieldsTable from './blockchain/transaction-input-fields-table'
+import TransactionOutputFieldsTable from './blockchain/transaction-output-fields-table'
+import TransactionSplitTab from './blockchain/transaction-split-tab'
+import TransactionSpliter from './blockchain/transaction-spliter'
+import TransactionTxidCalculator from './blockchain/transaction-txid-calculator'
+import TransactionWitnessFieldsTable from './blockchain/transaction-witness-fields-table'
+import WIFPrivateKeyGenerator from './blockchain/wif-private-key-generator'
+import ScaleableImage from './scaleable-image'
 
 const components = {
+  BitcoinOverview,
+  BitcoinChainTips,
+  BlockHeaderHex,
+  BlockHex,
+  BlockStructure,
+  BlockTransaction,
+  BlockSubsidyCalculator,
+  MempoolOverview,
+  BlockList,
+  BlockOverview,
+  TargetCalculator,
+  ConvertTargetToBits,
+  TransactionHex,
+  TransactionSpliter,
+  TransactionFieldsTable,
+  TransactionInputFieldsTable,
+  TransactionOutputFieldsTable,
+  TransactionWitnessFieldsTable,
+  TransactionSplitTab,
+  ScriptConverter,
+  AsciiConverter,
+  HalvingTable,
+  ReorganisationCalculator,
+  ReplaceBlockPowerTable,
+  MerkleRootCalculator,
+  TransactionTxidCalculator,
+  ScriptAsmTab,
+  ScriptOpcodes,
+  ScriptStackSimulator,
+  PrivateKeyGenerator,
+  PublicKeyGenerator,
+  Base58AddressGenerator,
+  Bech32AddressGenerator,
+  TaprootAddressGenerator,
+  WIFPrivateKeyGenerator,
+  LegacyRawTransactionBuilder,
+  SegwitRawTransactionBuilder,
+  Hash256Calculator,
+  Hash160Calculator,
+  RpcMethodTable,
+  NetworkHashps,
   Accordion,
+  AccordionTrigger,
   AccordionContent,
   AccordionItem,
   Alert,
   AlertTitle,
   AlertDescription,
+  Card,
+  CardHeader,
+  CardContent,
+  CardTitle,
+  CardDescription,
+  CardFooter,
+  ScaleableImage,
   admonition: ({
     className,
     __admonition_type__,
@@ -148,14 +249,14 @@ const components = {
             extension={extension}
             className='w-5 h-5 mr-1.5'
           />
-          {props.children}
+          <span className='font-medium text-sm'>{props.children}</span>
         </div>
 
         {__rawString__ && (
           <CopyButton
             value={__rawString__}
             className={cn(
-              'absolute right-4 top-4 text-zinc-500 dark:text-zinc-400'
+              'absolute right-4 top-2 text-zinc-500 dark:text-zinc-400'
             )}
           />
         )}
@@ -175,7 +276,7 @@ const components = {
       <>
         <pre
           className={cn(
-            'mb-4 mt-6 max-h-[650px] overflow-x-auto rounded-lg border  py-4 ',
+            'mb-4 mt-2 max-h-[650px] overflow-x-auto rounded-lg border  py-4 ',
             className,
             __withTitle__ && 'mt-0 rounded-tl-none rounded-tr-none'
           )}
@@ -186,7 +287,7 @@ const components = {
           <CopyButton
             value={__rawString__}
             className={cn(
-              'absolute right-4 top-4 text-zinc-500 dark:text-zinc-400',
+              'absolute right-4 top-4 text-zinc-400 dark:text-zinc-400',
               __withTitle__ && 'top-16'
             )}
           />
@@ -194,16 +295,33 @@ const components = {
       </>
     )
   },
-  a: ({ className, ...props }: React.HTMLAttributes<HTMLAnchorElement>) => (
-    <a
-      className={cn(
-        'font-medium underline underline-offset-4 text-primary',
-        className
-      )}
-      target='_blank'
-      {...props}
-    ></a>
-  ),
+  a: ({
+    className,
+    ...props
+  }: React.AnchorHTMLAttributes<HTMLAnchorElement>) => {
+    const { href } = props
+
+    let isGithubLink = false
+    if (href?.match(/github.com/)) {
+      isGithubLink = true
+    }
+
+    return (
+      <a
+        className={cn(
+          'font-medium underline underline-offset-4 text-primary',
+          className
+        )}
+        target='_blank'
+        {...props}
+      >
+        <span className='inline-flex items-center hover:underline underline'>
+          <span>{props.children}</span>
+          {isGithubLink && <GitHubLogoIcon className='ml-1 inline-block' />}
+        </span>
+      </a>
+    )
+  },
   p: ({ className, ...props }: React.HTMLAttributes<HTMLParagraphElement>) => (
     <p
       className={cn('leading-7 [&:not(:first-child)]:mt-4', className)}
@@ -212,13 +330,13 @@ const components = {
   ),
   ul: ({ className, ...props }: React.HTMLAttributes<HTMLUListElement>) => (
     <ul
-      className={cn('my-6 ml-6 list-disc', className)}
+      className={cn('my-2 ml-4 list-disc', className)}
       {...props}
     />
   ),
   ol: ({ className, ...props }: React.HTMLAttributes<HTMLOListElement>) => (
     <ol
-      className={cn('my-6 ml-6 list-decimal', className)}
+      className={cn('my-2 ml-4 list-decimal', className)}
       {...props}
     />
   ),
@@ -230,7 +348,7 @@ const components = {
   ),
   blockquote: ({ className, ...props }: React.HTMLAttributes<HTMLElement>) => (
     <blockquote
-      className={cn('mt-6 border-l-2 pl-4 italic font-medium', className)}
+      className={cn('mt-6 border-l-2 pl-4 font-medium italic', className)}
       {...props}
     />
   ),
@@ -241,7 +359,7 @@ const components = {
   }: React.ImgHTMLAttributes<HTMLImageElement>) => (
     // eslint-disable-next-line @next/next/no-img-element
     <img
-      className={cn('rounded-md', className)}
+      className={cn('border rounded-lg dark:invert p-2', className)}
       alt={alt}
       {...props}
     />
@@ -263,13 +381,9 @@ const components = {
         alt={alt}
       />
 
-      {caption && (
-        <div className='p-2 bg-muted'>
-          <div>{caption}</div>
+      {caption && <div className='p-2 bg-muted'>{caption}</div>}
 
-          {props.children}
-        </div>
-      )}
+      {props.children && <div className='p-2 bg-muted'>{props.children}</div>}
     </div>
   ),
   hr: ({ ...props }: React.HTMLAttributes<HTMLHRElement>) => (
@@ -316,7 +430,7 @@ const components = {
   td: ({ className, ...props }: React.HTMLAttributes<HTMLTableCellElement>) => (
     <td
       className={cn(
-        'border p-4 text-left [&[align=center]]:text-center [&[align=right]]:text-right',
+        'border p-2 text-left [&[align=center]]:text-center [&[align=right]]:text-right',
         className
       )}
       {...props}
@@ -325,7 +439,7 @@ const components = {
   code: ({ className, ...props }: React.HTMLAttributes<HTMLElement>) => (
     <code
       className={cn(
-        'relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm ',
+        'relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-base',
         className
       )}
       {...props}
@@ -348,7 +462,7 @@ const components = {
   ),
   Tabs: ({ className, ...props }: React.ComponentProps<typeof Tabs>) => (
     <Tabs
-      className={cn('relative mt-6 w-full', className)}
+      className={cn('relative mt-4 w-full', className)}
       {...props}
     />
   ),
@@ -407,13 +521,14 @@ const components = {
 
 interface MdxProps {
   code: string
+  className?: string
 }
-export function Mdx({ code }: MdxProps) {
+export function Mdx({ code, className }: MdxProps) {
   const Component = useMDXComponent(code)
 
   return (
-    <div className='mdx'>
+    <article className={cn('max-w-[120ch] mx-auto', className)}>
       <Component components={components} />
-    </div>
+    </article>
   )
 }

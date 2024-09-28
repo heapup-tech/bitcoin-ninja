@@ -1,0 +1,97 @@
+---
+title: 版本
+---
+
+<BlockStructure highlightFieldName={['Version']} />
+
+区块头中的 4 字节 `version` 字段表示创建该区块时使用的比特币协议版本。
+
+## 历史
+
+- `0x00000001` - 初始版本
+
+- `0x00000002` - 引入 [BIP 34](https://github.com/bitcoin/bips/blob/master/bip-0034.mediawiki) (`Coinbase` 交易中添加区块高度) , 激活高度 [227931](https://mempool.space/block/000000000000024b89b42a942fe0d9fea3bb44ab7bd1b19115dd6a759c0808b8?showDetails=true&view=actual#details)
+
+- `0x00000003` - 引入 [BIP 66](https://github.com/bitcoin/bips/blob/master/bip-0066.mediawiki) (严格的 DER 签名), 激活高度 [363725](https://mempool.space/block/00000000000000000379eaa19dce8c9b722d46ae6a57c2f1a988119488b50931?showDetails=true&view=actual#details)
+
+- `0x00000004` - 引入 [BIP 65](https://github.com/bitcoin/bips/blob/master/bip-0065.mediawiki) (OP_CHECKLOCKTIMEVERIFY), 激活高度 [388381](https://mempool.space/block/000000000000000004c2b624ed5d7756c508d90fd0da2c7c679febfa6c4735f0?showDetails=true&view=actual#details)
+
+:::warning
+
+- 以上为正常字节序, 实际的区块数据中, 以小端序显示。
+
+- 在激活高度前面的区块中, 会发现有相同的 `version` 值, 用于表示矿工支持该升级, 直到激活高度后, 才会真正使用该版本号。
+
+:::
+
+2015 年 10 月, [BIP 9](https://github.com/bitcoin/bips/blob/master/bip-0009.mediawiki) 被提出, 旨在提供更灵活和可扩展的升级机制, 其规定 `version` 字段的比特位分配, 称作 `version bits`。
+
+## Version Bits
+
+`version` 字段占据 4 个字节, 即 32 个比特位。前 3 个比特位必须为 `001`, 用于表示正在使用 `version bits`。后 29 个比特位用于不同的软分叉升级提议, 意味着可以**同时**支持最多 29 个不同功能的升级。
+
+```json
+0010 0000 0000 0000 0000 0000 0000 0000 = 0x20000000
+```
+
+该版本号也成为了当前默认版本号。
+
+对于不同的软分叉升级需将对应的比特位设置为 1。
+
+### Bit 1
+
+[BIP 141](https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki) 隔离见证升级, 从0开始计数, 将倒数第 1 个比特位设置为 1。
+
+如下是激活高度 [481824](https://mempool.space/block/0000000000000000001c8018d9cb3b742ef25114f27563e3fc4a1902167f9893?showDetails=true&view=actual#details) 的区块头数据
+
+<BlockHex hex='02000020801b81629334be8e7af5ebfb9df09c18e1f833b5f0efcb00000000000000000040d1ca077fefe7fb797711baa0c063eca9b8ed9469ae0128982b44ad0c25386491329e59e93c011822ff5422' />
+
+`0x02000020` 转换为正常字节序为 `0x20000002`, 转换为二进制为
+
+```json
+0010 0000 0000 0000 0000 0000 0000 0010
+```
+
+### Bit 2
+
+[BIP 341](https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki) Taproot升级, 将倒数第 2 个比特位设置为 1。
+
+如下是激活高度 [709632](https://mempool.space/block/0000000000000000000687bca986194dc2c1f949318629b44bb54ec0a94d8244?showDetails=true&view=actual#details) 的区块头数据。
+
+<BlockHex hex='04002020ccbcc674693ef8751c939c0e6d4728dde62e24fc12370100000000000000000077ec1447375fc68029ab7a85fd6989c5d31351b619e8f709de682008103bda6a6f9b9061ea690c1702730f54' />
+
+`0x04002020` 转换为正常字节序为 `0x20200004`, 转换为二进制为
+
+```json
+0010 0000 0010 0000 0000 0000 0000 0100
+```
+
+:::tip 软分叉激活
+
+软分叉激活使用了该版本协议, 在一个目标值调整周期(2016个区块)内, 有 90% 区块的 `version` 字段将对应的新功能的比特位设置为 1, 则该升级将激活。
+
+:::
+
+由于 `version` 字段对于版本位没有特定的限制, 所以经常可以看到区块头数据中包含一些奇怪的版本号, 这是因为矿工将其作为额外的随机数计算区块哈希了。
+
+例如区块 [860498](https://mempool.space/block/0000000000000000000142a232ca6e524e31354a5dde3d87ba809f0324a93c69?showDetails=true&view=actual#details) 的区块头数据
+
+<BlockHex hex='00606821dd7d2253f116e1e58880a59f7f3baef76a334126dde201000000000000000000dedca8ebc2f276214c7cbd112191db8672f3fa0266c56d6bf098a1ee7b05263c1bd6dd665b25031771f3101d' />
+
+`0x00606821` 转换为正常字节序为 `0x21686000`, 转换为二进制为
+
+```json
+0010 0001 0110 1000 0110 0000 0000 0000
+```
+
+再比如区块 [860362](https://mempool.space/block/000000000000000000021442e0200d4b7366f9aa383f77eb48ffd4a5011de6e7?showDetails=true&view=actual#details) 的区块头数据
+
+<BlockHex hex='00801520972bdc145ee35dc24f67f07d09aeeed78221411f00230100000000000000000076fcf6149e299928e0c5fe53daae2b626cfa3ede65393a5f1c6c11b35d09994a78d7dc665b2503178b6b64ee' />
+
+`0x00801520` 转换为正常字节序为 `0x20158000`, 转换为二进制为
+
+```json
+0010 0000 0001 0101 1000 0000 0000 0000
+```
+
+这些版本位并没有针对任何特定升级进行信号传递, 只是方便矿工可以快速计算出小于目标值的区块哈希, 以便获得区块奖励。

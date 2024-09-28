@@ -14,6 +14,8 @@ import * as React from 'react'
 export function MobileNav() {
   const [open, setOpen] = React.useState(false)
 
+  const sidebarNav = docsConfig.technicalSidebarNav
+
   return (
     <Sheet
       open={open}
@@ -22,7 +24,7 @@ export function MobileNav() {
       <SheetTrigger asChild>
         <Button
           variant='ghost'
-          className='mr-2 px-0 text-base hover:bg-transparent focus-visible:bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 md:hidden'
+          className='mr-2 px-0 text-base hover:bg-transparent focus-visible:bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 sm:hidden'
         >
           <SidebarOpen className='size-6' />
           <span className='sr-only'>Toggle Menu</span>
@@ -55,7 +57,7 @@ export function MobileNav() {
             )}
           </div>
           <div className='flex flex-col space-y-2'>
-            {docsConfig.sidebarNav.map((item, index) => (
+            {sidebarNav.map((item, index) => (
               <div
                 key={index}
                 className='flex flex-col space-y-3 pt-6'

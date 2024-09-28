@@ -1,21 +1,41 @@
 .admonition {
-  @apply mt-8 rounded-md border px-4 py-2 text-sm font-medium first:mt-0;
+  @apply mt-4 rounded-md border px-4 py-2 text-sm font-medium first:mt-0;
+}
+
+.admonition code:not(figure code) {
+  @apply border px-1 py-0.5 text-sm font-semibold;
 }
 
 .admonition-tip {
   @apply border-emerald-300 bg-emerald-100 text-emerald-600 dark:border-emerald-500 dark:bg-emerald-500/30 dark:text-emerald-400;
 }
 
+.admonition-tip code:not(figure code) {
+  @apply border-emerald-300 bg-emerald-200 dark:bg-emerald-500/30;
+}
+
 .admonition-note {
   @apply border-blue-300 bg-blue-100 text-blue-600 dark:border-blue-500 dark:bg-blue-500/30 dark:text-blue-400;
+}
+
+.admonition-note code:not(figure code) {
+  @apply border-blue-300 bg-blue-200 dark:bg-blue-600/30;
 }
 
 .admonition-warning {
   @apply border-yellow-300 bg-yellow-100 text-yellow-600 dark:border-yellow-500 dark:bg-yellow-500/30 dark:text-yellow-400;
 }
 
+.admonition-warning code:not(figure code) {
+  @apply border-yellow-300 bg-yellow-200 dark:bg-yellow-500/30;
+}
+
 .admonition-danger {
   @apply border-red-300 bg-red-100 text-red-600 dark:border-red-500 dark:bg-red-500/30 dark:text-red-400;
+}
+
+.admonition-danger code:not(figure code) {
+  @apply border-red-300 bg-red-200 dark:bg-red-500/30;
 }
 
 [data-admonition-title] {

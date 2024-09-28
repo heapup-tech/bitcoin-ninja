@@ -1,20 +1,18 @@
 import { defineDocumentType, makeSource } from 'contentlayer/source-files'
 import rehypeAutolinkHeadings from 'rehype-autolink-headings'
+import rehypeKatex from 'rehype-katex'
 import rehypePrettyCode from 'rehype-pretty-code'
 import rehypeSlug from 'rehype-slug'
 import remarkGfm from 'remark-gfm'
+import remarkMath from 'remark-math'
 import { visit } from 'unist-util-visit'
+import { themes } from './src/config/theme'
 import { rehypeCodeBlockTitle } from './src/lib/rehype-plugin/codeblock-title'
 import { remarkAdmonition } from './src/lib/remark-plugin/admonition'
 
-const themes = {
-  light: 'light-plus',
-  dark: 'dracula'
-}
-
-export const Doc = defineDocumentType(() => ({
-  name: 'Doc',
-  filePathPattern: 'docs/**/*.mdx',
+export const TechnicalDoc = defineDocumentType(() => ({
+  name: 'TechnicalDoc',
+  filePathPattern: 'technical/**/*.mdx',
   contentType: 'mdx',
   fields: {
     title: { type: 'string', required: true },
@@ -36,11 +34,13 @@ export const Doc = defineDocumentType(() => ({
 
 export default makeSource({
   contentDirPath: './content',
-  documentTypes: [Doc],
+  documentTypes: [TechnicalDoc],
   mdx: {
-    remarkPlugins: [remarkGfm, remarkAdmonition],
+    remarkPlugins: [remarkGfm, remarkAdmonition, remarkMath],
     rehypePlugins: [
       rehypeSlug,
+      // @ts-ignore
+      rehypeKatex,
       () => (tree) => {
         visit(tree, (node) => {
           if (node?.type === 'element' && node?.tagName === 'pre') {

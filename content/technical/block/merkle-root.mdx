@@ -1,0 +1,86 @@
+---
+title: 默克尔根
+---
+
+<BlockStructure highlightFieldName={['Merkle Root']} />
+
+`Merkle Root` 是区块内包含的所有交易ID构成默克尔树的根节点。用于确保区块内包含交易的唯一性和完整性, 以防止区块内容被篡改。
+
+## 默克尔树
+
+![merkletree](/merkle-tree.png)
+
+默克尔树是一种自底向上构建的二叉树。通过对每一个原始数据进行哈希计算(比特币采用的是 `Hash256` 算法), 然后将哈希结果两两配对, 再对配对结果进行哈希计算, 重复这个过程, 直到最终得到一个树形结构, 这个树就是**默克尔树**
+
+## 默克尔根
+
+默克尔树根节点的哈希值就是默克尔根。
+
+交易ID 已经 `Hash256` 的结果了, 所以在构建默克尔树时, 交易ID 会直接作为叶子节点。
+
+在区块 [400627](https://mempool.space/block/00000000000000000443083e239bfd1bfd2fcef1ce71d88ee50885ddde114b2a?showDetails=true&view=actual#details) 的区块头数据中
+
+<BlockHex hex='040000000150896d7a8cd13cd0bf3ee0eaf0a449beb7434ea3aaf70000000000000000002d3d02c97057f403386a1fb151e4bbb2cd20c34065741a96bdedbecd0678ed1a340cd5569fb9061863b03c4d' />
+
+能够清晰的知道 `Merkle Root` 的值为 `2d3d02c97057f403386a1fb151e4bbb2cd20c34065741a96bdedbecd0678ed1a`
+
+区块 [400627](https://mempool.space/block/00000000000000000443083e239bfd1bfd2fcef1ce71d88ee50885ddde114b2a?showDetails=true&view=actual#details) 包含的交易ID(小端序) 如下:
+
+```ts
+const txids = [
+  '62776c9c36a2fb3e504e8b7083ba93262e3cc7b7ec74fa3ddb605ee68b380597',
+  '18d29edfbae8dedf645a23f3e70affe799f48b8372b7f519aa68948335b04d34',
+  '085446db8ee01d8c4b809e5fccbfc65d51a746f749ac85a4c7934fd6b7f8e375',
+  'd807b51c028f55a7279aeff6387d9ac6a316aec05f2ed01a160ae0ebfb02fee9',
+  '51b1bc2e2b58b08068bbe4bf974fdac4315982aff85209bafbf3ab37a58d3ff0',
+  '76ff1ec37b8b89ff74f9e079958122ff30e83fe18fa3fd4ea7499ba00d8501ce',
+  '7be78ceca62dc0fabc4130631f95eac451b2a8843689d1fc9da18bb5cf8c627e',
+  '5b8374dad6a6f82f3930b81169adea18a24d113a22da65bddbef2fc3dba1b347'
+]
+```
+
+转换为正常字节序为:
+
+```ts
+const txids = [
+  '9705388be65e60db3dfa74ecb7c73c2e2693ba83708b4e503efba2369c6c7762',
+  '344db035839468aa19f5b772838bf499e7ff0ae7f3235a64dfdee8badf9ed218',
+  '75e3f8b7d64f93c7a485ac49f746a7515dc6bfcc5f9e804b8c1de08edb465408',
+  'e9fe02fbebe00a161ad02e5fc0ae16a3c69a7d38f6ef9a27a7558f021cb507d8',
+  'f03f8da537abf3fbba0952f8af825931c4da4f97bfe4bb6880b0582b2ebcb151',
+  'ce01850da09b49a74efda38fe13fe830ff22819579e0f974ff898b7bc31eff76',
+  '7e628ccfb58ba19dfcd1893684a8b251c4ea951f633041bcfac02da6ec8ce77b',
+  '47b3a1dbc32fefdbbd65da223a114da218eaad6911b830392ff8a6d6da74835b'
+]
+```
+
+由正常字节序的交易ID计算默克尔根:
+
+```ts
+import { hash256 } from 'bitcoinjs-lib/src/crypto'
+
+const getMerkleRoot = (txids: string[]) => {
+  if (txids.length === 1) return txids[0]
+
+  const hashedLeaves = []
+  for (let i = 0; i < txids.length; i += 2) {
+    const left = txids[i]
+    const right = i + 1 === txids.length ? left : txids[i + 1]
+    const combined = left + right
+
+    hashedLeaves.push(hash256(Buffer.from(combined, 'hex')).toString('hex'))
+  }
+  return getMerkleRoot(hashedLeaves)
+}
+
+const merkleRoot = getMerkleRoot(txids)
+// 2d3d02c97057f403386a1fb151e4bbb2cd20c34065741a96bdedbecd0678ed1a
+```
+
+得到的结果与区块头中的 `Merkle Root` 一致。
+
+:::note
+
+默克尔根是在矿工构建候选区块时, 从内存池选取交易, 并在选取的交易之上添加了 `coinbase` 交易, 这些交易的交易ID统一被用来计算默克尔树的根节点。
+
+:::

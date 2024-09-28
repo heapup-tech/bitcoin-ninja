@@ -19,6 +19,7 @@ export function rehypeCodeBlockTitle() {
         if (hasTitle) {
           const codeTitleElement = node.children.at(0)
           codeTitleElement.properties['__rawString__'] = node.__rawString__
+          codeTitleElement.properties['__language__'] = language
         }
 
         if (isTerminalLanguage(language)) {

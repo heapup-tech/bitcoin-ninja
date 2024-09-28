@@ -1,0 +1,27 @@
+---
+title: Nonce
+---
+
+<BlockStructure highlightFieldName={['Nonce']} />
+
+区块头中 `nonce` 字段用于挖矿。通过不断改变其值(通常是递增)来计算区块头的哈希值, 直至找到一个小于当前目标值的哈希值, 即算挖矿成功。
+
+`nonce` 字段大小为4个字节, 可表达 `0x0` 到 `0xffffffff` 之间的数, 转换为 10 进制就是 0 - 4294967295。
+
+<NetworkHashps />
+
+查询全网算力后可以看出, 可以看出算尽不同的 `nonce` 值甚至不需要 1 秒。
+
+理论上, 确实有可能只通过改变 `nonce` 值就挖到一个区块。但实际上, 只通过改变 `nonce` 值挖到区块的概率非常低。
+
+其他可能的尝试是:
+
+- 改变区块时间戳(例如相比于上一次尝试增加一秒), 只要满足关于区块时间的限制即可。然后再重新尝试所有的 `nonce` 值。
+- 改变区块头中 `version` 字段, 只要保证前3个比特币是 `001`, 后面29个比特位可以随意组合, 此时就有非常多种的可能, 每一种组合又可以和不同的 `nonce` 值组合。
+- 修改 `coinbase` 交易输入中的 `scriptSig` 字段, 因为 `coinbase` 交易本身就是凭空产生比特币, 并没有花费 `UTXO`, 也就不需要用 `scriptSig` 去解锁 `UTXO`, 因此 `scriptSig` 字段在**规则内**可以随便修改。修改 `scriptSig` 也将导致交易 ID 的变化, 进而导致区块头中 `Merkle Root` 字段的变化。区块头数据的变化最终会影响哈希结果。
+
+:::note
+
+[BIP 34](https://github.com/bitcoin/bips/blob/master/bip-0034.mediawiki) 升级后, 要求在 `coinbase` 交易输入中的 `scriptSig` 字段必须以区块高度开头, 以避免生成相同的交易ID。
+
+:::

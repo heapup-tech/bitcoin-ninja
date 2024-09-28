@@ -1,0 +1,83 @@
+---
+title: P2WSH
+---
+
+`P2WSH`: Pay To Witness Script Hash, 意为隔离见证版的支付到脚本哈希。
+
+自隔离见证升级后, `UTXO` 的解锁脚本便从 `ScriptSig` 字段移动到了 `Witness` 字段, `P2SH` 也就升级成了 `P2WSH`, 由于是隔离见证的第 0 个版本, 所以也叫 `V0_P2WSH`。
+
+## 锁定脚本
+
+`P2WSH` 锁定脚本的操作码模板:
+
+:::note
+
+OP_0 \<脚本哈希>
+
+:::
+
+以下是一个 `P2WSH` 锁定脚本的示例:
+
+<ScriptAsmTab
+  hex='0020758c229ce3fa5a3db9963baf485b7a7dec6faeed35cfc28395fd8095dde3115e'
+  txid='9f4ccd151bc4e67d3d823b092e54559917355be34253152f4ea3102fef1cbe2c'
+  index='1'
+/>
+
+`OP_0` 是隔离见证的版本字节, 表示该锁定脚本是 `P2WPKH` 或 `P2WSH`。
+
+:::warning 脚本哈希
+
+- `P2SH` 的脚本哈希是赎回脚本进行 `Hash160` 运算后的结果, 大小为 **20** 字节。
+
+- `P2WSH` 的脚本哈希是赎回脚本进行 `Sha256` 运算后的结果, 大小为 **32** 字节。
+
+:::
+
+## 解锁脚本
+
+要解锁 `P2WSH`, 需要提供自定义的解锁脚本和赎回脚本。
+
+以下是一个 `P2WSH` 解锁脚本的交易示例:
+
+<TransactionSplitTab
+  hex='010000000001012cbe1cef2f10a34e2f155342e35b35179955542e093b823d7de6c41b15cd4c9f0100000000fdffffff0298ea240000000000220020ae7ca40ea2f10255ffae6c0893489f26677e43c4f5e967cb43a5f243ccbb4ec467e72c00000000002200207bb8f5802ae446be4e5f7dde387ca1624faee09a8643a8c16ff87df4235e25840400483045022100adb72e46a74e31f763e56b9b59ae9705f13e3d9347771cd12e2297edb50c64ef02205c67ad3cacbaeb345e3e795a3ed77772a90f8626497c5faa2ec632ac2cad8fe40148304502210090bf186062bed9be0a465f766b55751b50e0a4df640f08d9d6575af61b2a96ea0220788933538950f5157de6f92b867a33f78aab6893e941dc777b4a7fe1f27c404a0169522103348ac32a74b4d29fca6d5fe19ec0bbc024c18e3a36344a1e709f3f53fa06d3b82102f772bdcf1406e59c492a2eb49b95e5cfbf103b8d1a375779f19c6d3c155a752f2102da69f954a5c304c4429b43fecaf4114fae573d2ba6189d8ef6a4a67c9473ed2c53ae00000000'
+  txid='5450ba66a0a09e5947187430581af4a945aeabda7f67cdf111df2a62886a1467'
+/>
+
+`Witness` 字段为:
+
+```json
+[
+  {
+    "0": {
+      "size": "00",
+      "item": ""
+    },
+    "1": {
+      "size": "48",
+      "item": "3045022100adb72e46a74e31f763e56b9b59ae9705f13e3d9347771cd12e2297edb50c64ef02205c67ad3cacbaeb345e3e795a3ed77772a90f8626497c5faa2ec632ac2cad8fe401" // 签名
+    },
+    "2": {
+      "size": "48",
+      "item": "304502210090bf186062bed9be0a465f766b55751b50e0a4df640f08d9d6575af61b2a96ea0220788933538950f5157de6f92b867a33f78aab6893e941dc777b4a7fe1f27c404a01" // 签名
+    },
+    "3": {
+      "size": "69",
+      "item": "522103348ac32a74b4d29fca6d5fe19ec0bbc024c18e3a36344a1e709f3f53fa06d3b82102f772bdcf1406e59c492a2eb49b95e5cfbf103b8d1a375779f19c6d3c155a752f2102da69f954a5c304c4429b43fecaf4114fae573d2ba6189d8ef6a4a67c9473ed2c53ae" // 赎回脚本
+    },
+    "stackItems": "04"
+  }
+]
+```
+
+入栈的元素共有 4 项, 其中最后一项一定是赎回脚本。从示例中的 `Witness` 字段可以看出来该交易的赎回脚本是 2-of-3 `P2MS` 锁定脚本。
+
+## 脚本执行
+
+同 `P2SH` 相同, `P2WSH` 脚本执行分为两部分:
+
+- 标准脚本执行 - 依次拼接 `ScriptSig` 和 `ScriptPubKey` 后执行, 主要用来验证脚本哈希的正确性。
+- 赎回脚本执行 - 检查栈顶元素是否为 `OP_1`, 若是则移除栈顶元素, 并执行赎回脚本。
+
+<ScriptStackSimulator txid='5450ba66a0a09e5947187430581af4a945aeabda7f67cdf111df2a62886a1467' />

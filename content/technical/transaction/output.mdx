@@ -1,0 +1,43 @@
+---
+title: 输出
+---
+
+一笔交易可以有多个交易输出, 每个输出都具有下列结构:
+
+<TransactionOutputFieldsTable />
+
+每笔交易的每个输出都是一个 `UTXO`, 都可以作为其他交易的输入使用(除 `OP_RETURN`)。一旦某个输出被使用过,就不能再次使用。
+
+如下是有两个交易输出的交易:
+<TransactionSplitTab
+  hex='010000000001016d122ad5fda85060b2867735fe6645b05f279163aa077fbbeef8011c99f7d1b10100000000ffffffff025dbf9700000000001976a9145556c3f18d0c003ad56b6e4ea4ddf4da24f73c0a88ace53d010500000000220020701a8d401c84fb13e6baf169d59684e17abd9fa216c8cc5b9fc63d622ff8c58d0400473044022010250a27461dbe7a29076b69880b3e3205394f41029a0c72f9458591f4b2bfd202201c3684998b8247016c116eb9ba0ec6f8f189c2b98632abc4ec86183f2ca170930147304402206d980ea087479857cd1fe2b45dab5d28577bbcc6ad874d980d3db61bbd4b482402205c4000c5df22bd15a3c92fad03ac9a86a857d4fbbc3865f50ceca4b2b7ff1e1a016952210375e00eb72e29da82b89367947f29ef34afb75e8654f6ea368e0acdfd92976b7c2103a1b26313f430c4b15bb1fdce663207659d8cac749a0e53d70eff01874496feff2103c96d495bfdd5ba4145e3e046fee45e84a8a48ad05bd8dbb395c011a32cf9f88053ae00000000'
+  txid='113b881794498fa3bfc6c9cb3b9d5ee7b1d9156e0ff6279a6f348e2d9d3fb881'
+/>
+
+
+## 交易输出字段详解
+
+### Amount
+
+
+`Amount` 字段表示交易输出包含聪的数量, 大小为 8 个字节, 可表达的值范围为 0 到 `0xffffffffffffffff`, 最多可存储 `184,467,440,737.09551615 BTC`, 远超比特币的最大供应量。
+
+
+### ScriptPubKey Size
+
+`ScriptPubKey Size` 表示锁定脚本 `ScriptPubKey` 的大小, 以字节为单位。
+
+### ScriptPubKey
+
+`ScriptPubKey` 字段表示该交易输出的锁定脚本。
+
+以下是标准锁定脚本:
+
+- [P2PK](/technical/script/p2pk)
+- [P2PKH](/technical/script/p2pkh)
+- [P2MS](/technical/script/p2ms)
+- [P2SH](/technical/script/p2sh)
+- [P2WPKH](/technical/script/p2wpkh)
+- [P2WSH](/technical/script/p2wsh)
+- [P2TR](/technical/script/p2tr)
+- [OP_RETURN](/technical/script/op-return)

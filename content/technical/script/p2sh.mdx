@@ -1,0 +1,139 @@
+---
+title: P2SH
+---
+
+`P2SH` - Pay to Script Hash, 意为支付到脚本哈希。
+
+这是一种可自定义脚本的标准模板, 自定义脚本被称为**赎回脚本**(Redeem Script)
+
+:::note 脚本哈希
+
+脚本哈希是对自定义脚本(赎回脚本)进行 `Hash160` 运算的结果, 大小为 20 字节。
+
+假设赎回脚本是 `6f93598893578893588851`
+
+<Hash160Calculator defaultValue='6f93598893578893588851' />
+
+`Hash160` 结果为 `da5a92e670a66538be1c550af352646000b2367d`, 该值即为脚本哈希, 被存储在 `UTXO` 的 `ScriptPubKey` 中。
+
+:::
+
+## 锁定脚本
+
+`P2SH` 锁定脚本的操作码模板:
+
+:::note
+
+OP_HASH160 \<脚本哈希> OP_EQUAL
+
+:::
+
+以下是一个 `P2SH` 锁定脚本的示例:
+
+<ScriptAsmTab
+  hex='a914da5a92e670a66538be1c550af352646000b2367d87'
+  txid='7d46745463a28049cb93d2c964320912d9c296c1038cb24cc3716255c397a87f'
+  index='1'
+/>
+
+其中 `da5a92e670a66538be1c550af352646000b2367d` 为脚本哈希。
+
+:::danger
+
+计算脚本哈希是一个不可逆的操作, 因此无法从脚本哈希中计算出赎回脚本。这在一定程度提升了自定义脚本的安全性。
+
+:::
+
+## 解锁脚本
+
+`P2SH` 解锁脚本由两部分组成, 前半部分是自定义的解锁脚本, 后半部分是赎回脚本。
+
+<ScriptAsmTab
+  hex='5355540b6f93598893578893588851'
+  txid='09afa3b1393f99bb01aa754dd4b89293fd8d6c9741488b537d14f7f81de1450e'
+  index='0'
+  type='ScriptSig'
+/>
+
+`6f93598893578893588851` 是赎回脚本, 转换成 `ASM` 格式为:
+
+<ScriptAsmTab hex='6f93598893578893588851' />
+
+## 脚本执行
+
+`P2SH` 脚本执行分为两部分:
+
+- 标准脚本执行 - 依次拼接 `ScriptSig` 和 `ScriptPubKey` 后执行, 主要用来验证脚本哈希的正确性。
+- 赎回脚本执行 - 检查栈顶元素是否为 `OP_1`, 若是则移除栈顶元素, 并执行赎回脚本。
+
+<ScriptStackSimulator txid='09afa3b1393f99bb01aa754dd4b89293fd8d6c9741488b537d14f7f81de1450e' />
+
+:::danger
+
+赎回脚本可以是任何有效的脚本，包括非标准脚本。只要在执行结束时栈上有且只有一个 `OP_1`, 则解锁脚本有效。
+
+:::
+
+:::tip
+
+赎回脚本最大为 **520** 个字节。若将 `P2MS` 作为赎回脚本, 压缩公钥大小为 33 字节, 则最多支持 15 个公钥。
+
+:::
+
+## 实践
+
+构建自定义赎回脚本
+
+```ts
+import { payments, script } from 'bitcoinjs-lib'
+import { OPS } from 'bitcoinjs-lib/src/ops'
+import { toHex } from 'uint8array-tools'
+
+const redeem = script.compile([
+  OPS.OP_3DUP,
+  OPS.OP_ADD,
+  OPS.OP_9,
+  OPS.OP_EQUALVERIFY,
+  OPS.OP_ADD,
+  OPS.OP_7,
+  OPS.OP_EQUALVERIFY,
+  OPS.OP_ADD,
+  OPS.OP_8,
+  OPS.OP_EQUALVERIFY,
+  OPS.OP_1
+])
+
+const p2sh = payments.p2sh({ redeem: { output: redeem } })
+
+console.log(toHex(p2sh.output!)) // a914da5a92e670a66538be1c550af352646000b2367d87
+console.log(toHex(p2sh.redeem?.output!)) // 6f93598893578893588851
+```
+
+`p2sh.output` 为锁定脚本, `p2sh.redeem?.output` 为赎回脚本
+
+以标准脚本作为赎回脚本, 如 `P2MS`:
+
+```ts
+const p2sh = payments.p2sh({
+  redeem: payments.p2ms({
+    m: 2,
+    pubkeys: [
+      Buffer.from(
+        '020727931f73a3557750012196a95c2c711eedea3b981311bdaae0d77830147f5e',
+        'hex'
+      ),
+      Buffer.from(
+        '03c843204c50447f6981eb9eb703d74f888dce775cc853ceba2d24b17758ac949c',
+        'hex'
+      ),
+      Buffer.from(
+        '03cf0f461d623c3a7c73d3d540ae07e6308d56f1630551be0b7aa7b86632ce4f60',
+        'hex'
+      )
+    ]
+  })
+})
+
+console.log(toHex(p2sh.output!)) // a914f71179c135963f43de2d173dbf8a0faa72def6ba87
+console.log(toHex(p2sh.redeem?.output!)) // 5221020727931f73a3557750012196a95c2c711eedea3b981311bdaae0d77830147f5e2103c843204c50447f6981eb9eb703d74f888dce775cc853ceba2d24b17758ac949c2103cf0f461d623c3a7c73d3d540ae07e6308d56f1630551be0b7aa7b86632ce4f6053ae
+```

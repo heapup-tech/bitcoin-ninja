@@ -1,0 +1,250 @@
+---
+title: 节点
+---
+
+比特币是一个计算机软件, 运行比特币软件的计算机叫做比特币节点。比特币网络由众多的比特币节点组成，这些节点相互连接，形成一个庞大的去中心化系统。每个节点都保存一份完整的区块链数据，能够独立验证和转发新的交易和区块。节点之间通过点对点协议进行通信，共同维护网络的安全性和稳定性。
+
+成为节点的最简单方法是下载并运行 [Bitcoin Core](https://bitcoincore.org/en/download)。
+
+首次运行比特币时, 会连接网络上的其他节点, 并开始下载完整的区块数据的作为本地副本, 这也意味着你的计算机磁盘空间至少要留有当前所有区块数据的大小。
+
+## 节点通信
+
+默认情况下, 比特币节点之间通过 `8333` 端口进行通信。通过该端口来连接到其他运行比特币程序的计算机, 用来同步区块数据, 广播交易等。
+
+:::note 通信端口
+
+比特币节点间的通信端口:
+
+- **主网(mainnet)**: `8333`
+- **测试网(testnet)**: `18333`
+- **回归测试网(regtest)**: `18444`
+
+:::
+
+### 连接
+
+比特币节点之间通过使用 `TCP` 协议进行通信。因此, 要连接到一个比特币节点, 需要知道运行节点的计算机的 IP 地址。
+
+以下代码展示了如何创建一个 `TCP` 连接
+
+```ts showLineNumbers title="connect.ts"
+import net from 'node:net'
+
+// 创建 TCP 连接
+const socket = net.createConnection({
+  host: '127.0.0.1',
+  port: 8333
+})
+
+socket.on('connect', () => {
+  console.log('Connected to the Bitcoin network')
+})
+```
+
+:::warning
+
+虽然比特币节点之间的通信要求通信双方是比特币节点, 但并不意味着只能用节点来请求远程节点的数据, 还可以用编程的方式来模拟节点之间的请求, 只要满足比特币节点之间的通信协议即可。
+
+:::
+
+:::note
+
+如果你没有运行比特币节点，可以从下面找到一些可以连接的节点:
+
+- [bitnodes.io](https://bitnodes.io)
+- `DNS Seeds`: 由可信的 `bitcoin-core` 开发者运行的一些 DNS 服务器会返回一些可靠的完整节点的 IP 地址, 例如
+  - **seed.bitcoin.sipa.be** - Pieter Wuille
+  - **dnsseed.bitcoin.dashjr.org** - Luke Dashjr
+  - **seed.bitcoin.sprovoost.nl** - Sjors Provoost
+
+通过命令行对 `DNS Seeds` 执行 DNS 查询, 返回可用的节点 IP
+
+```bash
+nslookup seed.bitcoin.sipa.be
+```
+
+:::
+
+:::tip
+
+Bitcoin Core 启动时按以下顺序查找远程节点 IP:
+
+1.  **以前的连接** - Bitcoin Core 会维护一个以前连接过的节点列表, 并在启动后再次尝试连接这些节点。
+2.  **DNS Seeds** - 如果是第一次运行 `Bitcoin Core`, 会使用 `DNS Seeds` 来寻找要连接的节点。
+3.  **硬编码列表** - 如果所有其他方法都失败了, `Bitcoin Core` 会尝试与自带的一个硬编码 `Seed Nodes` 列表连接, 并以此为起点, 查找网络上的其他可用节点。这个列表定义在 [chainparamsseeds.h](https://github.com/bitcoin/bitcoin/blob/master/src/chainparamsseeds.h)
+
+:::
+
+### 消息
+
+消息是 **比特币节点** 之间互相发送的一段结构化数据, 由 `Header` 和 `Payload` 两部分组成。
+
+#### Header
+
+`Header` 包含消息摘要, 具有如下字段
+
+| 字段          | 大小(字节) |                   说明                   |
+| ------------- | :--------: | :--------------------------------------: |
+| `Magic Bytes` |     4      |                消息标识符                |
+| `Command`     |     12     |                 消息类型                 |
+| `Size`        |     4      |                消息体大小                |
+| `Checksum`    |     4      | 消息体的校验和, 用于校验消息体是否被篡改 |
+
+字段解释：
+
+- `Magic Bytes`：用于标识信息的开始, 大小为 4 个字节, 固定为 `F9BEB4D9`
+- `Command`：发送的消息类型。大小为 12 个字节, 不足 12 个字节则补0。常见的消息类型有:
+  - `version`：用于初始化连接
+  - `verack`：并确认 `version` 信息
+  - `addr`：发送已知的其他节点信息
+  - `inv`：接收到新交易或区块, 发送给其他节点交易或区块的哈希值
+  - `tx`：发送完整的交易信息
+  - `block`：发送完整的区块信息
+- `Size`：发送的消息体的大小
+- `Checksum`：消息体的校验和, 用于校验消息体是否被篡改。通过对消息体进行两次 `SHA256` 哈希运算, 取前 `4` 个字节作为校验和
+
+#### Payload
+
+消息体。不同的消息类型, 有不同的消息体格式。比如 `version` 消息体的格式如下：
+
+|        字段        | 大小/字节 |                                                                     说明                                                                      |
+| :----------------: | :-------: | :-------------------------------------------------------------------------------------------------------------------------------------------: |
+| `Protocol Version` |     4     |                                                      协议版本号，表示节点支持的协议版本                                                       |
+|     `Services`     |     8     |                                                           本地节点可提供的服务列表                                                            |
+|       `Time`       |     8     |                                                            消息发送时的当前时间戳                                                             |
+| `Address Receive`  |    26     |                           连接的节点的信息: 依次为 8 字节的期望节点该有的服务列表, 16字节的节点 IP, 2 字节的端口号                            |
+|   `Address From`   |    26     |                                   本地节点的信息: 依次为 8 字节的服务列表, 16字节的节点 IP, 2 字节的端口号                                    |
+|      `Nonce`       |     8     |                                                         随机数, 用于检测与自身的连接                                                          |
+|    `User Agent`    | 动态大小  |                   用户代理,一个自定义字符串, 用于标识节点的软件版本。`Bitcoin Core` 使用类似 "/Satoshi:22.0.0/" 的字符串。                    |
+|    `Last Block`    |     4     |                                  本地节点的最新区块高度, 如果您没有任何区块或不愿意分享任何区块, 可设置为0。                                  |
+|      `Relay`       |     1     | 可选字段, 表示是否愿意接收和转发交易([BIP37](https://github.com/bitcoin/bips/blob/master/bip-0037.mediawiki#extensions-to-existing-messages)) |
+
+完整的消息类型和消息体见 [这里](https://en.bitcoin.it/wiki/Protocol_documentation#Message_types)
+
+### 握手
+
+节点间通过 `TCP` 协议通信, 为了确保通信过程的顺利进行, 需要进行握手:
+
+1. 本地节点发送 `version` 信息来启动通信, 远程节点以自己的 `version` 信息进行回应
+
+2. 并且远程节点会再发送一条 `verack` 信息, 确认已收到本地节点发送的 `version` 信息
+
+3. 本地节点收到远程节点发送的 `version` 信息后, 最后会向远程节点回发一条 `verack` 信息
+
+4. 握手完成, 两个节点之间的可以开始通信
+
+### 保持连接
+
+刚刚连接上的远程节点会偶尔向本地节点发送 [ping](https://en.bitcoin.it/wiki/Protocol_documentation#ping) 信息。如果想保持连接, 需要及时回复 [pong](https://en.bitcoin.it/wiki/Protocol_documentation#pong) 信息。
+
+## RPC
+
+默认情况下 `Bitcoin Core` 不会开放 `RPC` 服务, 但可以修改 `bitcoin.conf` 文件来开启.
+
+```text
+server=1
+rpcuser=bitcoin-ninja
+rpcpassword=bitcoin-ninja
+rpcport=8332
+rpcallowip=0.0.0.0/0
+rpcbind=0.0.0.0
+```
+
+- `rpcuser` 和 `rpcpassword` - 用来验证 `RPC` 请求的用户名和密码, 是必须要设置的选项。
+
+- `rpcport` - 用来设置监听的端口号, 默认为 `8332`
+
+- `rpcallowip` - 默认为空, 表示只允许本地访问, 但还可以设置为:
+
+  - 允许所有人都可以访问, 设置为 `0.0.0.0/0`
+  - 允许局域网的所有 IP 都可以访问, 设置为路由器 IP, 如 `192.168.1.0/24`, 后面的 `24` 表示子网掩码, 用来表示局域网内的所有 IP
+  - 允许特定 IP 访问, 设置为 `192.168.1.100`
+
+- `rpcbind` - 运行 `Bitcoin Core` 的设备有多个网络接口, 每个接口都有一个 IP 地址, 通过设置 `rpcbind` 可以指定节点监听的 IP 地址。
+
+:::danger
+
+修改配置文件后, 需要重启 `Bitcoin Core` 才能生效
+
+:::
+
+以下代码用于获取比特币网络信息
+
+```ts
+const rpcuser = 'bitcoin-ninja'
+const rpcpassword = 'bitcoin-ninja'
+const rpcport = 8332
+
+const auth = btoa(`${rpcuser}:${rpcpassword}`)
+
+const info = await fetch(`http://127.0.0.1:${rpcport}`, {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    Authorization: `Basic ${auth}`
+  },
+  body: JSON.stringify({
+    jsonrpc: '1.0',
+    id: '1',
+    method: 'getblockchaininfo',
+    params: []
+  })
+}).then((res) => {
+  return res.json()
+})
+
+console.log(info)
+```
+
+打印结果如下:
+
+```json
+{
+  "result": {
+    "chain": "main",
+    "blocks": 859827,
+    "headers": 859827,
+    "bestblockhash": "00000000000000000000a763b554db4206f4b7f3964c435dd9ae2a1beba01466",
+    "difficulty": 89471664776970.77,
+    "time": 1725447306,
+    "mediantime": 1725441373,
+    "verificationprogress": 0.9999950791847722,
+    "initialblockdownload": false,
+    "chainwork": "00000000000000000000000000000000000000008c9dfb597011dd9df64abd08",
+    "size_on_disk": 679724826461,
+    "pruned": false,
+    "warnings": ""
+  },
+  "error": null,
+  "id": "1"
+}
+```
+
+所有的 `RPC` 方法可以在 [这里](https://developer.bitcoin.org/reference/rpc) 找到。
+
+:::danger
+
+由于搭建可公开访问的比特币节点的成本较高, 故本站用到的 `RPC` 服务来自于 [ankr](https://www.ankr.com/) 提供的付费方案。
+
+:::
+
+## 节点类型
+
+### 全节点
+
+全节点接收区块数据的完整副本, 并验证接收到的区块或交易是否有效。
+
+全节点有两种类型:
+
+- **归档节点(Archival Node)**: 保存着区块数据的完整副本
+
+- **剪枝节点(Pruned Node)**: 不保存区块数据的完整副本, 只保留最近的一部分区块数据,通常是最近的550个区块（约95天的数据）
+
+### 轻节点
+
+轻节点具有以下特点:
+
+- 不保存区块数据的完整副本
+- 无法验证接收到的区块和交易, 但可以验证自己的交易
+- 只需下载区块头而非完整区块链数据, 可以更快同步区块数据

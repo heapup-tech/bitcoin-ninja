@@ -1,0 +1,93 @@
+---
+title: P2PKH
+---
+
+`P2PKH`: Pay To Public Key Hash, 意为支付到公钥哈希。
+
+:::note 公钥哈希
+
+公钥哈希是对原始**压缩公钥**进行 `Hash160` 编码。`Hash160` 是对数据先 `SHA-256` 再 `RIPEMD-160` 的哈希算法。
+
+```ts
+import { ripemd160, sha256 } from 'bitcoinjs-lib/src/crypto'
+const pubKeyHash = (pubkey: string) => {
+  return ripemd160(sha256(Buffer.from(pubkey, 'hex')))
+}
+```
+
+<Hash160Calculator
+  defaultValue='03f0609c81a45f8cab67fc2d050c21b1acd3d37c7acfd54041be6601ab4cef4f31'
+  minLength={66}
+/>
+
+:::
+
+锁定脚本中包含交易接收者的原始公钥哈希。
+
+## 锁定脚本
+
+`P2PKH` 锁定脚本的操作码模板:
+
+:::note
+
+OP_DUP OP_HASH160 \<公钥哈希> OP_EQUALVERIFY OP_CHECKSIG
+
+:::
+
+以下 `P2PKH` 锁定脚本的示例:
+
+<ScriptAsmTab
+  hex='76a914afbe3ae51e9af6faf7ef09eaffefb3480b65f9a288ac'
+  txid='16977021808ced528e55bfdbe5c6db9b2ffc7627ef84bdcd95a7c953dc10465b'
+  index='0'
+/>
+
+## 解锁脚本
+
+要解锁 `P2PKH` 锁定脚本, 需要提供交易的签名和原始压缩公钥:
+
+<ScriptAsmTab
+  hex='47304402204110fd22d5040fd9c863fcf7c06bebb82a37b3accd40b8191b3ef6493fc5ecd602200aa3a476fddfc4a80ed4f1048cc63603b10794135f3fd0d39672bc8f41be7c2b012103b2368dc9be26d422f0db1eb36e0522500b8e2ea6f409e99f702ab304e7910b96'
+  txid='c3c0feb2af73e48e57c6e46e821be9b5d04e0770b645bb8bb1a15633719d8841'
+  index='0'
+  type='ScriptSig'
+/>
+
+## 脚本执行
+
+脚本的执行过程如下:
+
+<ScriptStackSimulator txid='c3c0feb2af73e48e57c6e46e821be9b5d04e0770b645bb8bb1a15633719d8841' />
+
+## 实践
+
+`P2PKH` 地址是通过 [Base58](/technical/keys/secret#base58) 生成的地址。主网上总是以 `1` 开头, 测试网上以 `m/n` 开头。
+
+向某个地址转账时, 先判断是否是 `P2PKH` 地址, 如果是, 则从该地址中提取公钥哈希, 然后构建 `P2PKH` 锁定脚本, 存储在 `UTXO` 上。
+
+```ts
+import { fromBase58Check } from 'bitcoinjs-lib/src/address'
+import { toHex } from 'uint8array-tools'
+
+// pubkey: 03b2368dc9be26d422f0db1eb36e0522500b8e2ea6f409e99f702ab304e7910b96
+const recipient = 'mwYCS3JbvyZ2vhM52gjBA4Z8gYXUx1TwjB'
+
+const { version, hash: pubKeyHash } = fromBase58Check(recipient)
+
+console.log(version.toString(16)) // 6f
+console.log(toHex(pubKeyHash)) // afbe3ae51e9af6faf7ef09eaffefb3480b65f9a2
+```
+
+获取锁定脚本:
+
+```ts
+import { networks, payments } from 'bitcoinjs-lib'
+
+const recipient = 'mwYCS3JbvyZ2vhM52gjBA4Z8gYXUx1TwjB'
+const c = payments.p2pkh({
+  address: recipient,
+  network: networks.testnet
+})
+
+console.log(toHex(c.output!)) // 76a914afbe3ae51e9af6faf7ef09eaffefb3480b65f9a288ac
+```

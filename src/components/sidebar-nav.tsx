@@ -1,7 +1,7 @@
 'use client'
 
 import { cn } from '@/lib/utils'
-import { SidebarNavItem } from '@/types'
+import { SidebarNavItem } from '@/types/nav'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
@@ -17,12 +17,41 @@ export function DocsSidebarNav({ items }: DocsSidebarNavProps) {
       {items.map((item, index) => (
         <div
           key={index}
-          className={cn('pb-4')}
+          className={cn('pb-2')}
         >
-          <h4 className='mb-1 rounded-md px-2 py-1 text-sm font-semibold'>
-            {item.title}
+          <h4
+            className={cn(
+              'rounded-md px-2 py-0.5 text-sm',
+              item.items?.length && 'font-semibold '
+            )}
+          >
+            {item.href ? (
+              <Link
+                href={item.href}
+                className={cn(
+                  'hover:text-primary hover:translate-x-1',
+                  pathname === item.href && 'text-primary translate-x-1'
+                )}
+              >
+                {item.items?.length ? (
+                  item.title
+                ) : (
+                  <div
+                    className={cn(
+                      'text-muted-foreground hover:text-primary hover:translate-x-1 transition-transform',
+                      pathname === item.href &&
+                        'text-primary translate-x-1 font-semibold'
+                    )}
+                  >
+                    {item.title}
+                  </div>
+                )}
+              </Link>
+            ) : (
+              item.title
+            )}
           </h4>
-          {item?.items?.length && (
+          {item.items?.length && (
             <DocsSidebarNavItems
               items={item.items}
               pathname={pathname}
@@ -51,10 +80,10 @@ export function DocsSidebarNavItems({
             key={index}
             href={item.href}
             className={cn(
-              'group flex w-full items-center rounded-md border border-transparent px-2 py-1 hover:text-primary hover:translate-x-1 transition-transform',
+              'group flex w-full items-center rounded-md border border-transparent px-2 py-0.5 hover:text-primary hover:translate-x-1 transition-transform',
               item.disabled && 'cursor-not-allowed opacity-60 ',
               pathname === item.href
-                ? 'font-medium text-primary translate-x-1'
+                ? 'font-semibold text-primary translate-x-1'
                 : 'text-muted-foreground'
             )}
             target={item.external ? '_blank' : ''}

@@ -16,13 +16,12 @@ export function TableOfContents({ toc }: TocProps) {
       return toc
     }
 
-    const [linksInSteps, ...rest] = toc.items
-
-    if (linksInSteps.items && linksInSteps.items.length > 0) {
-      return {
-        items: [...linksInSteps.items, ...rest]
-      }
-    }
+    // const [linksInSteps, ...rest] = toc.items
+    // if (linksInSteps.items && linksInSteps.items.length > 0) {
+    //   return {
+    //     items: [...linksInSteps.items, ...rest]
+    //   }
+    // }
 
     return toc
   }, [toc])
@@ -48,7 +47,6 @@ export function TableOfContents({ toc }: TocProps) {
 
   return (
     <div className='space-y-2'>
-      <p className='font-medium'>On This Page</p>
       <Tree
         tree={refinedToc}
         activeItem={activeHeading}

@@ -1,0 +1,59 @@
+---
+title: P2MS
+---
+
+`P2MS` - Pay to Multi Signature, 意为支付到多重签名。将 `UTXO` 锁定到多个公钥，需要其中一部分公钥的签名才能解锁。
+
+## 锁定脚本
+
+`P2MS` 锁定脚本的操作码模板:
+
+:::note
+
+OP\_\<M> \<公钥1> \<公钥2> ... \<公钥N> OP\_\<N> OP_CHECKMULTISIG
+
+:::
+
+- M 表示需要多少个签名
+- N 表示锁定的公钥个数
+
+以下是一个 `P2MS` 2-of-3 多重签名锁定脚本的示例:
+
+<ScriptAsmTab
+  hex='524104d81fd577272bbe73308c93009eec5dc9fc319fc1ee2e7066e17220a5d47a18314578be2faea34b9f1f8ca078f8621acd4bc22897b03daa422b9bf56646b342a24104ec3afff0b2b66e8152e9018fe3be3fc92b30bf886b3487a525997d00fd9da2d012dce5d5275854adc3106572a5d1e12d4211b228429f5a7b2f7ba92eb0475bb14104b49b496684b02855bc32f5daefa2e2e406db4418f3b86bca5195600951c7d918cdbe5e6d3736ec2abf2dd7610995c3086976b2c0c7b4e459d10b34a316d5a5e753ae'
+  txid='581d30e2a73a2db683ac2f15d53590bd0cd72de52555c2722d9d6a78e9fea510'
+  index='0'
+/>
+
+:::warning
+
+`P2MS` 是一个标准的多签锁定脚本, 最多支持 3 个公钥。但可以将 `P2MS` 包裹在 `P2SH` 中，则可以使用最多 15 个公钥。
+
+:::
+
+## 解锁脚本
+
+要解锁 `P2MS` 锁定脚本, 需要提供 `M` 个签名, 并且需要在解锁脚本前加 `OP_0` :
+
+<ScriptAsmTab
+  hex='00483045022100af204ef91b8dba5884df50f87219ccef22014c21dd05aa44470d4ed800b7f6e40220428fe058684db1bb2bfb6061bff67048592c574effc217f0d150daedcf36787601483045022100e8547aa2c2a2761a5a28806d3ae0d1bbf0aeff782f9081dfea67b86cacb321340220771a166929469c34959daf726a2ac0c253f9aff391e58a3c7cb46d8b7e0fdc4801'
+  txid='949591ad468cef5c41656c0a502d9500671ee421fadb590fbc6373000039b693'
+  index='0'
+  type='ScriptSig'
+/>
+
+## 脚本执行
+
+脚本的执行过程如下:
+
+<ScriptStackSimulator txid='949591ad468cef5c41656c0a502d9500671ee421fadb590fbc6373000039b693' />
+
+`OP_CHECKMULTISIG` 依次弹出以下元素：
+
+- 锁定脚本中的公钥个数 `N`
+- 锁定脚本中的所有公钥
+- 锁定脚本中的需要签名的个数 `M`
+- 解锁脚本的所有签名
+- 额外的值(通常是 `OP_0`, 用于解决 `OP_CHECKMULTISIG` 会多弹出一个元素的 bug)
+
+检查 `M` 个签名是否有效匹配 `N` 个公钥中的任意 `M` 个。如果所有签名都有效，且数量正确，则将 `OP_1` 入栈。否则将 `OP_0` 入栈

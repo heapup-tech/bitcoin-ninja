@@ -1,9 +1,9 @@
 export const siteConfig = {
-  name: 'Docunicorn',
+  name: 'Bitcoin Ninja',
   url: '/',
-  description: 'Heapup Tech Documentation Template',
+  description: '比特币开发教程',
   links: {
-    github: 'https://github.com/heapup-tech/Docunicorn'
+    github: 'https://github.com/bitcoin-ninja/bitcoin-ninja'
   }
 }
 

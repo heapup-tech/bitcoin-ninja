@@ -1,0 +1,85 @@
+---
+title: P2WPKH
+---
+
+`P2WPKH`: Pay To Witness Public Key Hash, 意为隔离见证版的支付到公钥哈希。
+
+自隔离见证升级后, `UTXO` 的解锁脚本便从 `ScriptSig` 字段移动到了 `Witness` 字段, `P2PKH` 也就升级成了 `P2WPKH`, 由于是隔离见证的第 0 个版本, 所以也叫 `V0_P2WPKH`。
+
+## 锁定脚本
+
+`P2WPKH` 锁定脚本的操作码模板:
+
+:::note
+
+OP_0 \<公钥哈希>
+
+:::
+
+以下是一个 `P2WPKH` 锁定脚本的示例:
+
+<ScriptAsmTab
+  hex='001454458d8542977e9419a3d1fcd1aac462d3c87180'
+  txid='6d3ed09e20441e8273359c377dbf2d5f896a87a29b80600c7b68861d004a66df'
+  index='1'
+/>
+
+`OP_0` 是隔离见证的版本字节, 表示该锁定脚本是 `P2WPKH` 或 `P2WSH`。
+
+:::danger
+
+对比于 `P2PKH` 锁定脚本, `P2WPKH` 缺少了最重要 `OP_CHECKSIG`, 而令人质疑 `P2WPKH` 锁的安全性。但在实际脚本执行时, 会提取出 `P2WPKH` 中的**公钥哈希**转换为 `P2PKH` 锁定脚本后再执行。
+
+:::
+
+## 解锁脚本
+
+同 `P2PKH` 相同, 要解锁 `P2WPKH` 锁定脚本, 需要提供交易的签名和原始压缩公钥。不同的是, 这些数据不再放在 `ScriptSig` 字段, 而是放在 `Witness` 字段。
+
+以下是一个 `P2WPKH` 解锁脚本的交易示例:
+
+<TransactionSplitTab
+  hex='02000000000101df664a001d86687b0c60809ba2876a895f2dbf7d379c3573821e44209ed03e6d0100000000fdffffff019186e7040000000017a9140ad75d75b40799d5441eaafcc242af51fdbf6f2387024730440220303d5b5da4fb983de3a536f66f9d603f4de348b6a3d263e9ffc32a42309cd28602204aea9cf60eb52f8fc017cd0bb6b8326146b9f4215a73649093203cbd098fdc71012103f6755a6ee93c7be8d15bf0e324c7db1890fdd951b77668ffd9575a061afef477ff270d00'
+  txid='d308c2c120d51f1a5e1859c1d1e9afd6b3bf4de8aaa41d78eecf5337d1bd4720'
+/>
+
+交易输入只有一个, 并且是使用 `P2WPKH` 锁定脚本的 `UTXO`。其对应的解锁脚本是 `Witness` 字段为
+
+```json
+[
+  {
+    "stackItems": "02",
+    "0": {
+      "size": "47",
+      "item": "30440220303d5b5da4fb983de3a536f66f9d603f4de348b6a3d263e9ffc32a42309cd28602204aea9cf60eb52f8fc017cd0bb6b8326146b9f4215a73649093203cbd098fdc7101" // 签名
+    },
+    "1": {
+      "size": "21",
+      "item": "03f6755a6ee93c7be8d15bf0e324c7db1890fdd951b77668ffd9575a061afef477" // 公钥
+    }
+  }
+]
+```
+
+`Witness` 字段是一个数组, 和交易输入一一对应, 数组中的每个元素包含
+
+- `stackItems` - 栈中元素的数量
+- 栈中的元素
+
+在 `P2WPKH` 解锁脚本中, 栈中的元素依次为签名和原始压缩公钥。
+
+## 脚本执行
+
+脚本执行时, 会从锁定脚本中提取出公钥哈希, 转换为 `P2PKH` 锁定脚本:
+
+:::note
+
+OP_DUP OP_HASH160 \<公钥哈希> OP_EQUALVERIFY OP_CHECKSIG
+
+:::
+
+`P2WPKH` 脚本的执行过程如下:
+
+<ScriptStackSimulator txid='d308c2c120d51f1a5e1859c1d1e9afd6b3bf4de8aaa41d78eecf5337d1bd4720' />
+
+## 实践

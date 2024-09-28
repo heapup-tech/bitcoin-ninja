@@ -26,7 +26,7 @@ export function CopyButton({ className, value, ...props }: CopyButtonProps) {
       variant='ghost'
       className={cn(
         className,
-        'z-10 h-6 w-6 [&_svg]:size-5 bg-transparent hover:bg-transparent',
+        'z-10 h-6 w-6 [&_svg]:size-5 bg-transparent hover:bg-transparent hover:text-zinc-400/80',
         copied &&
           '[&_svg]:animate-code-block-hide [&_svg:nth-of-type(2)]:animate-code-block-show'
       )}

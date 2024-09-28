@@ -1,0 +1,51 @@
+---
+title: P2PK
+---
+
+`P2PK`: Pay To Public Key, 意为支付到公钥。锁定脚本中包含**交易接收者的原始公钥**。
+
+## 锁定脚本
+
+`P2PK` 锁定脚本的操作码模板:
+
+:::note
+
+\<OP_PUSHBYTES_33 | OP_PUSHBYTES_65> \<原始公钥> OP_CHECKSIG
+
+:::
+
+- 当交易接收者的原始公钥是压缩公钥时, 大小是 33 字节, 使用 `OP_PUSHBYTES_33` 操作码
+- 当交易接收者的原始公钥是未压缩公钥时, 大小是 65 字节, 使用 `OP_PUSHBYTES_65` 操作码
+
+以下是一个 `P2PK` 锁定脚本的示例:
+
+<ScriptAsmTab
+  hex='410412135fcb9afbfefff40fb2e5d1f730b7b6ca871f1376b8571211285fec4682c994da12effec22d725d591c8f8c92c742c2e4951c5dafc307ff08dbadcff17be4ac'
+  txid='5ef5c50300a067545a647d48b194fa8f18e8d268636055a3c14fc0975940411e'
+  index={'0'}
+/>
+
+## 解锁脚本
+
+要解锁 P2PK 锁定脚本, 只需提供交易的签名:
+
+<ScriptAsmTab
+  hex='483045022100c7d8d9a8bda958cad2b2dff50bde4685233cbad0b53c9f41d31a165118d4540202206981e98bb7e2cf86691d7d5e7406e822b4ead9dc817d80fe5f7563448815e91d01'
+  txid='d5a0538d9aa6a37ea3cdf7c3209cbea89fe59bac15d744c47375c6cc43a27e81'
+  index='1'
+  type='ScriptSig'
+/>
+
+## 脚本执行
+
+脚本运行时, `ScriptSig` 和 `ScriptPubKey` 依次被执行。
+
+`OP_CHECKSIG` 会从执行栈中弹出两个元素, 依次为公钥和签名数据, 然后验证签名是否有效, 有效则将 `OP_1` 入栈, 否则将 `OP_0` 入栈。
+
+<ScriptStackSimulator txid='e827a366ad4fc9a305e0901fe1eefc7e9fb8d70655a079877cf1ead0c3618ec0' />
+
+:::danger
+
+P2PK 是最初的比特币交易脚本, 但由于公钥的泄露风险, 目前已经不再推荐使用。
+
+:::

@@ -1,0 +1,138 @@
+---
+title: 交易输入
+---
+
+交易输入是一个**数组**, 数组中的每个元素都具有下列结构：
+
+<TransactionInputFieldsTable />
+
+如下是有两个交易输入的交易:
+
+<TransactionSplitTab
+  hex='0100000002115d7ffad08cbe01cf0398ff22d0a49c2892635167770b7d7e76abba1d8435a8000000006a47304402204fed79b9499b64bf702b72a98a17fed20582a65245a672fd72d640790c57519202207560db682b1d2aadd3d1cedf8a95bc9ab9a592347d34aa2eef72360c7796b06501210267b8d349dd61316a8eda423dd20fdb4d44d1d08873043d50f7e669dc80ca6773fffffffff97736e761eb89101c3a9a981b3dbd770f491507be8d006c92c30875b6d5a00c000000006a47304402202d1f34a80233dd306d6a7804409253bd0fab99f699b85407096c5b4a12b12011022011e9bfef016ee635907bc2014610130c1c98203d77d79de2918379f56e57ce4c01210267b8d349dd61316a8eda423dd20fdb4d44d1d08873043d50f7e669dc80ca6773ffffffff015b002c9e1100000017a914dcfbeddd8daafa20221169eab5a2356500cbc9168700000000'
+  txid='c4b5c87233c9bec50d321f6f2e92c37f90bb95c375e4e901eea2e37069650c8c'
+/>
+
+在隔离见证升级后, `ScriptSig` 字段被移动到了 `Witness` 字段中。
+
+<TransactionSplitTab
+  hex='010000000001030ce89651d36c7ad347ce3d80376ec771ac3b19eed6aeac7ef0dc7dd99c90d454c000000000fdffffffb79e98e563703639d6c140c39d0e15ebab41ff831e3df2d7c374d73294b565590000000000fdffffff63497b1838acd222aac94f8f17a3333b5893e1779f81c9473adf2333a01f8adb8000000000fdffffff02187101000000000016001491baa46dbf7d6c4e77ec785748b9740e7779e4430902000000000000225120c2bdaec46bda8d592241844cf42e04c1e1e1058a9ed44ff0f0c2a3fcb875ea62024730440220255753c55d6635baac044981157af12aecf40e3475eb5db3502b7b432c354f1d02207088e35e8f3f79eaada1d9c68918b09775586ab521de1da322178a880045a0cd0121035ed9d82000930a7a469bbaf2f64ef6e91de228f5bd97bf7bcf2f90959114fcb101408194703a2b05f00306da1f17507f45548a14512f90013a9619d6e3ff754dcca29017970dcfc2de6c69d409330b7b267a7e5c23de04831e89468afb0a6faf20a6014028a8665c4f0631a31a70427e7585a15356fcfbe25e89314327e4cadfabb0f5fe4fd377b6e5a28edf51580c2ef1fa5d7e4f4ee5d0d1b54a6f125006bb08fc624900000000'
+  txid='2f9a3efb666ac91cc9b9cdbacfe520d6e53bd7740f68a170454f0a830dba81d0'
+/>
+
+隔离见证交易的 `ScriptSig` 为空, 但仍保留 `ScriptSigSize` 字段, 值为 `0x00`。
+
+## 交易输入字段详解
+
+### TXID
+
+交易ID, 是一笔交易的唯一标识, 大小为 32 字节, 以小端序显示。 通过对交易数据进行 `HASH256` 运算得到。
+
+- 隔离见证前的交易, 对全部原始交易数据进行 `HASH256` 运算。
+- 隔离见证交易, 对除 `Marker`、`Flag` 和 `Witness` 字段之外的所有原始交易数据进行 `HASH256` 运算。
+
+<TransactionTxidCalculator />
+
+交易输入中的 `TXID` 表示要花费的 `UTXO` 来自于哪笔交易输出。
+
+:::warning
+
+在原始交易数据中的交易ID, 以大端序显示。但在区块浏览器中显示的交易ID, 则以小端序显示。
+
+:::
+
+:::note wTXID
+
+`wTXID` 是所有交易数据进行 `HASH256` 运算得到的结果, 包括 `Marker`、`Flag` 和 `Witness` 字段。
+
+- `Witness Root Hash` - 将区块内所有交易的 `wTXID` 构造成默克尔树, 得到默克尔根。
+- `Witness Reserved Value` - `Coinbase` 交易输入中 `Witness` 字段值, 是矿工设置的保留值。用于在必要时可以向区块中添加额外的信息，而不需要重新构建整个区块。
+
+将 `Witness Root Hash` 与 `Witness Reserved Value` 组合进行 `HASH256` 运算, 得到 `wTXID` 承诺。`wTXID` 承诺会被放在 `Coinbase` 交易输出的 `OP_RETURN` 中。
+
+例如区块 [862971](https://mempool.space/tx/45a8439fbbb905e14a5e86af1acba851be1af2e877268f80cade6e100d1baaef) 中 `Coinbase` 交易的包含 `wTXID` 承诺的输出:
+
+<ScriptAsmTab hex='6a24aa21a9ed94d86d79ebe355a9fc0bcca8bff377959ada3725cd289c92f6236b51a97cd6da' />
+
+前 4 个字节 `aa21a9ed` 用于标识此输出包含 `wTXID` 承诺, 后 32 个字节为 `wTXID` 承诺。
+
+:::
+
+### VOUT
+
+`VOUT` 表示花费的 `UTXO` 来自于交易的第几个输出。
+
+<TransactionSplitTab
+  hex='0200000000010169ce4496d3d90f685a246ec270cfc975b782443feea1f22d1a6fb5186f9321098c01000000fdffffff0126010000000000001600140598de473db92508466ad422e0bf50d005b5784203408efaf1139678dff03b28d2ee2527be9a0d57f389d4471c6569757596365acce336fd6195ac6953652c26dd191773ec1edb9aad15d721b25267aa1fbaf3a3bda54420afd36e561af10735e88f95d9655e5b3f7bc79de0a4781ef99d1e030c0c567422ac0063036f7264510a746578742f706c61696e000d3836323930322e6269746d61706821c0afd36e561af10735e88f95d9655e5b3f7bc79de0a4781ef99d1e030c0c56742200000000'
+  txid='612b9ac6e7f9c3655d293b7fbfc47b632f27037eae9f56a0b077f92beafdb76f'
+/>
+
+示例中交易输入只有一个, 其 `VOUT` 为 `0x8c010000`, 由于原始交易数据的 `VOUT` 是小端序, 转换为大端序为 `0x0000018c`, 即 10进制的 396。表示该交易花费的 `UTXO` 来自于交易 `69ce...2109` 的第 396 个输出。
+
+### ScriptSig Size
+
+`ScriptSig Size` 表示解锁脚本 `ScriptSig` 的大小, 以字节为单位。
+
+### ScriptSig
+
+`ScriptSig` 表示对应交易输入的解锁脚本。
+
+由于每个交易输出中有一个锁定脚本 `ScriptPubKey`, 当将其作为交易输入时, 需要提供对应的解锁脚本 `ScriptSig`。在非隔离见证交易中, 解锁脚本位于交易输入的 `ScriptSig` 字段中。
+
+标准非隔离见证锁定脚本都有各自对应的固定格式 `ScriptSig`:
+
+- [P2PK](/technical/script/p2pk)
+- [P2PKH](/technical/script/p2pkh)
+- [P2MS](/technical/script/p2ms)
+- [P2SH](/technical/script/p2sh)
+
+在隔离见证交易中该字段为空。
+
+### Sequence
+
+每个交易输入内 `Sequence` 字段控制其最终确认时间。有以下取值
+
+- `0xFFFFFFFF` - 表示输入是最终的, 不能被替换。当所有交易输入都设置为这个值时, 将禁用交易的 `Locktime` 字段。
+- `0xFFFFFFFE` - 启用交易的 `Locktime` 字段。
+- `0xFFFFFFFD` - 启用 `RBF`(Replace-By-Fee), 整个交易可以被更高手续费的交易替换。只要有一个交易输入的 `Sequence` 小于 `0xFFFFFFFE` 即可。通常情况下设置为 `0xFFFFFFFD`来启用 `RBF`。
+- 相对锁定时间, [BIP68](https://github.com/bitcoin/bips/blob/master/bip-0068.mediawiki) 规定 `Sequence` 字段低16位的用法, 用于实现相对于交易被打包进区块的时间经过多久后被该输入真正被花费。
+  - 比特位 22 为 1, 则表示基于时间的锁定, 以 512 秒为单位, 0-15 比特位为表示的锁定时间为 $bit_{0-15} \times 512秒$。
+  - 比特位 22 为 0, 则表示区块的锁定, 0-15 比特位为区块数。
+
+交易已经被打包进区块, 并不等于交易输入的 `UTXO` 真正被花费了, 何时被花费取决于交易输入的 `Sequence` 字段。
+
+:::note 相对时间锁定
+
+启用基于时间锁定, 且锁定时间为 0 时
+
+```ts
+00000000 01000000 00000000 00000000 // 0x00400000
+```
+
+启用基于时间锁定, 且锁定时间为512秒
+
+```ts
+00000000 01000000 00000000 00000001 // 0x00400001
+```
+
+启用区块锁定, 且锁定区块数为1时
+
+```ts
+00000000 00000000 00000000 00000001 // 0x00000001
+```
+
+启用区块锁定, 且锁定区块数为6时
+
+```ts
+00000000 00000000 00000000 00000110 // 0x00000006
+```
+
+注: 以上是大端序展示的比特位, 转换成 `Sequence` 字段时, 需要转换为小端序。
+
+:::
+
+:::warning
+
+要启用相对时间锁定,交易版本号须大于等于2。
+
+:::

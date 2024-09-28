@@ -4,6 +4,7 @@ import { siteConfig } from '@/config/site'
 import { cn } from '@/lib/utils'
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
+import ConnectButton from './connect-button'
 import { Icons } from './icons'
 import { MainNav } from './main-nav'
 import { MobileNav } from './mobile-nav'
@@ -35,6 +36,8 @@ export default function AppHeader() {
           </Link>
 
           <ModeToggle />
+
+          <ConnectButton />
         </div>
       </div>
     </header>

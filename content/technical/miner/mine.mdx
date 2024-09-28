@@ -1,0 +1,324 @@
+---
+title: 挖矿
+---
+
+比特币挖矿是指在区块链上添加新区块并获得区块奖励的过程。
+
+任何人都可以尝试进行挖矿, 只要有足够的算力计算出一个低于目标值的哈希值就可以拥有交易的打包权。当新区块产生时, 会被广播到每个运行比特币的网络节点, 每个节点获取到新区块的数据后, 会进行客户端验证, 确认有效后, 将新区块添加到自己的本地区块数据的副本中。
+
+## 挖矿流程
+
+挖矿遵循以下流程:
+
+- **构建候选区块**
+
+  1. 从内存池中选择交易
+  2. 添加一个 `coinbase` 交易到交易列表的头部
+  3. 构建区块头
+
+- **挖矿**: 不断改变区块头相关数据并使用 `HASH256` 算法进行哈希计算, 直到哈希结果小于当前**目标值**。
+
+:::tip HASH256 算法
+
+对数据进行两次 `SHA256` 哈希计算, 也叫 `HASH256`
+
+假设区块头数据是 `x`, 区块头的 `HASH256(x)` 就等于 `SHA256(SHA256(x))`
+
+挖矿就是对 `HASH256(x)` 的不断尝试, 通过调整区块头的相关数据字段的值, 使得区块头的哈希值小于目标值。
+
+:::
+
+当矿工成功计算出一个哈希值小于目标值的区块头时, 会将这个区块广播到网络中。
+
+其他正在挖矿的矿工接收到新区块后会停止当前的工作, 会将新区块加入到本地的区块链上, 同时会移除内存池中冲突的交易。之后开始重新构建一个新的候选区块, 并尝试在新区块上的基础上进行挖矿。
+
+## 实践
+
+假设你现在是挖出区块 [859386](https://mempool.space/block/000000000000000000002ff5d2e0167087a1c5178e375787d6549623e8babb9e) 的矿工。
+
+你现在要开始进行挖矿, 首先你需要构建候选区块。
+
+你从内存池中选择了一些手续费高的交易, 并添加了一笔 `coinbase` 交易到交易列表的头部
+
+<BlockTransaction height={859386} />
+
+接着开始构建区块头数据:
+
+<BlockHeaderHex
+  version='0040182c'
+  previousBlockHash='c3c90d900bab2e19823722955933fe96826cbe0617fa00000000000000000000'
+  merkleRoot='9c852a8efb4d7d0fbb63dd2fd3a21777a927ee90fd40df8fcfbfdf33245dd434'
+  time='ed75d466'
+  bits='5b250317'
+  nonce='00000000'
+/>
+
+上面的 `Nonce` 字段是区块头中的随机数字段, 占用 4 个字节, 一开始设置为 0。
+
+然后你开始尝试挖矿。对区块头数据不断进行 `HASH256` 运算, 每次将 `Nonce` 字段的值加 1, 试图找到一个哈希值小于目标值的随机数。
+
+<Hash256Calculator
+  minLength={160}
+  defaultValue='0040182cc3c90d900bab2e19823722955933fe96826cbe0617fa000000000000000000009c852a8efb4d7d0fbb63dd2fd3a21777a927ee90fd40df8fcfbfdf33245dd434ed75d4665b25031773a49bb0'
+/>
+
+直到 `Nonce` 值为 `b09ba473` 时, 你找到了一个哈希值小于目标值的随机数。转换为小端序为 `73a49bb0`, 此时的区块头数据是:
+
+<BlockHeaderHex
+  version='0040182c'
+  previousBlockHash='c3c90d900bab2e19823722955933fe96826cbe0617fa00000000000000000000'
+  merkleRoot='9c852a8efb4d7d0fbb63dd2fd3a21777a927ee90fd40df8fcfbfdf33245dd434'
+  time='ed75d466'
+  bits='5b250317'
+  nonce='73a49bb0'
+/>
+
+对区块头数据进行 `HASH256` 运算结果为
+
+```text
+9ebbbae8239654d68757378e17c5a1877016e0d2f52f00000000000000000000
+```
+
+转换为小端序后得到最终的区块哈希值
+
+```text
+000000000000000000002ff5d2e0167087a1c5178e375787d6549623e8babb9e
+```
+
+:::danger
+
+上面的示例只模拟了 `nonce` 的变化, 实际挖矿过程中, 会不断调整区块头的相关字段, 比如时间戳、交易列表等, 以增加哈希值的随机性。
+
+:::
+
+:::warning 空块
+
+在区块浏览器有时会看到空块(只有一笔 `Coinbase` 交易), 如 [860932](https://mempool.space/block/0000000000000000000021cbca8d7e3c778648070da31e394929ba0fc65c001c)
+
+这是因为构建候选区块是一个耗时的操作, 比如从内存池选择交易, 构建交易的默克尔根等。为了更快的开始挖矿, 矿工会从先尝试一个空块, 运气好的时候, 会直接出块。
+
+:::
+
+## 相关RPC
+
+<RpcMethodTable
+  method='getblocktemplate'
+  description='获取区块模板'
+  args={[
+    {
+      name: 'template_request',
+      type: 'json',
+      optional: true,
+      default: '{}',
+      description: `控制区块模板返回的内容`
+    }
+  ]}
+  customReturnsTitle='相关返回值'
+  returns={[
+    {
+      name: 'version',
+      type: 'string',
+      description: '区块版本号'
+    },
+    {
+      name: 'previousblockhash',
+      type: 'string',
+      description: '前一个区块的哈希'
+    },
+    {
+      name: 'curtime',
+      type: 'number',
+      description: '当前时间戳'
+    },
+    {
+      name: 'target',
+      type: 'string',
+      description: '目标值'
+    },
+    {
+      name: 'bits',
+      type: 'string',
+      description: '目标值的压缩格式'
+    },
+    {
+      name: 'height',
+      type: 'number',
+      description: '区块高度'
+    },
+    {
+      name: 'transactions',
+      type: 'array',
+      description: '建议包含的交易列表'
+    }
+  ]}
+/>
+
+<RpcMethodTable
+  method='submitblock'
+  description='矿工提交新挖出的完整区块数据'
+  args={[
+    {
+      name: 'hexdata',
+      type: 'string',
+      optional: false,
+      description: '16进制编码的区块数据'
+    }
+  ]}
+  returns={[
+    {
+      name: 'result',
+      type: 'string',
+      description: '成功返回 "null"，否则返回错误信息'
+    }
+  ]}
+/>
+
+<RpcMethodTable
+  method='getmininginfo'
+  description='获取挖矿信息'
+  args={[]}
+  returns={[
+    {
+      name: 'blocks',
+      type: 'number',
+      description: '当前区块高度'
+    },
+    {
+      name: 'currentblockweight',
+      type: 'number',
+      description: '当前区块的权重'
+    },
+    {
+      name: 'currentblocktx',
+      type: 'number',
+      description: '当前区块的交易数量'
+    },
+    {
+      name: 'difficulty',
+      type: 'number',
+      description: '当前挖矿难度'
+    },
+    {
+      name: 'networkhashps',
+      type: 'number',
+      description: '当前网络的哈希率'
+    },
+    {
+      name: 'pooledtx',
+      type: 'number',
+      description: '内存池中的交易数量'
+    },
+    {
+      name: 'chain',
+      type: 'string',
+      description: '当前区块链名称(main/test/regtest)'
+    },
+    {
+      name: 'warnings',
+      type: 'string',
+      description: '警告信息'
+    }
+  ]}
+  demoLog='{
+      "blocks": 858331,
+      "currentblockweight": 3995798,
+      "currentblocktx": 7353,
+      "difficulty": 86871474313761.95,
+      "networkhashps": 6.231666429796796e+20,
+      "pooledtx": 118317,
+      "chain": "main",
+      "warnings": ""
+  }'
+/>
+
+<RpcMethodTable
+  method='prioritisetransaction'
+  description='调整内存池交易的优先级'
+  args={[
+    {
+      name: 'txid',
+      type: 'string',
+      optional: false,
+      description: '交易 ID'
+    },
+    {
+      name: 'fee_delta',
+      type: 'number',
+      optional: false,
+      description: '虚拟的要增加的交易费用以获得内存池更靠前的排名, 单位是聪'
+    }
+  ]}
+  returns={[
+    {
+      name: 'result',
+      type: 'boolean',
+      description: '是否成功'
+    }
+  ]}
+/>
+
+<RpcMethodTable
+  method='gettxoutsetinfo'
+  description='获取 UTXO 集合统计信息'
+  args={[
+    {
+      name: 'hash_type',
+      type: 'string',
+      optional: true,
+      default: 'hash_serialized_3',
+      description: 'UTXO集合的哈希类型'
+    }
+  ]}
+  returns={[
+    {
+      name: 'height',
+      type: 'number',
+      description: '当前区块高度'
+    },
+    {
+      name: 'bestblock',
+      type: 'string',
+      description: '最新的区块哈希'
+    },
+    {
+      name: 'transactions',
+      type: 'number',
+      description: 'UTXO 集合中的交易数量'
+    },
+    {
+      name: 'txouts',
+      type: 'number',
+      description: 'UTXO 数量'
+    },
+    {
+      name: 'bogosize',
+      type: 'number',
+      description: 'UTXO 集合的大小, 单位是字节'
+    },
+    {
+      name: 'hash_serialized_3',
+      type: 'string',
+      description: 'UTXO 集合的哈希值'
+    },
+    {
+      name: 'disk_size',
+      type: 'number',
+      description: 'UTXO 集合的磁盘大小, 单位是字节'
+    },
+    {
+      name: 'total_amount',
+      type: 'number',
+      description: 'UTXO 集合的总金额, 单位是 BTC'
+    }
+  ]}
+  demoLog='{
+  "height": 861098,
+  "bestblock": "00000000000000000002895e8b890f316fee10df337d8f52d54bc276f2be6d18",
+  "txouts": 186223213,
+  "bogosize": 14394725347,
+  "hash_serialized_3": "68ade7d725e132a5e5c9ca0ce5473612fa40871381e3391398af33485030690d",
+  "total_amount": 19753214.86602987,
+  "transactions": 128887893,
+  "disk_size": 12546710839,
+}'
+/>
