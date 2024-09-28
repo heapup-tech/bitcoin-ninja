@@ -86,6 +86,9 @@ const config = {
         'accordion-up': 'accordion-up 0.2s ease-out',
         'code-block-hide': 'code-block-hide 1.25s forwards',
         'code-block-show': 'code-block-show 1.25s .15s forwards'
+      },
+      gridTemplateColumns: {
+        'auto-fill-40': 'repeat(auto-fill, 40px)'
       }
     }
   },

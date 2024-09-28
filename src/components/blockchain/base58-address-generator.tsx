@@ -150,7 +150,7 @@ export default function Base58AddressGenerator() {
         </div>
       </RadioGroup>
 
-      {/* <RadioGroup
+      <RadioGroup
         className='flex mt-4'
         value={addressType}
         onValueChange={(v: keyof (typeof ADDRESS_BASE58_PREFIX)['mainnet']) =>
@@ -172,7 +172,7 @@ export default function Base58AddressGenerator() {
           />
           <Label htmlFor='base58_p2sh'>P2SH</Label>
         </div>
-      </RadioGroup> */}
+      </RadioGroup>
 
       <div className='text-sm font-medium mt-4 mb-0.5 flex items-center gap-x-2'>
         Step 2: 添加版本前缀
@@ -185,7 +185,9 @@ export default function Base58AddressGenerator() {
               版本前缀:
               <ul>
                 <li>主网 P2PKH: 0x00</li>
+                <li>主网 P2SH: 0x05</li>
                 <li>测试网 P2PKH: 0x6f</li>
+                <li>测试网 P2SH: 0xc4</li>
               </ul>
             </div>
           </TooltipContent>
