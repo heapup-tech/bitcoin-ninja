@@ -1,6 +1,6 @@
 import { NavItem, NavItemWithChildren, SidebarNavItem } from '@/types/nav'
 import { ChevronLeftIcon, ChevronRightIcon } from '@radix-ui/react-icons'
-import { TechnicalDoc } from 'contentlayer/generated'
+import { TechnicalDoc } from 'content-collections'
 import Link from 'next/link'
 
 import { buttonVariants } from '@/components/ui/button'

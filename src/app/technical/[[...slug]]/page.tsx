@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils'
 import '@/styles/mdx.css'
 import { ChevronRightIcon } from '@radix-ui/react-icons'
 import { ScrollArea } from '@radix-ui/react-scroll-area'
-import { allTechnicalDocs } from 'contentlayer/generated'
+import { allTechnicalDocs } from 'content-collections'
 import { notFound } from 'next/navigation'
 import Balancer from 'react-wrap-balancer'
 

@@ -1,6 +1,6 @@
 ## Docunicorn
 
-Docunicorn is a docs template powered by [Contentlayer](https://contentlayer.dev) and [Next.js](https://nextjs.org/)
+Docunicorn is a docs template powered by [Content Collections](https://www.content-collections.dev/) and [Next.js](https://nextjs.org/)
 
 ## Config Theme
 
