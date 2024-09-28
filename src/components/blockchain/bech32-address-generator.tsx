@@ -11,7 +11,11 @@ import {
   calculatePublicKeyPoint,
   generatePrivateKey
 } from '@/lib/blockchain/keys'
-import { ADDRESS_BECH32_PREFIX, COLORS } from '@/lib/constants'
+import {
+  ADDRESS_BECH32_PREFIX,
+  GETCOLORS,
+  GETHOVERBGCOLORS
+} from '@/lib/constants'
 import { cn } from '@/lib/utils'
 import { bech32 } from 'bech32'
 import { ripemd160, sha256 } from 'bitcoinjs-lib/src/crypto'
@@ -123,7 +127,7 @@ export default function Bech32AddressGenerator() {
         </Tooltip>
       </div>
       <div className='bg-background text-base break-all border rounded-md shadow-sm px-3 py-1.5'>
-        <span className={`${COLORS[1]}`}>{hash160PublicKey}</span>
+        <span className={cn(GETCOLORS(0))}>{hash160PublicKey}</span>
       </div>
 
       <div className='text-sm font-medium mt-4 mb-0.5 flex items-center gap-x-2'>
@@ -151,7 +155,7 @@ export default function Bech32AddressGenerator() {
         </Tooltip>
       </div>
       <div className='bg-background text-base break-all border rounded-md shadow-sm px-3 py-1.5'>
-        <span className={`${COLORS[2]}`}>{bech32Words}</span>
+        <span className={cn(GETCOLORS(1))}>{bech32Words}</span>
       </div>
 
       <div className='text-sm font-medium mt-4 mb-0.5 flex items-center gap-x-2'>
@@ -168,7 +172,9 @@ export default function Bech32AddressGenerator() {
       <div className='bg-background text-base break-all border rounded-md shadow-sm px-3 py-1.5'>
         <Tooltip>
           <TooltipTrigger asChild>
-            <span className={`${COLORS[3]}`}>{versionedWords.slice(0, 2)}</span>
+            <span className={cn(GETCOLORS(2), GETHOVERBGCOLORS(2))}>
+              {versionedWords.slice(0, 2)}
+            </span>
           </TooltipTrigger>
           <TooltipContent>
             <span>版本前缀</span>
@@ -177,7 +183,9 @@ export default function Bech32AddressGenerator() {
 
         <Tooltip>
           <TooltipTrigger asChild>
-            <span className={`${COLORS[2]}`}>{versionedWords.slice(2)}</span>
+            <span className={cn(GETCOLORS(1), GETHOVERBGCOLORS(1))}>
+              {versionedWords.slice(2)}
+            </span>
           </TooltipTrigger>
           <TooltipContent>
             <span>字节分组</span>
@@ -232,7 +240,7 @@ export default function Bech32AddressGenerator() {
         </Tooltip>
       </div>
       <div className='bg-background text-base break-all border rounded-md shadow-sm px-3 py-1.5'>
-        <span className={`${COLORS[3]}`}>{address}</span>
+        <span className={cn(GETCOLORS(2))}>{address}</span>
       </div>
     </InteractionCard>
   )

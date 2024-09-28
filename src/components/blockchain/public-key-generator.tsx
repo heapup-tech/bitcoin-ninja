@@ -9,7 +9,7 @@ import {
   calculatePublicKeyPoint,
   generatePrivateKey
 } from '@/lib/blockchain/keys'
-import { COLORS, HOVERBGCOLORS } from '@/lib/constants'
+import { GETCOLORS, GETHOVERBGCOLORS } from '@/lib/constants'
 import { cn } from '@/lib/utils'
 import { useEffect, useState } from 'react'
 import RadixViewer from '../radix-viewer'
@@ -134,7 +134,7 @@ export default function PublicKeyGenerator() {
           <span>
             <Tooltip>
               <TooltipTrigger asChild>
-                <span className={cn(COLORS[0], HOVERBGCOLORS[0])}>
+                <span className={cn(GETCOLORS(0), GETHOVERBGCOLORS(0))}>
                   {publicKeyPoint.compressedPublicKey.slice(0, 2)}
                 </span>
               </TooltipTrigger>
@@ -145,7 +145,7 @@ export default function PublicKeyGenerator() {
 
             <Tooltip>
               <TooltipTrigger asChild>
-                <span className={cn(COLORS[1], HOVERBGCOLORS[1])}>
+                <span className={cn(GETCOLORS(1), GETHOVERBGCOLORS(1))}>
                   {publicKeyPoint.compressedPublicKey.slice(2)}
                 </span>
               </TooltipTrigger>
@@ -158,7 +158,7 @@ export default function PublicKeyGenerator() {
           <span>
             <Tooltip>
               <TooltipTrigger asChild>
-                <span className={cn(COLORS[0], HOVERBGCOLORS[0])}>
+                <span className={cn(GETCOLORS(0), GETHOVERBGCOLORS(0))}>
                   {publicKeyPoint.uncompressedPublicKey.slice(0, 2)}
                 </span>
               </TooltipTrigger>
@@ -169,7 +169,7 @@ export default function PublicKeyGenerator() {
 
             <Tooltip>
               <TooltipTrigger asChild>
-                <span className={cn(COLORS[1], HOVERBGCOLORS[1])}>
+                <span className={cn(GETCOLORS(1), GETHOVERBGCOLORS(1))}>
                   {publicKeyPoint.uncompressedPublicKey.slice(2, 66)}
                 </span>
               </TooltipTrigger>
@@ -180,7 +180,9 @@ export default function PublicKeyGenerator() {
 
             <Tooltip>
               <TooltipTrigger asChild>
-                <span className={cn(COLORS[2], HOVERBGCOLORS[2], 'break-all')}>
+                <span
+                  className={cn(GETCOLORS(2), GETHOVERBGCOLORS(2), 'break-all')}
+                >
                   {publicKeyPoint.uncompressedPublicKey.slice(66)}
                 </span>
               </TooltipTrigger>

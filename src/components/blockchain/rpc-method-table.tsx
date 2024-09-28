@@ -6,7 +6,7 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table'
-import { BGCOLORS } from '@/lib/constants'
+import { GETBGCOLORS } from '@/lib/constants'
 import { cn } from '@/lib/utils'
 import { Check, X } from 'lucide-react'
 import Link from 'next/link'
@@ -55,7 +55,7 @@ export default function RpcMethodTable({
 
       {args && args.length > 0 && (
         <div className={cn(returns && returns.length > 0 && 'border-b')}>
-          <div className={cn('border-b p-2 font-medium', BGCOLORS[0])}>
+          <div className={cn('border-b p-2 font-medium', GETBGCOLORS(0))}>
             参数列表
           </div>
           <Table>
@@ -100,7 +100,7 @@ export default function RpcMethodTable({
 
       {returns && returns.length > 0 && (
         <div>
-          <div className={cn('border-b p-2 font-medium', BGCOLORS[1])}>
+          <div className={cn('border-b p-2 font-medium', GETBGCOLORS(1))}>
             {customReturnsTitle}
           </div>
           <Table>
@@ -133,7 +133,7 @@ export default function RpcMethodTable({
 
       {demoLog && (
         <div>
-          <div className={cn('border-b p-2 font-medium', BGCOLORS[2])}>
+          <div className={cn('border-b p-2 font-medium', GETBGCOLORS(2))}>
             示例输出
           </div>
           <CodeBlock

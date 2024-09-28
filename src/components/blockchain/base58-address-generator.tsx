@@ -6,7 +6,11 @@ import {
   calculatePublicKeyPoint,
   generatePrivateKey
 } from '@/lib/blockchain/keys'
-import { ADDRESS_BASE58_PREFIX, COLORS } from '@/lib/constants'
+import {
+  ADDRESS_BASE58_PREFIX,
+  GETCOLORS,
+  GETHOVERBGCOLORS
+} from '@/lib/constants'
 import { cn } from '@/lib/utils'
 import { ripemd160, sha256 } from 'bitcoinjs-lib/src/crypto'
 import base58 from 'bs58'
@@ -124,8 +128,8 @@ export default function Base58AddressGenerator() {
           </TooltipContent>
         </Tooltip>
       </div>
-      <div className='bg-background text-base break-all border rounded-md shadow-sm px-3 py-1.5'>
-        <span className={`${COLORS[1]}`}>{hash160PublicKey}</span>
+      <div className='bg-background text-base break-all border rounded-md shadow-sm px-3 py-1.5 min-h-9'>
+        <span className={cn(GETCOLORS(0))}>{hash160PublicKey}</span>
       </div>
 
       <RadioGroup
@@ -174,7 +178,7 @@ export default function Base58AddressGenerator() {
         </div>
       </RadioGroup>
 
-      <div className='text-sm font-medium mt-4 mb-0.5 flex items-center gap-x-2'>
+      <div className='text-sm font-medium mt-4 mb-0.5 flex items-center gap-x-2 '>
         Step 2: 添加版本前缀
         <Tooltip>
           <TooltipTrigger asChild>
@@ -193,10 +197,10 @@ export default function Base58AddressGenerator() {
           </TooltipContent>
         </Tooltip>
       </div>
-      <div className='bg-background text-base break-all border rounded-md shadow-sm px-3 py-1.5'>
+      <div className='bg-background text-base break-all border rounded-md shadow-sm px-3 py-1.5 min-h-9'>
         <Tooltip>
           <TooltipTrigger asChild>
-            <span className={`${COLORS[0]}`}>
+            <span className={cn(GETCOLORS(1), GETHOVERBGCOLORS(1))}>
               {versionedHash160.slice(0, 2)}
             </span>
           </TooltipTrigger>
@@ -207,7 +211,9 @@ export default function Base58AddressGenerator() {
 
         <Tooltip>
           <TooltipTrigger asChild>
-            <span className={`${COLORS[1]}`}>{versionedHash160.slice(2)}</span>
+            <span className={cn(GETCOLORS(0), GETHOVERBGCOLORS(0))}>
+              {versionedHash160.slice(2)}
+            </span>
           </TooltipTrigger>
           <TooltipContent>
             <span>公钥哈希</span>
@@ -232,10 +238,10 @@ export default function Base58AddressGenerator() {
           </TooltipContent>
         </Tooltip>
       </div>
-      <div className='bg-background text-base break-all border rounded-md shadow-sm px-3 py-1.5'>
+      <div className='bg-background text-base break-all border rounded-md shadow-sm px-3 py-1.5 min-h-9'>
         <Tooltip>
           <TooltipTrigger asChild>
-            <span className={`${COLORS[0]}`}>
+            <span className={cn(GETCOLORS(1), GETHOVERBGCOLORS(1))}>
               {versionedHash160.slice(0, 2)}
             </span>
           </TooltipTrigger>
@@ -246,7 +252,9 @@ export default function Base58AddressGenerator() {
 
         <Tooltip>
           <TooltipTrigger asChild>
-            <span className={`${COLORS[1]}`}>{versionedHash160.slice(2)}</span>
+            <span className={cn(GETCOLORS(0), GETHOVERBGCOLORS(0))}>
+              {versionedHash160.slice(2)}
+            </span>
           </TooltipTrigger>
           <TooltipContent>
             <span>公钥哈希</span>
@@ -255,7 +263,9 @@ export default function Base58AddressGenerator() {
 
         <Tooltip>
           <TooltipTrigger asChild>
-            <span className={`${COLORS[2]}`}>{checksum}</span>
+            <span className={cn(GETCOLORS(2), GETHOVERBGCOLORS(2))}>
+              {checksum}
+            </span>
           </TooltipTrigger>
           <TooltipContent>
             <span>校验和</span>
@@ -274,8 +284,8 @@ export default function Base58AddressGenerator() {
           </TooltipContent>
         </Tooltip>
       </div>
-      <div className='bg-background text-base break-all border rounded-md shadow-sm px-3 py-1.5'>
-        <span className={`${COLORS[3]}`}>{address}</span>
+      <div className='bg-background text-base break-all border rounded-md shadow-sm px-3 py-1.5 min-h-9'>
+        <span className={cn(GETCOLORS(3))}>{address}</span>
       </div>
     </InteractionCard>
   )

@@ -12,7 +12,11 @@ import {
   generatePrivateKey
 } from '@/lib/blockchain/keys'
 import { tweakKey } from '@/lib/blockchain/taproot'
-import { ADDRESS_BECH32_PREFIX, COLORS, HOVERBGCOLORS } from '@/lib/constants'
+import {
+  ADDRESS_BECH32_PREFIX,
+  GETCOLORS,
+  GETHOVERBGCOLORS
+} from '@/lib/constants'
 import { cn } from '@/lib/utils'
 import { isCompressedPublicKey, isValidPrivateKey } from '@/lib/validator'
 import { bech32m } from 'bech32'
@@ -154,7 +158,7 @@ export default function TaprootAddressGenerator() {
         </Tooltip>
       </div>
       <div className='bg-background text-base break-all border rounded-md shadow-sm px-3 py-1.5 min-h-10'>
-        <span className={`${COLORS[0]}`}>{publicKeyX}</span>
+        <span className={cn(GETCOLORS(0))}>{publicKeyX}</span>
       </div>
 
       <div className='text-sm font-medium mt-4 mb-0.5 flex items-center gap-x-2'>
@@ -175,14 +179,14 @@ export default function TaprootAddressGenerator() {
         </Tooltip>
       </div>
       <div className='bg-background text-base break-all border rounded-md shadow-sm px-3 py-1.5 min-h-10'>
-        <span className={`${COLORS[1]}`}>{tPubKey}</span>
+        <span className={cn(GETCOLORS(1))}>{tPubKey}</span>
       </div>
 
       <div className='text-sm font-medium mt-4 mb-0.5 flex items-center gap-x-2'>
         Step 3: 字节分组
       </div>
       <div className='bg-background text-base break-all border rounded-md shadow-sm px-3 py-1.5 min-h-10'>
-        <span className={`${COLORS[2]}`}>{bech32Words}</span>
+        <span className={cn(GETCOLORS(2))}>{bech32Words}</span>
       </div>
 
       <div className='text-sm font-medium mt-4 mb-0.5 flex items-center gap-x-2'>
@@ -199,7 +203,7 @@ export default function TaprootAddressGenerator() {
       <div className='bg-background text-base break-all border rounded-md shadow-sm px-3 py-1.5 min-h-10'>
         <Tooltip>
           <TooltipTrigger asChild>
-            <span className={cn(COLORS[3], HOVERBGCOLORS[3])}>
+            <span className={cn(GETCOLORS(3), GETHOVERBGCOLORS(3))}>
               {versionedWords.slice(0, 2)}
             </span>
           </TooltipTrigger>
@@ -210,7 +214,7 @@ export default function TaprootAddressGenerator() {
 
         <Tooltip>
           <TooltipTrigger asChild>
-            <span className={cn(COLORS[2], HOVERBGCOLORS[2])}>
+            <span className={cn(GETCOLORS(2), GETHOVERBGCOLORS(2))}>
               {versionedWords.slice(2)}
             </span>
           </TooltipTrigger>
@@ -267,7 +271,7 @@ export default function TaprootAddressGenerator() {
         </Tooltip>
       </div>
       <div className='bg-background text-base break-all border rounded-md shadow-sm px-3 py-1.5 min-h-10'>
-        <span className={`${COLORS[3]}`}>{address}</span>
+        <span className={cn(GETCOLORS(3))}>{address}</span>
       </div>
     </InteractionCard>
   )

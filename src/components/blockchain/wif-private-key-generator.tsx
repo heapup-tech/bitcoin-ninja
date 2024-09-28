@@ -3,7 +3,12 @@
 import InteractionCard from '@/components/interaction-card'
 import { Button } from '@/components/ui/button'
 import { generatePrivateKey } from '@/lib/blockchain/keys'
-import { ADDRESS_BASE58_PREFIX, COLORS, WIF_PREFIX } from '@/lib/constants'
+import {
+  ADDRESS_BASE58_PREFIX,
+  GETCOLORS,
+  GETHOVERBGCOLORS,
+  WIF_PREFIX
+} from '@/lib/constants'
 import { cn } from '@/lib/utils'
 import { sha256 } from 'bitcoinjs-lib/src/crypto'
 import base58 from 'bs58'
@@ -154,7 +159,7 @@ export default function WIFPrivateKeyGenerator() {
       <div className='bg-background text-base break-all border rounded-md shadow-sm px-3 py-1.5'>
         <Tooltip>
           <TooltipTrigger asChild>
-            <span className={`${COLORS[0]}`}>
+            <span className={cn(GETCOLORS(0), GETHOVERBGCOLORS(0))}>
               {versionedPrivateKey.slice(0, 2)}
             </span>
           </TooltipTrigger>
@@ -165,7 +170,7 @@ export default function WIFPrivateKeyGenerator() {
 
         <Tooltip>
           <TooltipTrigger asChild>
-            <span className={`${COLORS[1]}`}>
+            <span className={cn(GETCOLORS(1), GETHOVERBGCOLORS(1))}>
               {versionedPrivateKey.slice(2)}
             </span>
           </TooltipTrigger>
@@ -212,7 +217,7 @@ export default function WIFPrivateKeyGenerator() {
       <div className='bg-background text-base break-all border rounded-md shadow-sm px-3 py-1.5'>
         <Tooltip>
           <TooltipTrigger asChild>
-            <span className={`${COLORS[0]}`}>
+            <span className={cn(GETCOLORS(0), GETHOVERBGCOLORS(0))}>
               {versionedCompressedPrivateKey.slice(0, 2)}
             </span>
           </TooltipTrigger>
@@ -223,7 +228,7 @@ export default function WIFPrivateKeyGenerator() {
 
         <Tooltip>
           <TooltipTrigger asChild>
-            <span className={`${COLORS[1]}`}>
+            <span className={cn(GETCOLORS(1), GETHOVERBGCOLORS(1))}>
               {versionedCompressedPrivateKey.slice(2, 66)}
             </span>
           </TooltipTrigger>
@@ -234,7 +239,7 @@ export default function WIFPrivateKeyGenerator() {
 
         <Tooltip>
           <TooltipTrigger asChild>
-            <span className={`${COLORS[2]}`}>
+            <span className={cn(GETCOLORS(2), GETHOVERBGCOLORS(2))}>
               {versionedCompressedPrivateKey.slice(66)}
             </span>
           </TooltipTrigger>
@@ -261,7 +266,7 @@ export default function WIFPrivateKeyGenerator() {
       <div className='bg-background text-base break-all border rounded-md shadow-sm px-3 py-1.5'>
         <Tooltip>
           <TooltipTrigger asChild>
-            <span className={`${COLORS[0]}`}>
+            <span className={cn(GETCOLORS(0), GETHOVERBGCOLORS(0))}>
               {checksumPrivateKey.slice(0, 2)}
             </span>
           </TooltipTrigger>
@@ -272,7 +277,7 @@ export default function WIFPrivateKeyGenerator() {
 
         <Tooltip>
           <TooltipTrigger asChild>
-            <span className={`${COLORS[1]}`}>
+            <span className={cn(GETCOLORS(1), GETHOVERBGCOLORS(1))}>
               {checksumPrivateKey.slice(2, 66)}
             </span>
           </TooltipTrigger>
@@ -284,7 +289,7 @@ export default function WIFPrivateKeyGenerator() {
         {isCompressed && (
           <Tooltip>
             <TooltipTrigger asChild>
-              <span className={`${COLORS[2]}`}>
+              <span className={cn(GETCOLORS(2), GETHOVERBGCOLORS(2))}>
                 {checksumPrivateKey.slice(66, 68)}
               </span>
             </TooltipTrigger>
@@ -296,7 +301,7 @@ export default function WIFPrivateKeyGenerator() {
 
         <Tooltip>
           <TooltipTrigger asChild>
-            <span className={`${COLORS[3]} `}>
+            <span className={cn(GETCOLORS(3), GETHOVERBGCOLORS(3))}>
               {checksumPrivateKey.slice(isCompressed ? 68 : 66)}
             </span>
           </TooltipTrigger>
@@ -318,7 +323,7 @@ export default function WIFPrivateKeyGenerator() {
         </Tooltip>
       </div>
       <div className='bg-background text-base break-all border rounded-md shadow-sm px-3 py-1.5'>
-        <span className={`${COLORS[4]}`}>{wifPrivateKey}</span>
+        <span className={cn(GETCOLORS(4))}>{wifPrivateKey}</span>
       </div>
     </InteractionCard>
   )

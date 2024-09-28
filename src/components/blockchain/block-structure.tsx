@@ -6,7 +6,7 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table'
-import { BGCOLORS } from '@/lib/constants'
+import { GETBGCOLORS } from '@/lib/constants'
 import { cn } from '@/lib/utils'
 
 const fields = [
@@ -84,8 +84,7 @@ export default function BlockStructure({
             <TableRow
               key={field.name}
               className={cn(
-                highlightFieldName.includes(field.name) &&
-                  BGCOLORS[index % BGCOLORS.length]
+                highlightFieldName.includes(field.name) && GETBGCOLORS(index)
               )}
             >
               <TableCell className='font-medium border-r'>

@@ -1,5 +1,5 @@
 import { splitRawTransaction } from '@/lib/blockchain/transaction'
-import { COLORS, HOVERBGCOLORS } from '@/lib/constants'
+import { GETCOLORS, GETHOVERBGCOLORS } from '@/lib/constants'
 import { cn } from '@/lib/utils'
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip'
 
@@ -11,8 +11,8 @@ export default function TransactionHex({ hex }: { hex: string }) {
         <TooltipTrigger
           asChild
           className={cn(
-            COLORS[0 % COLORS.length],
-            HOVERBGCOLORS[0 % HOVERBGCOLORS.length],
+            GETCOLORS(0),
+            GETHOVERBGCOLORS(0),
             'hover:cursor-pointer'
           )}
         >
@@ -27,8 +27,8 @@ export default function TransactionHex({ hex }: { hex: string }) {
           <TooltipTrigger
             asChild
             className={cn(
-              COLORS[1 % COLORS.length],
-              HOVERBGCOLORS[1 % HOVERBGCOLORS.length],
+              GETCOLORS(1),
+              GETHOVERBGCOLORS(1),
               'hover:cursor-pointer'
             )}
           >
@@ -45,8 +45,8 @@ export default function TransactionHex({ hex }: { hex: string }) {
           <TooltipTrigger
             asChild
             className={cn(
-              COLORS[2 % COLORS.length],
-              HOVERBGCOLORS[2 % HOVERBGCOLORS.length],
+              GETCOLORS(2),
+              GETHOVERBGCOLORS(2),
               'hover:cursor-pointer'
             )}
           >
@@ -62,8 +62,8 @@ export default function TransactionHex({ hex }: { hex: string }) {
         <TooltipTrigger
           asChild
           className={cn(
-            COLORS[3 % COLORS.length],
-            HOVERBGCOLORS[3 % HOVERBGCOLORS.length],
+            GETCOLORS(3),
+            GETHOVERBGCOLORS(3),
             'hover:cursor-pointer'
           )}
         >
@@ -77,12 +77,12 @@ export default function TransactionHex({ hex }: { hex: string }) {
       {tx.inputs.map((input, index) => (
         <span
           key={input.scriptSig}
-          className={cn(COLORS[4 % COLORS.length], 'hover:cursor-pointer')}
+          className={cn(GETCOLORS(4), 'hover:cursor-pointer')}
         >
           <Tooltip>
             <TooltipTrigger
               asChild
-              className={cn(HOVERBGCOLORS[4 % HOVERBGCOLORS.length])}
+              className={cn(GETHOVERBGCOLORS(4))}
             >
               <span>{input.txid}</span>
             </TooltipTrigger>
@@ -93,7 +93,7 @@ export default function TransactionHex({ hex }: { hex: string }) {
           <Tooltip>
             <TooltipTrigger
               asChild
-              className={cn(HOVERBGCOLORS[4 % HOVERBGCOLORS.length])}
+              className={cn(GETHOVERBGCOLORS(4))}
             >
               <span>{input.vout}</span>
             </TooltipTrigger>
@@ -104,7 +104,7 @@ export default function TransactionHex({ hex }: { hex: string }) {
           <Tooltip>
             <TooltipTrigger
               asChild
-              className={cn(HOVERBGCOLORS[4 % HOVERBGCOLORS.length])}
+              className={cn(GETHOVERBGCOLORS(4))}
             >
               <span>{input.scriptSigSize}</span>
             </TooltipTrigger>
@@ -115,7 +115,7 @@ export default function TransactionHex({ hex }: { hex: string }) {
           <Tooltip>
             <TooltipTrigger
               asChild
-              className={cn(HOVERBGCOLORS[4 % HOVERBGCOLORS.length])}
+              className={cn(GETHOVERBGCOLORS(4))}
             >
               <span>{input.scriptSig}</span>
             </TooltipTrigger>
@@ -126,7 +126,7 @@ export default function TransactionHex({ hex }: { hex: string }) {
           <Tooltip>
             <TooltipTrigger
               asChild
-              className={cn(HOVERBGCOLORS[4 % HOVERBGCOLORS.length])}
+              className={cn(GETHOVERBGCOLORS(4))}
             >
               <span>{input.sequence}</span>
             </TooltipTrigger>
@@ -141,8 +141,8 @@ export default function TransactionHex({ hex }: { hex: string }) {
         <TooltipTrigger
           asChild
           className={cn(
-            COLORS[5 % COLORS.length],
-            HOVERBGCOLORS[5 % HOVERBGCOLORS.length],
+            GETCOLORS(5),
+            GETHOVERBGCOLORS(5),
             'hover:cursor-pointer'
           )}
         >
@@ -156,12 +156,12 @@ export default function TransactionHex({ hex }: { hex: string }) {
       {tx.outputs.map((output, index) => (
         <span
           key={output.scriptPubKey}
-          className={cn(COLORS[6 % COLORS.length], 'hover:cursor-pointer')}
+          className={cn(GETCOLORS(6), 'hover:cursor-pointer')}
         >
           <Tooltip>
             <TooltipTrigger
               asChild
-              className={cn(HOVERBGCOLORS[6 % HOVERBGCOLORS.length])}
+              className={cn(GETHOVERBGCOLORS(6))}
             >
               <span>{output.amount}</span>
             </TooltipTrigger>
@@ -172,7 +172,7 @@ export default function TransactionHex({ hex }: { hex: string }) {
           <Tooltip>
             <TooltipTrigger
               asChild
-              className={cn(HOVERBGCOLORS[6 % HOVERBGCOLORS.length])}
+              className={cn(GETHOVERBGCOLORS(6))}
             >
               <span>{output.scriptPubKeySize}</span>
             </TooltipTrigger>
@@ -183,7 +183,7 @@ export default function TransactionHex({ hex }: { hex: string }) {
           <Tooltip>
             <TooltipTrigger
               asChild
-              className={cn(HOVERBGCOLORS[6 % HOVERBGCOLORS.length])}
+              className={cn(GETHOVERBGCOLORS(6))}
             >
               <span>{output.scriptPubKey}</span>
             </TooltipTrigger>
@@ -198,12 +198,12 @@ export default function TransactionHex({ hex }: { hex: string }) {
         tx.witness.map((witness, index) => (
           <span
             key={index}
-            className={cn(COLORS[7 % COLORS.length], 'hover:cursor-pointer')}
+            className={cn(GETCOLORS(7), 'hover:cursor-pointer')}
           >
             <Tooltip>
               <TooltipTrigger
                 asChild
-                className={cn(HOVERBGCOLORS[7 % HOVERBGCOLORS.length])}
+                className={cn(GETHOVERBGCOLORS(7))}
               >
                 <span>{witness.stackItems}</span>
               </TooltipTrigger>
@@ -218,7 +218,7 @@ export default function TransactionHex({ hex }: { hex: string }) {
                   <Tooltip>
                     <TooltipTrigger
                       asChild
-                      className={cn(HOVERBGCOLORS[7 % HOVERBGCOLORS.length])}
+                      className={cn(GETHOVERBGCOLORS(7))}
                     >
                       <span>{witness[key].size}</span>
                     </TooltipTrigger>
@@ -232,7 +232,7 @@ export default function TransactionHex({ hex }: { hex: string }) {
                   <Tooltip>
                     <TooltipTrigger
                       asChild
-                      className={cn(HOVERBGCOLORS[7 % HOVERBGCOLORS.length])}
+                      className={cn(GETHOVERBGCOLORS(7))}
                     >
                       <span>{witness[key].item}</span>
                     </TooltipTrigger>
@@ -252,8 +252,8 @@ export default function TransactionHex({ hex }: { hex: string }) {
         <TooltipTrigger
           asChild
           className={cn(
-            COLORS[8 % COLORS.length],
-            HOVERBGCOLORS[8 % HOVERBGCOLORS.length],
+            GETCOLORS(8),
+            GETHOVERBGCOLORS(8),
             'hover:cursor-pointer'
           )}
         >

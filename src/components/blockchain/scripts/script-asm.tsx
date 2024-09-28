@@ -1,4 +1,4 @@
-import { COLORS } from '@/lib/constants'
+import { GETCOLORS } from '@/lib/constants'
 import { cn } from '@/lib/utils'
 import { script } from 'bitcoinjs-lib'
 
@@ -23,7 +23,7 @@ export default function ScriptAsm(props: ScriptAsmProps) {
       {internalAsm.split(' ').map((item, index) => (
         <span
           key={item + index}
-          className={cn('block', COLORS[index % COLORS.length])}
+          className={cn('block', GETCOLORS(index))}
         >
           {item}
         </span>
