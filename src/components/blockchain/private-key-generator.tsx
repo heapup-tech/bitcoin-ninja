@@ -52,7 +52,7 @@ export default function PrivateKeyGenerator() {
           <div
             key={index}
             className={cn(
-              'aspect-square flex justify-center items-center border  bg-background hover:cursor-pointer',
+              'aspect-square flex justify-center items-center border-[0.5px] border-solid bg-background hover:cursor-pointer',
               bit === 1 && 'bg-primary text-white'
             )}
             onClick={() => reverseBit(index)}
