@@ -25,6 +25,7 @@ import { useMDXComponent } from '@content-collections/mdx/react'
 import { GitHubLogoIcon } from '@radix-ui/react-icons'
 import { Info, Siren, Skull, TriangleAlert } from 'lucide-react'
 import Link from 'next/link'
+import React from 'react'
 import AsciiConverter from './blockchain/ascii-converter'
 import Base58AddressGenerator from './blockchain/base58-address-generator'
 import Bech32AddressGenerator from './blockchain/bech32-address-generator'
@@ -37,6 +38,8 @@ import BlockStructure from './blockchain/block-structure'
 import BlockSubsidyCalculator from './blockchain/block-subsidy-calculator'
 import BlockTransaction from './blockchain/block-transaction'
 import ConvertTargetToBits from './blockchain/convert-target-to-bits'
+import DeriveSubKey from './blockchain/derive-sub-key'
+import ExtendedKey from './blockchain/extended-key'
 import HalvingTable from './blockchain/halving-table'
 import Hash160Calculator from './blockchain/hash160-calculator'
 import Hash256Calculator from './blockchain/hash256-calculator'
@@ -77,6 +80,8 @@ const components = {
   BlockSubsidyCalculator,
   MempoolOverview,
   BlockList,
+  ExtendedKey,
+  DeriveSubKey,
   BlockOverview,
   TargetCalculator,
   ConvertTargetToBits,

@@ -41,16 +41,32 @@ export const calculatePublicKeyPoint = (privateKeyHex: string) => {
   }
 }
 
-export const generatePrivateKey = () => {
-  const bits = Array.from({ length: 256 }, () => (Math.random() > 0.5 ? 1 : 0))
+const generateBits = (length: number) => {
+  if (length % 8 !== 0) {
+    return {
+      bits: [],
+      decimal: '0',
+      hexadecimal: '0'
+    }
+  }
+
+  const bits = Array.from({ length }, () => (Math.random() > 0.5 ? 1 : 0))
 
   const bigDecimalInt = BigInt(`0b${bits.join('')}`)
   const decimal = bigDecimalInt.toString()
-  const hexadecimal = bigDecimalInt.toString(16).padStart(64, '0')
+  const hexadecimal = bigDecimalInt.toString(16).padStart((length / 8) * 2, '0')
 
   return {
     bits,
     decimal,
     hexadecimal
   }
+}
+
+export const generatePrivateKey = () => {
+  return generateBits(256)
+}
+
+export const generateSeed = () => {
+  return generateBits(256)
 }

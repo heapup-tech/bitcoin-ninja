@@ -68,7 +68,7 @@ export default function ScriptStackSimulator({
   const [couldRun, setCouldRun] = useState(true)
 
   const [currentIndex, setCurrentIndex] = useState(0)
-  const [stackItems, setStackItems] = useState<string[]>(stack.data())
+  const [stackItems, setStackItems] = useState<string[]>([])
 
   const {
     isFetching: queryTxLoading,
@@ -502,15 +502,18 @@ export default function ScriptStackSimulator({
             </Button>
           </div>
           <div className='border-l border-r border-b rounded-bl-md rounded-br-md p-2 mt-2 border-primary min-h-20 bg-background flex flex-col justify-end'>
-            {stackItems.reverse().map((item, index) => (
-              <div
-                key={index}
-                className='break-all border rounded-md p-1 mt-2 truncate text-sm  min-h-7'
-                title={item}
-              >
-                {item || '-'}
-              </div>
-            ))}
+            {stackItems
+              .slice()
+              .reverse()
+              .map((item, index) => (
+                <div
+                  key={index}
+                  className='break-all border rounded-md p-1 mt-2 truncate text-sm  min-h-7'
+                  title={item}
+                >
+                  {item || '-'}
+                </div>
+              ))}
           </div>
         </div>
       </div>
