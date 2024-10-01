@@ -78,3 +78,57 @@ export const SCRIPTS: Array<ScriptType> = [
   'p2wsh',
   'p2tr'
 ]
+
+export type ENT = 128 | 160 | 192 | 224 | 256
+
+// mnemonic entropy length
+export const ENTROPYWORDMAP: Record<ENT, string> = {
+  128: '12',
+  160: '15',
+  192: '18',
+  224: '21',
+  256: '24'
+}
+
+export const MNEMONIC_LANGUAGES = [
+  {
+    name: 'English',
+    value: 'english'
+  },
+  {
+    name: '中文简体',
+    value: 'chinese_simplified'
+  },
+  {
+    name: '中文繁体',
+    value: 'chinese_traditional'
+  },
+  {
+    name: '捷克语',
+    value: 'czech'
+  },
+  {
+    name: '日语',
+    value: 'japanese'
+  },
+  {
+    name: '韩语',
+    value: 'korean'
+  },
+  {
+    name: '法语',
+    value: 'french'
+  },
+  {
+    name: '意大利语',
+    value: 'italian'
+  },
+  {
+    name: '西班牙语',
+    value: 'spanish'
+  },
+  {
+    name: '葡萄牙语',
+    value: 'portuguese'
+  }
+]

@@ -18,7 +18,13 @@ import { Label } from '../ui/label'
 import { Textarea } from '../ui/textarea'
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip'
 
-export default function DeriveSubKey() {
+interface DeriveSubKeyProps {
+  showSerialized?: boolean
+}
+
+export default function DeriveSubKey({
+  showSerialized = false
+}: DeriveSubKeyProps) {
   const [seed, setSeed] = useState(
     '333da71c53ae1a77e2afd6d2f4d45a65ef67a640d9fb92fa96c6fee18599bbfaaab41ad02397dba5ce1d94a626b313747fa3e0f516ca16b225e105050909f134'
   )
@@ -94,6 +100,8 @@ export default function DeriveSubKey() {
       setSubPrivate(subPrivate)
 
       setSubPublic(subPublic)
+
+      if (!showSerialized) return
 
       const depth = '01'
       const fingerprint = hash160(Buffer.from(parentPublicKey))
@@ -194,32 +202,36 @@ export default function DeriveSubKey() {
         <Label>子公钥</Label>
 
         <div className='bg-background text-base break-all border rounded-md shadow-sm px-3 py-1.5 min-h-9'>
-          <span className={cn(GETCOLORS(4))}>{subPublic}</span>
+          <span className={cn(GETCOLORS(3))}>{subPublic}</span>
         </div>
       </div>
 
       <div className='text-sm font-medium mt-4 mb-0.5'>
         <Label>子链码</Label>
         <div className='bg-background text-base break-all border rounded-md shadow-sm px-3 py-1.5 min-h-9'>
-          <span className={cn(GETCOLORS(3))}>{subChainCode}</span>
+          <span className={cn(GETCOLORS(4))}>{subChainCode}</span>
         </div>
       </div>
 
-      <div className='text-sm font-medium mt-4 mb-0.5'>
-        <Label>子拓展私钥格式化</Label>
+      {showSerialized && (
+        <div>
+          <div className='text-sm font-medium mt-4 mb-0.5'>
+            <Label>子拓展私钥序列化</Label>
 
-        <div className='bg-background text-base break-all border rounded-md shadow-sm px-3 py-1.5 min-h-9'>
-          <span className={cn(GETCOLORS(4))}>{subFormatedPrivate}</span>
+            <div className='bg-background text-base break-all border rounded-md shadow-sm px-3 py-1.5 min-h-9'>
+              <span className={cn(GETCOLORS(5))}>{subFormatedPrivate}</span>
+            </div>
+          </div>
+
+          <div className='text-sm font-medium mt-4 mb-0.5'>
+            <Label>子拓展公钥序列化</Label>
+
+            <div className='bg-background text-base break-all border rounded-md shadow-sm px-3 py-1.5 min-h-9'>
+              <span className={cn(GETCOLORS(6))}>{subFormatedPublic}</span>
+            </div>
+          </div>
         </div>
-      </div>
-
-      <div className='text-sm font-medium mt-4 mb-0.5'>
-        <Label>子拓展公钥格式化</Label>
-
-        <div className='bg-background text-base break-all border rounded-md shadow-sm px-3 py-1.5 min-h-9'>
-          <span className={cn(GETCOLORS(4))}>{subFormatedPublic}</span>
-        </div>
-      </div>
+      )}
     </InteractionCard>
   )
 }

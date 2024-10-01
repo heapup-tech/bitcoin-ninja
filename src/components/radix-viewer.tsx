@@ -52,7 +52,7 @@ export default function RadixViewer({ radix, perfer }: RadixViewerProps) {
         >
           <SelectTrigger
             className={cn(
-              'w-14 text-center p-2 text-base shadow-none border-l-0 border-t-0 border-b-0 border-r border-muted rounded-none focus:ring-0 bg-muted'
+              'w-14 text-center p-2 text-base shadow-none border-l-0 border-t-0 border-b-0 border-r border-muted rounded-none focus:ring-0 bg-muted h-auto self-stretch'
             )}
           >
             <SelectValue />
@@ -73,7 +73,7 @@ export default function RadixViewer({ radix, perfer }: RadixViewerProps) {
           {radixPrefixMap[prefixes[0]]}
         </div>
       )}
-      <div className='flex-1 h-9 px-2 overflow-auto bg-background flex items-center'>
+      <div className='flex-1 px-2 py-1.5  bg-background text-base break-all'>
         {radixData}
       </div>
     </div>

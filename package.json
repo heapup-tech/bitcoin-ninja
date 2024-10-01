@@ -27,6 +27,7 @@
     "@tanstack/react-query": "^5.56.2",
     "bech32": "^2.0.0",
     "bignumber.js": "^9.1.2",
+    "bip39": "^3.1.0",
     "bitcoinjs-lib": "^6.1.6",
     "bs58": "^6.0.0",
     "bs58check": "^4.0.0",

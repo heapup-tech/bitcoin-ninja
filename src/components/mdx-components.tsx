@@ -46,6 +46,7 @@ import Hash256Calculator from './blockchain/hash256-calculator'
 import LegacyRawTransactionBuilder from './blockchain/legacy-raw-transaction-builder'
 import MempoolOverview from './blockchain/mempool-overview'
 import MerkleRootCalculator from './blockchain/merkle-root-calculator'
+import MnemonicGenerator from './blockchain/mnemonic-generator'
 import NetworkHashps from './blockchain/network-hashps'
 import PrivateKeyGenerator from './blockchain/private-key-generator'
 import PublicKeyGenerator from './blockchain/public-key-generator'
@@ -82,6 +83,7 @@ const components = {
   BlockList,
   ExtendedKey,
   DeriveSubKey,
+  MnemonicGenerator,
   BlockOverview,
   TargetCalculator,
   ConvertTargetToBits,

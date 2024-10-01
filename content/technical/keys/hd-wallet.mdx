@@ -10,13 +10,13 @@ description: Hierarchical Deterministic Wallets
   alt='taprppt-out-explain'
 />
 
-从 `seed` 生成拓展秘钥, 拓展秘钥又可以派生出多个子拓展秘钥。每个子拓展秘钥又可以继续派生其下层拓展秘钥, 如此往复, 理论上可以无限派生。每个拓展秘钥都可以计算出一个公私钥作为比特币账户。所以 HD 钱包的优点显而易见, 通过一个 `seed` 就可以生成无限多的比特币账号, 且无需备份每个私钥。
+从 `seed` 生成拓展秘钥, 拓展秘钥又可以派生出多个子拓展秘钥。每个子拓展秘钥又可以继续派生其下层拓展秘钥, 如此往复, 理论上可以无限派生。每个拓展秘钥都可以计算出一个公私钥作为比特币账户。所以 HD 钱包的优点显而易见, 通过一个 `seed` 就可以生成无限多的比特币账号, 且无需备份每个私钥, 只需要备份 `seed` 即可。
 
 ## 派生密钥
 
 [BIP32](https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki) 是 HD 钱包的基础, 定义了如何从 `seed` 派生出密钥。
 
-`seed` 是一个随机数, 大小通常是 128 或 256 比特位, 即 16 或 32 字节。通过 `HMAC-SHA512` 哈希函数由 `seed` 生成拓展秘钥(`extended key`), 拓展秘钥由主私钥和链码(`chain code`)组成。
+`seed` 是一个随机数。通过 `HMAC-SHA512` 哈希函数由 `seed` 生成拓展秘钥(`extended key`), 拓展秘钥由主私钥和链码(`chain code`)组成。
 
 <ExtendedKey />
 
@@ -27,7 +27,7 @@ import { sha512 } from '@noble/hashes/sha512'
 const extendedKey = hmac(sha512, 'Bitcoin seed', Buffer.from(seed, 'hex'))
 ```
 
-`HMAC-SHA512` 函数的输入是 `seed` 和秘钥字符串([BIP 32](https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki#master-key-generation) 规定这个秘钥字符串是 **Bitcoin seed**), 输出是 64 字节的拓展秘钥(从 `seed` 生成的拓展秘钥也叫主拓展秘钥 `master extended key` )。 前 32 字节作为主私钥, 后 32 字节作为链码。链码作为派生子密钥的秘钥。
+`HMAC-SHA512` 函数的输入是 `seed` 和密码([BIP 32](https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki#master-key-generation) 规定这个密码是 **Bitcoin seed**), 输出是 64 字节的拓展秘钥(从 `seed` 生成的拓展秘钥也叫主拓展秘钥 `master extended key` )。 前 32 字节作为主私钥, 后 32 字节作为链码。链码作为派生子密钥的 `HMAC-SHA512` 的密码。
 
 拓展秘钥有两种:
 
@@ -52,7 +52,16 @@ const extendedPublicKey = Buffer.concat([publicKey, chainCode])
 
 这两种拓展秘钥都能单独的生成子密钥, 从拓展私钥可以派生出**子拓展私钥**, 但从拓展公钥只能派生出**子拓展公钥**。从拓展私钥派生出的子拓展私钥所对应的公钥与拓展公钥派生出的子拓展公钥相同。
 
-拓展秘钥根据索引生成子密钥, 索引大小为 4 字节, 可以表达的最大值是 `4294967295`, 即最多可以派生出 `4294967296` 个子密钥。按照索引值将其分成两种派生方式:
+```text
+extended private key -> child extended private key
+                                    |
+                                    | secp256k1
+                                    |
+                                    ▼
+extended public key -> child extended public key
+```
+
+拓展秘钥根据**索引**生成子密钥, 索引大小为 4 字节, 可以表达的最大值是 `4294967295`, 即最多可以派生出 `4294967296` 个子密钥。按照索引值将其分成两种派生方式:
 
 - `Normal Derivation` - 普通派生, 索引范围在 0 - 2147483647:
 - `Hardened derivation` - 硬化派生, 索引范围在 2147483648 - 4294967295:
@@ -64,8 +73,8 @@ const extendedPublicKey = Buffer.concat([publicKey, chainCode])
 普通派生过程如下:
 
 - 将索引转换为 4 字节的大端字节序
-- 将主私钥对应的压缩公钥和索引拼接, 生成 37 字节的数据作为 `HMAC-SHA512` 加密数据
-- 将拓展秘钥的链码作为 `HMAC-SHA512` 秘钥
+- 将压缩公钥和索引拼接, 生成 37 字节的数据作为 `HMAC-SHA512` 加密数据
+- 将拓展秘钥的链码作为 `HMAC-SHA512` 密码
 - `HMAC-SHA512` 生成 64 字节的 `I`, 前 32 字节为派生因子, 后 32 字节为子链码
   - 已知父私钥: 派生因子与父私钥相加, 并对椭圆曲线的阶取模, 得到子私钥
   - 仅知道父公钥: 派生因子乘以椭圆曲线的基点并与父公钥相加, 得到子公钥
@@ -113,23 +122,23 @@ const childPublicKey = pointFromScalar(childPrivateKey, true)
 
 <DeriveSubKey />
 
-子私钥和子链码组合又可以作为拓展秘钥, 继续生成下一级子密钥。
+子私钥或子公钥和子链码组合又可以作为拓展秘钥, 根据索引继续生成下一级子密钥。
 
 :::danger
 
-普通派生的要求是知道父公钥, 但如果只知道父公钥, 就只能派生出子公钥, 则无法派生出子私钥。
+普通派生的要求必须要知道父公钥, 但如果只知道父公钥, 就只能派生出子公钥, 则无法派生出子私钥。
 
 :::
 
 ### 硬化派生
 
-如果索引大于等于 `2147483648`, 则为硬化派生。
+如果索引大于等于 `2147483648`, 则为硬化派生 `hardened derivation`。
 
 硬化派生过程如下:
 
 - 将索引转换为 4 字节的大端字节序
-- 将主私钥和索引拼接, 最前面补充一个字节 0, 生成 37 字节的数据作为 `HMAC-SHA512` 加密数据
-- 将拓展秘钥的链码作为 `HMAC-SHA512` 秘钥
+- 将主私钥和索引拼接后, 最前面补充一个字节 0, 生成 37 字节的数据作为 `HMAC-SHA512` 加密数据
+- 将拓展秘钥的链码作为 `HMAC-SHA512` 密码
 - `HMAC-SHA512` 生成 64 字节的 `I`, 前 32 字节为派生因子, 后 32 字节为子链码, 派生因子与主私钥相加, 并对椭圆曲线的阶取模, 得到子私钥。
 
 ```ts
@@ -141,73 +150,88 @@ if (index < 2147483648) {
 }
 ```
 
-硬化派生与普通派生过程基本一致, 区别在于硬化派生以**主私钥和索引**拼接, 而普通派生则以主私钥对应的**压缩公钥和索引**拼接。
+硬化派生与普通派生过程基本一致, 区别在于硬化派生以**主私钥和索引**拼接, 而普通派生则**压缩公钥和索引**拼接。
 
-## 秘钥树
+## 秘钥序列化
 
-通过 `seed` 生成的多层密钥对构成密钥树。
-
-密钥树中的每个节点都是拓展秘钥, 可以用来生成下一级的子秘钥。但拓展秘钥并不能很好的描述节点的信息, 例如节点所在的层级, 节点在所在层的索引, 父秘钥等。因此, 需要定义一种标准格式来描述密钥树中的节点信息。
-
-[BIP32](https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki#serialization-format) 定义了一种序列化格式, 用于描述密钥树中的节点信息。序列化格式包括:
+[BIP32](https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki#serialization-format) 定义了拓展秘钥序列化格式。序列化格式字段包括:
 
 - 版本号 - 4 字节
-  - 主网私钥 - `xprv`(0x0488ADE4), 主网公钥 - `xpub`(0x0488B21E)
-  - 测试网私钥 - `tprv`(0x04358394), 测试网公钥 - `tpub`(0x043587CF)
+  - 主网: 拓展私钥 - `xprv`(0x0488ADE4), 拓展公钥 - `xpub`(0x0488B21E)
+  - 测试网: 拓展私钥 - `tprv`(0x04358394), 拓展公钥 - `tpub`(0x043587CF)
 - 深度 - 1 字节, 表示节点在树中的深度
 - 父指纹 - 4 字节, 父节点公钥进行 `Hash160` 运算后取前 4 字节作为指纹
 - 索引 - 4 字节, 节点在当前层的索引
 - 链码 - 32 字节, 拓展秘钥的后 32 字节
 - 秘钥 - 33 字节, 压缩公钥或私钥
 
+将上述字段按顺序拼接, 生成 78 字节的序列化数据。并对序列化数据进行 `Base58Check` 编码, 生成拓展秘钥的字符串表示。
+
+<DeriveSubKey showSerialized />
+
+在已知序列化格式的拓展秘钥情况下, 可以通过 `Base58Check` 解码, 得到拓展秘钥的各个字段。
+
 ## 助记词
 
-助记词是 `Seed` 的人类可读形式, 通常是 12 或 24 个单词, 用于恢复钱包。
+助记词是 `seed` 的人类可读形式, 通常是 12 或 24 个单词。通过助记词可以生成 `seed`, 再由 `seed` 生成多个拓展秘钥。
+
+[BIP39](https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki) 定义了助记词的生成规则, 过程如下:
+
+- 生成随机数 - 这个随机数叫 `entropy`, 大小为 4 的倍数的字节, 范围在 16 - 32 字节。即 `entropy` 大小可以是 16, 20, 24, 28 或 32 字节。`entropy` 的比特位长度称作 `ENT`
+
+- 计算 `checksum` - 取 `SHA256(entropy)` 的前 ENT/32 比特位作 `checksum`
+
+- 将 `entropy` 和 `checksum` 比特位拼接, 并按照每11比特位分组。每组转换为10进制作为 [单词表](https://github.com/bitcoin/bips/blob/master/bip-0039/bip-0039-wordlists.md) 的索引从单词表中取出单词, 生成助记词。
+
+- 通过 `PBKDF2` 函数将助记词转换为512位的 `seed`, `PBKDF2` 函数的密码是 `mnemonic${passphrase}`, `passphrase` 是用户自定义的密码。
+
+<MnemonicGenerator />
+
+结合 `BIP39` 和 `BIP32`, 可以总结出生成多个比特币账户的过程:
+
+- 通过助记词生成 `seed`
+- 通过 `seed` 生成主拓展秘钥
+- 通过主拓展秘钥生成多层子密钥
+
+:::warning
+
+使用助记词生成 `seed` 时, 更安全的做法是设置 `passphrase`, 这样即使助记词泄露, 也无法生成 `seed`。
+
+:::
+
+:::danger
+
+助记词的目的是为了提供一种更友好的方式来记忆 `seed`。 如果你有更安全且方便的方法来保存 `seed`, 那么助记词就不是必须的。
+
+:::
 
 ## 派生路径
 
-BIP32 是 HD 钱包的基础, 它定义了如何从种子生成私钥。BIP44 定义了如何生成地址, 以便在多个钱包之间共享。m/0'/0/0
-BIP39 定义了如何生成种子, 以便用户可以记住助记词, 而不是随机的种子。
-BIP44 定义了如何生成 P2PKH 地址。m/44'/0'/0'/0/0
-BIP49 定义了如何生成 P2SH 地址。m/49'/0'/0'/0/0
-BIP84 定义了如何生成 P2WPKH 地址。m/84'/0'/0'/0/0
-BIP141 定义了如何生成 P2TR 地址。m/141'/0'/0'/0/0
+派生路径用于定位从 `seed` 生成的子密钥的位置。从秘钥树的第 0 层开始, 每一层的索引作为路径的一部分, 用 `/` 分隔。如果是硬化派生, 索引需要减去 $2^{31}$ 并在后面加上 `'`
 
-```ts
-import { hmac } from '@noble/hashes/hmac'
-import { sha512 } from '@noble/hashes/sha512'
-import { bytesToHex, hexToBytes } from '@noble/hashes/utils'
-import { secp256k1 } from '@noble/curves/secp256k1'
+例如: `m/8'/2/0'`:
 
-function deriveChildKey(parentPrivateKey, parentChainCode, index) {
-  const indexBuffer = new Uint8Array(4)
-  new DataView(indexBuffer.buffer).setUint32(0, index, false)
+- `m` 表示从 `seed` 生成的主拓展秘钥, 是密钥树的第 0 层,
+- `8'` 表示从 `m` 派生出的第一层索引是 $ 2^{31} + 8$
+- `2` 表示从 `m/8'` 派生出的第二层索引是 `2`
+- `0'` 表示从 `m/8'/2` 派生出的第三层索引是 $2^{31} + 0$ 个子密钥。
 
-  let data
-  if (index >= 0x80000000) {
-    // Hardened child
-    data = new Uint8Array([0, ...hexToBytes(parentPrivateKey), ...indexBuffer])
-  } else {
-    // Normal child
-    const parentPublicKey = secp256k1.getPublicKey(
-      hexToBytes(parentPrivateKey),
-      true
-    )
-    data = new Uint8Array([...parentPublicKey, ...indexBuffer])
-  }
+在 BIP44 中定义了派生路径固定的结构:
 
-  const I = hmac(sha512, hexToBytes(parentChainCode), data)
-  const IL = I.slice(0, 32)
-  const IR = I.slice(32)
-
-  // Convert IL to a BigInt and reduce it modulo the curve order
-  const ILBigInt = BigInt('0x' + bytesToHex(IL))
-  const childPrivateKey =
-    (ILBigInt + BigInt('0x' + parentPrivateKey)) % secp256k1.CURVE.n
-
-  return {
-    childPrivateKey: childPrivateKey.toString(16).padStart(64, '0'),
-    childChainCode: bytesToHex(IR)
-  }
-}
+```text
+m / purpose' / coin_type' / account' / change / address_index
 ```
+
+- `purpose` - 目的, 例如是 BIP44, 则为 `44'`, BIP49 则为 `49'`, BIP84 则为 `84'`等
+- `coin_type` - 币种, 一个 `seed` 可以生成多个币种的密钥, 每个币种有一个唯一的索引。比特币的索引是 `0'`, 比特币测试网的索引是 `1'`, 以太坊的索引是 `60'`等
+- `account` - 账户索引, 从 0 开始
+- `change` - 0 表示外部地址, 1 表示内部地址。外部地址用于钱包外可见的地址, 例如接收付款。内部地址用于钱包内部的地址, 例如找零地址。
+- `address_index` - 地址索引
+
+[BIP44](https://github.com/bitcoin/bips/blob/master/bip-0044.mediawiki) 路径是 `m/44'/0'/0'/0/0`, 定义了生成 `P2PKH` 地址使用的公私钥。
+
+[BIP49](https://github.com/bitcoin/bips/blob/master/bip-0049.mediawiki) 路径是 `m/49'/0'/0'/0/0`, 定义了生成 `P2SH-P2WPKH` 地址使用的公私钥。
+
+[BIP84](https://github.com/bitcoin/bips/blob/master/bip-0084.mediawiki) 路径是 `m/84'/0'/0'/0/0`, 定义了生成 `P2WPKH` 地址使用的公私钥。
+
+[BIP86](https://github.com/bitcoin/bips/blob/master/bip-0086.mediawiki) 路径是 `m/86'/0'/0'/0/0`, 定义了生成 `P2TR` 地址使用的公私钥。

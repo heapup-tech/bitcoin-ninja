@@ -2,6 +2,7 @@
 
 // replace tiny-secp256k1 with @bitcoinerlab/secp256k1 [tiny-secp256k1 use wasm to calculate public key, but the wasm it's not working on vercel]
 import ecc from '@bitcoinerlab/secp256k1'
+import { ENT } from '../constants'
 
 // 计算公钥坐标点
 export const calculatePublicKeyPoint = (privateKeyHex: string) => {
@@ -69,4 +70,8 @@ export const generatePrivateKey = () => {
 
 export const generateSeed = () => {
   return generateBits(256)
+}
+
+export const generateEntropy = (length: ENT) => {
+  return generateBits(length)
 }
