@@ -1,3 +1,24 @@
 ---
 title: 签名
 ---
+
+比特币中的签名数据是通过私钥对交易数据进行签名生成的。目的是为了在脚本执行时, 通过类似 `OP_CHECKSIG` 操作码的检查, 以打开 `UTXO` 锁。
+
+## 未签名交易
+
+<TransactionBuilder />
+
+<TransactionSplitTab
+  hex='020000000001011b2ffe749d2333c5dbcbe9b812e1aef49cb6e0f0143151f1b44c5d0f20b13ca00100000000fdffffff02a0860100000000001976a914c189d7f7ea4333daec66a645cb3388163c22900b88ac67360a0000000000225120b494169f485231b6f428d3ce782cdaccc6b6bfd5d1a45802b62848d1b74c04f1014060269c7979be5a482056745ec5d51b5292cbc7e329cf7b932db67287e04ab7366ba50b747d83ee2e563ef8b9b4dbeb277fe81c093be1641254a866cba70cbbf500000000'
+  txid='e4f7440ca6a59764064ab663f396e9cd0ccff96d6b7ecd368340d3cdc5f02303'
+/>
+
+<TransactionFieldsTable />
+
+## 签名
+
+ecdsa 签名是通过私钥对交易数据进行签名生成的。签名数据是一个数字, 通过公钥可以验证签名的有效性。
+
+schorr 签名是通过私钥对交易数据进行签名生成的。签名数据是一个数字, 通过公钥可以验证签名的有效性。
+
+## PSBT

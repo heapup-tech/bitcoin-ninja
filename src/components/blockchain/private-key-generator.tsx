@@ -6,7 +6,6 @@ import { useEffect, useState } from 'react'
 import InteractionCard from '../interaction-card'
 import RadixViewer from '../radix-viewer'
 import { Button } from '../ui/button'
-import { Textarea } from '../ui/textarea'
 
 export default function PrivateKeyGenerator() {
   const [bits, setBits] = useState<Array<0 | 1>>([])
@@ -61,30 +60,14 @@ export default function PrivateKeyGenerator() {
           </div>
         ))}
       </div>
-      <div className='text-sm font-medium mt-4 mb-0.5'>二进制</div>
-      <div className='flex border rounded-md shadow-sm overflow-hidden items-stretch'>
-        <div className='min-h-9 flex items-center p-2 w-14 justify-center border-r bg-muted flex-shrink-0'>
-          0b
-        </div>
-
-        <Textarea
-          readOnly
-          rows={3}
-          defaultValue={bits.join('')}
-          className='bg-background text-base border-none shadow-none rounded-none focus:ring-0 focus-visible:ring-0 flex-1'
-        />
-      </div>
-      <div className='text-sm font-medium mt-4 mb-0.5'>十进制</div>
+      <div className='text-sm font-medium mt-4 mb-0.5'>私钥</div>
       <RadixViewer
         radix={{
-          decimal
-        }}
-      />
-      <div className='text-sm font-medium mt-4 mb-0.5'>十六进制(私钥)</div>
-      <RadixViewer
-        radix={{
+          binary: bits.join(''),
+          decimal,
           hexadecimal
         }}
+        perfer='binary'
       />
     </InteractionCard>
   )

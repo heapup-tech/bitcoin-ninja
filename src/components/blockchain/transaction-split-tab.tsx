@@ -15,10 +15,14 @@ export default function TransactionSplitTab({
   hex?: string
 }) {
   let rawTx = hex || ''
-  const decodedTx = splitRawTransaction(rawTx)
+
+  let decodedTx
+  try {
+    decodedTx = splitRawTransaction(rawTx)
+  } catch (error) {}
 
   return (
-    <div className='mt-4'>
+    <div className='mt-4 '>
       <Tabs defaultValue='raw'>
         <TabsList className=''>
           <TabsTrigger value='raw'>Raw</TabsTrigger>
@@ -26,14 +30,18 @@ export default function TransactionSplitTab({
         </TabsList>
 
         <TabsContent value='raw'>
-          <TransactionHex hex={rawTx} />
+          {decodedTx ? <TransactionHex hex={rawTx} /> : <div>无效交易</div>}
         </TabsContent>
 
         <TabsContent value='split'>
-          <CodeBlock
-            language='json'
-            code={stringifySplitedTransaction(decodedTx)}
-          />
+          {decodedTx ? (
+            <CodeBlock
+              language='json'
+              code={stringifySplitedTransaction(decodedTx)}
+            />
+          ) : (
+            <div>无效交易</div>
+          )}
         </TabsContent>
       </Tabs>
       {txid && (

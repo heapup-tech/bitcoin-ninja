@@ -51,6 +51,7 @@ import ScriptStackSimulator from './blockchain/script-stack-simulator'
 import ScriptOpcodes from './blockchain/scripts/opcode'
 import ScriptAsmTab from './blockchain/scripts/script-asm-tab'
 import TaprootAddressGenerator from './blockchain/taproot-address-generator'
+import TransactionBuilder from './blockchain/transaction-builder'
 import TransactionFieldsTable from './blockchain/transaction-fields-table'
 import TransactionHex from './blockchain/transaction-hex'
 import TransactionInputFieldsTable from './blockchain/transaction-input-fields-table'
@@ -75,6 +76,7 @@ const components = {
   DeriveSubKey,
   MnemonicGenerator,
   BlockOverview,
+  TransactionBuilder,
   TransactionHex,
   TransactionSpliter,
   TransactionFieldsTable,
