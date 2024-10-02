@@ -26,10 +26,8 @@ import { GitHubLogoIcon } from '@radix-ui/react-icons'
 import { Info, Siren, Skull, TriangleAlert } from 'lucide-react'
 import Link from 'next/link'
 import React from 'react'
-import AsciiConverter from './blockchain/ascii-converter'
 import Base58AddressGenerator from './blockchain/base58-address-generator'
 import Bech32AddressGenerator from './blockchain/bech32-address-generator'
-import BitcoinChainTips from './blockchain/bitcoin-chaintips'
 import BitcoinOverview from './blockchain/bitcoin-overview'
 import BlockHex from './blockchain/block-hex'
 import BlockList from './blockchain/block-list'
@@ -37,29 +35,22 @@ import BlockOverview from './blockchain/block-overview'
 import BlockStructure from './blockchain/block-structure'
 import BlockSubsidyCalculator from './blockchain/block-subsidy-calculator'
 import BlockTransaction from './blockchain/block-transaction'
-import ConvertTargetToBits from './blockchain/convert-target-to-bits'
 import DeriveSubKey from './blockchain/derive-sub-key'
 import ExtendedKey from './blockchain/extended-key'
 import HalvingTable from './blockchain/halving-table'
 import Hash160Calculator from './blockchain/hash160-calculator'
 import Hash256Calculator from './blockchain/hash256-calculator'
-import LegacyRawTransactionBuilder from './blockchain/legacy-raw-transaction-builder'
 import MempoolOverview from './blockchain/mempool-overview'
-import MerkleRootCalculator from './blockchain/merkle-root-calculator'
 import MnemonicGenerator from './blockchain/mnemonic-generator'
 import NetworkHashps from './blockchain/network-hashps'
 import PrivateKeyGenerator from './blockchain/private-key-generator'
 import PublicKeyGenerator from './blockchain/public-key-generator'
-import ReorganisationCalculator from './blockchain/reorganisation-calculator'
 import ReplaceBlockPowerTable from './blockchain/replace-block-power-table'
 import RpcMethodTable from './blockchain/rpc-method-table'
-import ScriptConverter from './blockchain/script-converter'
 import ScriptStackSimulator from './blockchain/script-stack-simulator'
 import ScriptOpcodes from './blockchain/scripts/opcode'
 import ScriptAsmTab from './blockchain/scripts/script-asm-tab'
-import SegwitRawTransactionBuilder from './blockchain/segwit-raw-transaction-builder'
 import TaprootAddressGenerator from './blockchain/taproot-address-generator'
-import TargetCalculator from './blockchain/target-calculator'
 import TransactionFieldsTable from './blockchain/transaction-fields-table'
 import TransactionHex from './blockchain/transaction-hex'
 import TransactionInputFieldsTable from './blockchain/transaction-input-fields-table'
@@ -73,7 +64,6 @@ import ScaleableImage from './scaleable-image'
 
 const components = {
   BitcoinOverview,
-  BitcoinChainTips,
   BlockHeaderHex,
   BlockHex,
   BlockStructure,
@@ -85,8 +75,6 @@ const components = {
   DeriveSubKey,
   MnemonicGenerator,
   BlockOverview,
-  TargetCalculator,
-  ConvertTargetToBits,
   TransactionHex,
   TransactionSpliter,
   TransactionFieldsTable,
@@ -94,12 +82,8 @@ const components = {
   TransactionOutputFieldsTable,
   TransactionWitnessFieldsTable,
   TransactionSplitTab,
-  ScriptConverter,
-  AsciiConverter,
   HalvingTable,
-  ReorganisationCalculator,
   ReplaceBlockPowerTable,
-  MerkleRootCalculator,
   TransactionTxidCalculator,
   ScriptAsmTab,
   ScriptOpcodes,
@@ -110,8 +94,6 @@ const components = {
   Bech32AddressGenerator,
   TaprootAddressGenerator,
   WIFPrivateKeyGenerator,
-  LegacyRawTransactionBuilder,
-  SegwitRawTransactionBuilder,
   Hash256Calculator,
   Hash160Calculator,
   RpcMethodTable,

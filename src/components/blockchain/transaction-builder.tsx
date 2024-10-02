@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import InteractionCard from '../interaction-card'
 
-export default function SegwitRawTransactionBuilder() {
+export default function TransactionBuilder() {
   const [inputs, setInputs] = useState<TransactionInput[]>([])
   const [outputs, setOutputs] = useState<TransactionOutput[]>([])
   const [fee, setFee] = useState('0')
