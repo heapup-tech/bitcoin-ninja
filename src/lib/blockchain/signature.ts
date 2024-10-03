@@ -1,8 +1,10 @@
 import ecc from '@bitcoinerlab/secp256k1'
-import { script, Transaction } from 'bitcoinjs-lib'
+import { initEccLib, script, Transaction } from 'bitcoinjs-lib'
 import { ECPairFactory } from 'ecpair'
 import { compileP2PKH, isP2TR, isP2WPKH, isP2WSH } from './script-utils'
 const ECPair = ECPairFactory(ecc)
+
+initEccLib(ecc)
 
 export const checkSig = (
   pubkey: string,

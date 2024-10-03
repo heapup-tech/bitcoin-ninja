@@ -1,3 +1,5 @@
+import { GETCOLORS, GETHOVERBGCOLORS } from '@/lib/constants'
+import { cn } from '@/lib/utils'
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip'
 
 export default function BlockHex({ hex }: { hex: string }) {
@@ -15,7 +17,7 @@ export default function BlockHex({ hex }: { hex: string }) {
       <Tooltip>
         <TooltipTrigger
           asChild
-          className='text-red-500 hover:bg-red-200 hover:cursor-pointer'
+          className={cn(GETCOLORS(0), GETHOVERBGCOLORS(0))}
         >
           <span>{version}</span>
         </TooltipTrigger>
@@ -26,7 +28,7 @@ export default function BlockHex({ hex }: { hex: string }) {
       <Tooltip>
         <TooltipTrigger
           asChild
-          className='text-orange-500 hover:bg-orange-200 hover:cursor-pointer'
+          className={cn(GETCOLORS(1), GETHOVERBGCOLORS(1))}
         >
           <span>{previousBlockHash}</span>
         </TooltipTrigger>
@@ -37,7 +39,7 @@ export default function BlockHex({ hex }: { hex: string }) {
       <Tooltip>
         <TooltipTrigger
           asChild
-          className='text-lime-500 hover:bg-lime-200 hover:cursor-pointer'
+          className={cn(GETCOLORS(2), GETHOVERBGCOLORS(2))}
         >
           <span>{merkleRoot}</span>
         </TooltipTrigger>
@@ -48,7 +50,7 @@ export default function BlockHex({ hex }: { hex: string }) {
       <Tooltip>
         <TooltipTrigger
           asChild
-          className='text-green-500 hover:bg-green-200 hover:cursor-pointer'
+          className={cn(GETCOLORS(3), GETHOVERBGCOLORS(3))}
         >
           <span>{time}</span>
         </TooltipTrigger>
@@ -59,7 +61,7 @@ export default function BlockHex({ hex }: { hex: string }) {
       <Tooltip>
         <TooltipTrigger
           asChild
-          className='text-cyan-500 hover:bg-cyan-200 hover:cursor-pointer'
+          className={cn(GETCOLORS(4), GETHOVERBGCOLORS(4))}
         >
           <span>{bits}</span>
         </TooltipTrigger>
@@ -70,7 +72,7 @@ export default function BlockHex({ hex }: { hex: string }) {
       <Tooltip>
         <TooltipTrigger
           asChild
-          className='text-indigo-500 hover:bg-indigo-200 hover:cursor-pointer'
+          className={cn(GETCOLORS(5), GETHOVERBGCOLORS(5))}
         >
           <span>{nonce}</span>
         </TooltipTrigger>
@@ -81,7 +83,7 @@ export default function BlockHex({ hex }: { hex: string }) {
       <Tooltip>
         <TooltipTrigger
           asChild
-          className='text-fuchsia-500 hover:bg-fuchsia-200 hover:cursor-pointer'
+          className={cn(GETCOLORS(6), GETHOVERBGCOLORS(6))}
         >
           <span>{transactionCount}</span>
         </TooltipTrigger>
@@ -92,7 +94,7 @@ export default function BlockHex({ hex }: { hex: string }) {
       <Tooltip>
         <TooltipTrigger
           asChild
-          className='text-teal-500 hover:bg-teal-200 hover:cursor-pointer'
+          className={cn(GETCOLORS(7), GETHOVERBGCOLORS(7))}
         >
           <span>{transactions}</span>
         </TooltipTrigger>

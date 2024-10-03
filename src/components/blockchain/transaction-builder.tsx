@@ -4,6 +4,8 @@ import {
   decimalToCompactHex,
   decimalToFixedByteHex
 } from '@/lib/blockchain/bytes'
+import { networks } from 'bitcoinjs-lib'
+import { toOutputScript } from 'bitcoinjs-lib/src/address'
 import { CircleMinus, CirclePlus } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
@@ -20,18 +22,26 @@ import {
   SelectTrigger,
   SelectValue
 } from '../ui/select'
+import { Textarea } from '../ui/textarea'
 import TransactionSplitTab from './transaction-split-tab'
 
 export default function TransactionBuilder() {
   const [version, setVersion] = useState('01000000')
   const [isSegwit, setIsSegwit] = useState(false)
-  const [inputs, setInputs] = useState<TransactionInput[]>([
+  const [inputs, setInputs] = useState<
+    Array<
+      TransactionInput & {
+        scriptPubKey: string
+      }
+    >
+  >([
     {
       txid: 'e4f7440ca6a59764064ab663f396e9cd0ccff96d6b7ecd368340d3cdc5f02303',
       vout: '0',
       sequence: 'ffffffff',
       scriptSigSize: '00',
-      scriptSig: ''
+      scriptSig: '',
+      scriptPubKey: '76a914c189d7f7ea4333daec66a645cb3388163c22900b88ac'
     }
   ])
 
@@ -41,7 +51,15 @@ export default function TransactionBuilder() {
         recipient: string
       }
     >
-  >([])
+  >([
+    {
+      amount: '100',
+      scriptPubKeySize: '0',
+      scriptPubKey: 'ffffffff',
+      recipient:
+        'tb1pkgzf5mvgg46la90rljh2akhya3874mxvcv8669t0z2frw57qj48qa5x5y6'
+    }
+  ])
 
   const [rawTransaction, setRawTransaction] = useState('')
 
@@ -63,21 +81,39 @@ export default function TransactionBuilder() {
     }
     rawTransaction += decimalToCompactHex(inputs.length)
     inputs.forEach((input) => {
+      // txid
       rawTransaction += toHex(
         Uint8Array.from(Buffer.from(input.txid, 'hex')).reverse()
       )
+      // vout
       rawTransaction += decimalToFixedByteHex(Number(input.vout), 4, true)
-      rawTransaction += decimalToCompactHex(input.scriptSig.length / 2)
-      rawTransaction += input.scriptSig
+      // scriptSigSize
+      rawTransaction += decimalToCompactHex(input.scriptPubKey.length / 2)
+      // scriptSig
+      rawTransaction += input.scriptPubKey
+      // sequence
       rawTransaction += input.sequence
     })
 
     rawTransaction += decimalToCompactHex(outputs.length)
-    outputs.forEach((output) => {
-      rawTransaction += decimalToFixedByteHex(Number(output.amount), 8, true)
-      rawTransaction += decimalToCompactHex(output.scriptPubKey.length / 2)
-      rawTransaction += output.scriptPubKey
-    })
+
+    try {
+      outputs.forEach((output) => {
+        // amount
+        rawTransaction += decimalToFixedByteHex(Number(output.amount), 8, true)
+
+        let script: Buffer = Buffer.from('')
+        if (output.recipient) {
+          script = toOutputScript(output.recipient, networks.testnet)
+        }
+
+        // scriptPubKeySize
+        rawTransaction += decimalToCompactHex(script.length)
+
+        // scriptPubKey
+        rawTransaction += toHex(script)
+      })
+    } catch (error) {}
 
     rawTransaction += '00000000'
 
@@ -85,7 +121,7 @@ export default function TransactionBuilder() {
   }
 
   return (
-    <InteractionCard title='交易构造器'>
+    <InteractionCard title='未签名交易构造器'>
       <div className='flex items-center space-x-2'>
         <Checkbox
           id='tx_type'
@@ -126,10 +162,11 @@ export default function TransactionBuilder() {
                 ...inputs,
                 {
                   txid: '',
-                  vout: '',
+                  vout: '0',
                   sequence: 'ffffffff',
                   scriptSigSize: '00',
-                  scriptSig: ''
+                  scriptSig: '',
+                  scriptPubKey: ''
                 }
               ])
             }}
@@ -141,30 +178,45 @@ export default function TransactionBuilder() {
         <div className='flex-col space-y-2'>
           {inputs.map((input, index) => (
             <div
-              key={index}
-              className='flex items-center space-x-2'
+              key={input.txid + index}
+              className='flex items-center space-x-2 border p-2 rounded-lg bg-background'
             >
-              <Input
-                className='bg-background'
-                placeholder='交易ID'
-                value={input.txid}
-                onChange={(e) => {
-                  const newInputs = [...inputs]
-                  newInputs[index].txid = e.target.value
-                  setInputs(newInputs)
-                }}
-              ></Input>
-              <Input
-                className='bg-background w-40'
-                placeholder='输出索引'
-                type='number'
-                value={input.vout}
-                onChange={(e) => {
-                  const newInputs = [...inputs]
-                  newInputs[index].vout = e.target.value
-                  setInputs(newInputs)
-                }}
-              ></Input>
+              <div className='flex flex-col flex-1'>
+                <div className='flex items-center gap-x-4'>
+                  <Input
+                    className='bg-background'
+                    placeholder='交易ID'
+                    value={input.txid}
+                    onChange={(e) => {
+                      const newInputs = [...inputs]
+                      newInputs[index].txid = e.target.value
+                      setInputs(newInputs)
+                    }}
+                  />
+                  <Input
+                    className='bg-background w-40'
+                    placeholder='输出索引'
+                    type='number'
+                    value={input.vout}
+                    onChange={(e) => {
+                      const newInputs = [...inputs]
+                      newInputs[index].vout = e.target.value
+                      setInputs(newInputs)
+                    }}
+                  />
+                </div>
+
+                <Textarea
+                  className='bg-background mt-2'
+                  placeholder='ScriptPubKey'
+                  value={input.scriptPubKey}
+                  onChange={(e) => {
+                    const newInputs = [...inputs]
+                    newInputs[index].scriptPubKey = e.target.value
+                    setInputs(newInputs)
+                  }}
+                />
+              </div>
 
               <Button
                 size='sm'
@@ -214,7 +266,7 @@ export default function TransactionBuilder() {
         <div className='flex-col space-y-2'>
           {outputs.map((output, index) => (
             <div
-              key={index}
+              key={output.recipient + index}
               className='flex items-center space-x-2'
             >
               <Input
@@ -229,8 +281,9 @@ export default function TransactionBuilder() {
               ></Input>
               <Input
                 className='bg-background w-40'
-                placeholder='输出金额'
+                placeholder='输出金额(聪)'
                 value={output.amount}
+                type='number'
                 onChange={(e) => {
                   const newOutputs = [...outputs]
                   newOutputs[index].amount = e.target.value
@@ -243,10 +296,10 @@ export default function TransactionBuilder() {
                 className='p-0 h-auto ml-2 text-primary'
                 variant='ghost'
                 onClick={() => {
-                  if (inputs.length === 1) {
-                    toast.error('至少保留一个输入')
+                  if (outputs.length === 1) {
+                    toast.error('至少保留一个输出')
                   } else {
-                    setInputs(inputs.filter((_, i) => i !== index))
+                    setOutputs(outputs.filter((_, i) => i !== index))
                   }
                 }}
               >

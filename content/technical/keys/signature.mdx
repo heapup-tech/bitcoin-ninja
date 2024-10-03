@@ -6,7 +6,33 @@ title: 签名
 
 ## 未签名交易
 
+- 交易输入, 来自于另一笔交易的输出的 `UTXO`
+
+  - `txid` - 交易哈希, 花费的 `UTXO` 所在的交易哈希
+  - `vout` - 交易输出索引
+  - `scriptSigSize` - `scriptSig` 的字节长度
+  - `scriptSig` - 未签名交易中, 暂时替换为要花费的 `UTXO` 的锁定脚本, 即 `scriptPubKey`
+
+- 交易输出
+
+  - `amount` - 输出的聪的数量
+  - `scriptPubKeySize` - `scriptPubKey` 的字节长度
+  - `scriptPubKey` - 根据接收地址生成的锁定脚本, 例如接收地址是 `P2PKH` 类型, 则锁定脚本是 <br /> `OP_DUP OP_HASH160 <pubKeyHash> OP_EQUALVERIFY OP_CHECKSIG`
+
 <TransactionBuilder />
+
+最后对未签名交易末尾添加哈希类型, 哈希类型是一个字节, 用于指定签名的类型, 有以下几种类型:
+
+- `SIGHASH_ALL` - 签名所有输入和输出, 值为 `0x01`
+- `SIGHASH_NONE` - 签名所有输入, 但不签名输出, 值为 `0x02`
+- `SIGHASH_SINGLE` - 签名所有输入, 但只签名对应的输出, 值为 `0x03`
+- `SIGHASH_ANYONECANPAY` - 只签名当前输入, 不签名其他输入和输出, 值为 `0x80`
+
+<TransactionSplitTab
+  hex='02000000010323f0c5cdd3408336cd7e6b6df9cf0ccde996f363b64a066497a5a60c44f7e4000000001976a914c189d7f7ea4333daec66a645cb3388163c22900b88acffffffff016400000000000000225120b2049a6d884575fe95e3fcaeaedae4ec4feaecccc30fad156f12923753c0954e0000000001000000'
+  txid='e4f7440ca6a59764064ab663f396e9cd0ccff96d6b7ecd368340d3cdc5f02303'
+  isTestnet={true}
+/>
 
 <TransactionSplitTab
   hex='020000000001011b2ffe749d2333c5dbcbe9b812e1aef49cb6e0f0143151f1b44c5d0f20b13ca00100000000fdffffff02a0860100000000001976a914c189d7f7ea4333daec66a645cb3388163c22900b88ac67360a0000000000225120b494169f485231b6f428d3ce782cdaccc6b6bfd5d1a45802b62848d1b74c04f1014060269c7979be5a482056745ec5d51b5292cbc7e329cf7b932db67287e04ab7366ba50b747d83ee2e563ef8b9b4dbeb277fe81c093be1641254a866cba70cbbf500000000'
