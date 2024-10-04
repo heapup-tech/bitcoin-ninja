@@ -50,8 +50,8 @@ import RpcMethodTable from './blockchain/rpc-method-table'
 import ScriptStackSimulator from './blockchain/script-stack-simulator'
 import ScriptOpcodes from './blockchain/scripts/opcode'
 import ScriptAsmTab from './blockchain/scripts/script-asm-tab'
+import SignedTransactionBuilder from './blockchain/signed-transaction-builder'
 import TaprootAddressGenerator from './blockchain/taproot-address-generator'
-import TransactionBuilder from './blockchain/transaction-builder'
 import TransactionFieldsTable from './blockchain/transaction-fields-table'
 import TransactionHex from './blockchain/transaction-hex'
 import TransactionInputFieldsTable from './blockchain/transaction-input-fields-table'
@@ -60,6 +60,7 @@ import TransactionSplitTab from './blockchain/transaction-split-tab'
 import TransactionSpliter from './blockchain/transaction-spliter'
 import TransactionTxidCalculator from './blockchain/transaction-txid-calculator'
 import TransactionWitnessFieldsTable from './blockchain/transaction-witness-fields-table'
+import UnSignTransactionBuilder from './blockchain/unsign-transaction-builder'
 import WIFPrivateKeyGenerator from './blockchain/wif-private-key-generator'
 import ScaleableImage from './scaleable-image'
 
@@ -76,7 +77,8 @@ const components = {
   DeriveSubKey,
   MnemonicGenerator,
   BlockOverview,
-  TransactionBuilder,
+  UnSignTransactionBuilder,
+  SignedTransactionBuilder,
   TransactionHex,
   TransactionSpliter,
   TransactionFieldsTable,

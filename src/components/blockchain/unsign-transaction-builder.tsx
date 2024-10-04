@@ -25,7 +25,7 @@ import {
 import { Textarea } from '../ui/textarea'
 import TransactionSplitTab from './transaction-split-tab'
 
-export default function TransactionBuilder() {
+export default function UnSignTransactionBuilder() {
   const [version, setVersion] = useState('01000000')
   const [isSegwit, setIsSegwit] = useState(false)
   const [inputs, setInputs] = useState<
@@ -64,6 +64,7 @@ export default function TransactionBuilder() {
   const [rawTransaction, setRawTransaction] = useState('')
 
   useEffect(() => {
+    if (isSegwit) setVersion('02000000')
     buildTransaction()
   }, [isSegwit, version, inputs, outputs])
 
@@ -114,6 +115,10 @@ export default function TransactionBuilder() {
         rawTransaction += toHex(script)
       })
     } catch (error) {}
+
+    if (isSegwit) {
+      rawTransaction += '00'
+    }
 
     rawTransaction += '00000000'
 
