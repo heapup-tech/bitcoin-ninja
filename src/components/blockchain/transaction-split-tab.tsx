@@ -26,7 +26,7 @@ export default function TransactionSplitTab({
   return (
     <div className='mt-4 '>
       <Tabs defaultValue='raw'>
-        <TabsList className=''>
+        <TabsList>
           <TabsTrigger value='raw'>Raw</TabsTrigger>
           <TabsTrigger value='split'>Split</TabsTrigger>
         </TabsList>
@@ -58,7 +58,7 @@ export default function TransactionSplitTab({
         <div className='text-xs mt-1'>
           交易ID:{' '}
           <Link
-            href={`https://mempool.space${isTestnet && '/testnet'}/tx/${txid}`}
+            href={`https://mempool.space${isTestnet ? '/testnet' : ''}/tx/${txid}`}
             target='_blank'
             className='underline text-primary'
           >

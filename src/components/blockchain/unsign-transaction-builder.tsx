@@ -42,6 +42,14 @@ export default function UnSignTransactionBuilder() {
       scriptSigSize: '00',
       scriptSig: '',
       scriptPubKey: '76a914c189d7f7ea4333daec66a645cb3388163c22900b88ac'
+    },
+    {
+      txid: 'eea092f5d411a7d35344a21b3e7735dac8e5a804af44fc8b02594f4d80d0cf24',
+      vout: '0',
+      sequence: 'ffffffff',
+      scriptSigSize: '00',
+      scriptSig: '',
+      scriptPubKey: '76a914c189d7f7ea4333daec66a645cb3388163c22900b88ac'
     }
   ])
 

@@ -1,6 +1,6 @@
 import { splitRawTransaction } from '@/lib/blockchain/transaction'
 import { GETCOLORS, GETHOVERBGCOLORS } from '@/lib/constants'
-import { cn } from '@/lib/utils'
+import { cn, random } from '@/lib/utils'
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip'
 
 export default function TransactionHex({ hex }: { hex: string }) {
@@ -76,7 +76,7 @@ export default function TransactionHex({ hex }: { hex: string }) {
 
       {tx.inputs.map((input, index) => (
         <span
-          key={input.scriptSig}
+          key={input.scriptSig + random({ max: 1000 })}
           className={cn(GETCOLORS(4), 'hover:cursor-pointer')}
         >
           <Tooltip>
