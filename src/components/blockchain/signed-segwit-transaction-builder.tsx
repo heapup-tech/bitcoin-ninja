@@ -17,7 +17,7 @@ interface SignTransactionProps {
   hex: string // unsigned transaction hex
 }
 
-export default function SignedTransactionBuilder({
+export default function SignedSegwitTransactionBuilder({
   hex
 }: SignTransactionProps) {
   const [privateKey, setPrivateKey] = useState(

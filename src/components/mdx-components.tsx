@@ -50,6 +50,7 @@ import RpcMethodTable from './blockchain/rpc-method-table'
 import ScriptStackSimulator from './blockchain/script-stack-simulator'
 import ScriptOpcodes from './blockchain/scripts/opcode'
 import ScriptAsmTab from './blockchain/scripts/script-asm-tab'
+import SignedSegwitTransactionBuilder from './blockchain/signed-segwit-transaction-builder'
 import SignedTransactionBuilder from './blockchain/signed-transaction-builder'
 import TaprootAddressGenerator from './blockchain/taproot-address-generator'
 import TransactionFieldsTable from './blockchain/transaction-fields-table'
@@ -79,6 +80,7 @@ const components = {
   BlockOverview,
   UnSignTransactionBuilder,
   SignedTransactionBuilder,
+  SignedSegwitTransactionBuilder,
   TransactionHex,
   TransactionSpliter,
   TransactionFieldsTable,

@@ -15,7 +15,7 @@ title: 签名
   - `txid` - 要花费的 `UTXO` 来自于哪个交易ID
   - `vout` - 要花费的 `UTXO` 来自于交易输出的哪个索引号
   - `scriptSigSize` - `scriptSig` 的字节长度
-  - `scriptSig` - 解锁脚本。签名时, 需要暂时替换为要花费的 `UTXO` 的锁定脚本。
+  - `scriptSig` - 解锁脚本。未签名时, 需要暂时替换为要花费的 `UTXO` 的锁定脚本。
   - `sequence` - 设置交易是否可以替换或何时可以挖掘
 
 - 交易输出
@@ -28,38 +28,129 @@ title: 签名
 
 ## 签名
 
+### 非隔离见证
+
+非隔离见证交易的签名数据存储在 `scriptSig` 字段中。
+
 交易签名数据针对的是特定的交易输入, 对某个输入签名的过程如下:
 
-- 当前需要签名的交易输入的 `ScriptSig` 字段临时替换为要花费的 `UTXO` 的 `scriptPubKey` 字段, 其他交易输入的 `scriptSig` 字段保持为空
+- 当前需要签名的交易输入的 `scriptSig` 字段临时替换为要花费的 `UTXO` 的 `scriptPubKey` 字段, 其他交易输入的 `scriptSig` 字段保持为空
 
-- 未签名交易末尾添加哈希类型 `sighash`, 为小端序 4 字节数据, 用于指定签名的数据:
-
-  - `SIGHASH_ALL` - 签名所有输入和输出, 值为 `0x01`
-  - `SIGHASH_NONE` - 签名所有输入, 但不签名输出, 值为 `0x02`
-  - `SIGHASH_SINGLE` - 签名所有输入, 但只签名对应的输出, 值为 `0x03`
-  - `SIGHASH_ANYONECANPAY` - 只签名当前输入, 不签名其他输入和输出, 值为 `0x80`
+- 未签名交易末尾添加哈希类型 `sighash`, 为小端序 4 字节数据, 用于指定签名的数据
 
 - 对整个交易进行 `Hash256` 计算, 并生成 `ECDSA` 签名数据
 
 - 将签名数据 `DER` 编码后生成最后签名数据
 
-- 根据花费的 `UTXO` 锁定脚本类型, 生成解锁脚本。
+- 根据花费的 `UTXO` 锁定脚本类型, 生成解锁脚本放在 `scriptSig` 字段中
 
-### 替换 ScriptSig
+<SignedTransactionBuilder hex='02000000020323f0c5cdd3408336cd7e6b6df9cf0ccde996f363b64a066497a5a60c44f7e4000000001976a914c189d7f7ea4333daec66a645cb3388163c22900b88acffffffff24cfd0804d4f59028bfc44af04a8e5c8da35773e1ba24453d3a711d4f592a0ee000000001976a914c189d7f7ea4333daec66a645cb3388163c22900b88acffffffff016400000000000000225120b2049a6d884575fe95e3fcaeaedae4ec4feaecccc30fad156f12923753c0954e00000000' />
 
-### 添加哈希类型
+#### 替换 ScriptSig
 
-### 计算签名
+将要签名的交易输入的 `scriptSig` 字段替换为要花费的 `UTXO` 的 `scriptPubKey` 字段, 并且将其他交易输入的 `scriptSig` 字段保持为空。
 
-### DER 编码
+相应的交易输入的 `scriptSigSize` 也需要同步更新。
 
-### 生成签名数据
+#### 添加哈希类型
 
-<SignedTransactionBuilder hex='02000000010323f0c5cdd3408336cd7e6b6df9cf0ccde996f363b64a066497a5a60c44f7e4000000001976a914c189d7f7ea4333daec66a645cb3388163c22900b88acffffffff016400000000000000225120b2049a6d884575fe95e3fcaeaedae4ec4feaecccc30fad156f12923753c0954e0000000001000000' />
+对上一步生成的交易数据的末尾添加哈希类型 `sighash`, 为小端序 4 字节数据, 用于指定签名的数据。
 
-首先判断是否是 P2TR 锁定。
+- `SIGHASH_ALL` - 签名所有输入和输出, 值为 `0x01`
+- `SIGHASH_NONE` - 签名所有输入, 但不签名输出, 值为 `0x02`
+- `SIGHASH_SINGLE` - 签名所有输入, 但只签名对应的输出, 值为 `0x03`
+- `SIGHASH_ANYONECANPAY` - 只签名当前输入, 不签名其他输入和输出, 值为 `0x80`
 
-<TransactionFieldsTable />
+#### 计算签名
+
+对上一步生成的交易数据进行 `Hash256` 计算, 并将运算结果作为 `ECDSA` 签名消息, 使用私钥对消息进行签名, 得到 `r` 和 `s`。
+
+```ts
+import ecc from '@bitcoinerlab/secp256k1'
+import ECPairFactory from 'ecpair'
+import { hash256 } from 'bitcoinjs-lib/src/crypto'
+
+const ECPair = ECPairFactory(ecc)
+
+const keypair = ECPair.fromPrivateKey(Buffer.from(privateKey, 'hex'))
+const hashedTransaction = hash256(Buffer.from(waitingForSignTx, 'hex'))
+
+const ecdsaSignature = keypair.sign(hashedTransaction)
+```
+
+`ECDSA` 签名结果是一个 `64` 字节的数据, 前 `32` 字节是 `r`, 后 `32` 字节是 `s`。
+
+验证时通过公钥和签名数据计算得到的 `r` 是否与签名数据中的 `r` 相同, 若相同则签名有效。
+
+因此实际的交易中, 凡是用到 `ECDSA` 签名的脚本, 都需要提供公钥。
+
+例如:
+
+- `P2PK` 将公钥存储在锁定脚本中, 解锁脚本只需要包含签名数据
+- `P2PKH` 和 `P2WPKH` 将公钥和签名数据都放在解锁脚本中
+- `P2MS` 将多签用到的公钥都放在了锁定脚本中
+
+而 `P2TR` 使用 `Schnorr` 签名, 并不需要提供原始公钥, 但需要 `Taproot` 公钥。
+
+#### DER 编码
+
+`ECDSA` 签名数据需要进行 `DER` 编码, 生成最终的签名数据。
+
+假设 `ECDSA` 签名数据是:
+
+```ts
+039d8fcf8bd43c2eba1ca16ad2512e33892994745220464164dd7550886a4f961d056caebb71ab54aedf29143b6416a5e482d3d840c0dab48abbd34efef53032
+
+r=039d8fcf8bd43c2eba1ca16ad2512e33892994745220464164dd7550886a4f96
+s=1d056caebb71ab54aedf29143b6416a5e482d3d840c0dab48abbd34efef53032
+```
+
+- 在 `r` 和 `s` 前添加类型字节 `0x02` (表示整数) 和长度字节 `0x20`
+
+```text
+r:
+02 20 039d8fcf8bd43c2eba1ca16ad2512e33892994745220464164dd7550886a4f96
+
+s:
+02 20 1d056caebb71ab54aedf29143b6416a5e482d3d840c0dab48abbd34efef53032
+
+```
+
+- 组合 `r` 和 `s` 后并在前添加整体长度字节 `0x44` 和 标识符字节 `0x30`
+
+```text
+30440220039d8fcf8bd43c2eba1ca16ad2512e33892994745220464164dd7550886a4f9602201d056caebb71ab54aedf29143b6416a5e482d3d840c0dab48abbd34efef53032
+```
+
+- 末尾添加签名使用的哈希类型
+
+```text
+30440220039d8fcf8bd43c2eba1ca16ad2512e33892994745220464164dd7550886a4f9602201d056caebb71ab54aedf29143b6416a5e482d3d840c0dab48abbd34efef5303201
+```
+
+最终的签名数据大小为 71 字节
+
+#### 解锁脚本
+
+根据要花费的 `UTXO` 的锁定脚本类型, 生成解锁脚本放在 `scriptSig` 字段中。
+
+例如要花费的 `UTXO` 是 `P2PKH` 类型, 则解锁脚本格式为:
+
+```text
+OP_PUSHBYTES_71 <签名数据> OP_PUSHBYTES_33 <公钥>
+```
+
+最后将 `scriptSig` 字段替换为解锁脚本。
+
+### 隔离见证 V0
+
+隔离见证交易的签名数据存储在 `witness` 字段中, 和交易输入一一对应。
+
+[BIP143](https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki) 定义了隔离见证交易的签名规则。
+
+<SignedSegwitTransactionBuilder />
+
+### 隔离见证 V1
 
 ## DER 编码
 
