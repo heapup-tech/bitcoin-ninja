@@ -3,6 +3,7 @@ import {
   splitRawTransaction,
   stringifySplitedTransaction
 } from '@/lib/blockchain/transaction'
+import { cn } from '@/lib/utils'
 import Link from 'next/link'
 import CodeBlock from '../code-block'
 import TransactionHex from './transaction-hex'
@@ -10,21 +11,25 @@ import TransactionHex from './transaction-hex'
 export default function TransactionSplitTab({
   txid,
   hex,
-  isTestnet = false
+  isTestnet = false,
+  className = ''
 }: {
   txid?: string
   hex?: string
   isTestnet?: boolean
+  className?: string
 }) {
   let rawTx = hex || ''
 
   let decodedTx
   try {
     decodedTx = splitRawTransaction(rawTx)
-  } catch (error) {}
+  } catch (error) {
+    console.log(error)
+  }
 
   return (
-    <div className='mt-4 '>
+    <div className={cn('mt-4', className)}>
       <Tabs defaultValue='raw'>
         <TabsList>
           <TabsTrigger value='raw'>Raw</TabsTrigger>

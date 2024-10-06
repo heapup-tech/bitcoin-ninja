@@ -125,7 +125,9 @@ export default function UnSignTransactionBuilder() {
     } catch (error) {}
 
     if (isSegwit) {
-      rawTransaction += '00'
+      inputs.forEach(() => {
+        rawTransaction += '00'
+      })
     }
 
     rawTransaction += '00000000'

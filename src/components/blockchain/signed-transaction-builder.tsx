@@ -8,6 +8,7 @@ import { toHex } from 'uint8array-tools'
 import ContentCard from '../content-card'
 import InteractionCard from '../interaction-card'
 import { Input } from '../ui/input'
+import { Label } from '../ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs'
 import { Textarea } from '../ui/textarea'
 import TransactionSplitTab from './transaction-split-tab'
@@ -53,8 +54,6 @@ export default function SignedTransactionBuilder({
 
   const signTx = () => {
     if (!unsignedTransaction) return
-
-    console.log('signing tx: ', signInputIndex)
 
     const keypair = ECPair.fromPrivateKey(Buffer.from(privateKey, 'hex'))
 
@@ -119,7 +118,7 @@ export default function SignedTransactionBuilder({
                 value={index + ''}
                 className='w-full'
               >
-                {index}
+                Input {index}
               </TabsTrigger>
             ))}
           </TabsList>
@@ -127,9 +126,13 @@ export default function SignedTransactionBuilder({
           {unsignedTransaction.ins.map((input, index) => (
             <TabsContent
               value={index + ''}
-              key={index}
+              key={toHex(input.hash) + index}
             >
-              <TransactionSplitTab hex={unsignedTransactionForInput?.toHex()} />
+              <Label className='relative mb-3'>未签名交易</Label>
+              <TransactionSplitTab
+                hex={unsignedTransactionForInput?.toHex()}
+                className='mt-0.5'
+              />
               <ContentCard
                 title='Hash256'
                 content={hashedTransaction}

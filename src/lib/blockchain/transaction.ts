@@ -24,9 +24,9 @@ export const splitRawTransaction = (hex: string) => {
   let flag = hex.slice(offset, offset + 2)
   offset += 2
 
-  let hasWitnesses = false
+  let isWitness = false
   if (marker === '00' && flag === '01') {
-    hasWitnesses = true
+    isWitness = true
     tx.marker = marker
     tx.flag = flag
   } else {
@@ -34,6 +34,7 @@ export const splitRawTransaction = (hex: string) => {
   }
 
   const inputCountCompact = parserCompactSize(hex, offset)
+
   tx.inputCount = inputCountCompact.section
   offset = inputCountCompact.offset
 
@@ -93,7 +94,7 @@ export const splitRawTransaction = (hex: string) => {
     })
   }
 
-  if (hasWitnesses) {
+  if (isWitness) {
     tx.witness = []
     for (let i = 0; i < inputCountCompact.numberValue; i++) {
       const stackItemsCompact = parserCompactSize(hex, offset)
@@ -129,11 +130,11 @@ export const splitRawTransaction = (hex: string) => {
   tx.lockTime = hex.slice(offset, offset + 8)
   offset += 8
 
-  if (offset !== hex.length) {
-    throw new Error(
-      'Transaction parsing error: offset does not match hex length'
-    )
-  }
+  // if (offset !== hex.length) {
+  //   throw new Error(
+  //     'Transaction parsing error: offset does not match hex length'
+  //   )
+  // }
 
   return tx
 }

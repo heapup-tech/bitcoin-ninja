@@ -2,53 +2,66 @@
 title: 签名
 ---
 
-比特币中的签名数据是通过私钥对交易数据进行签名生成的。目的是为了在脚本执行时, 通过类似 `OP_CHECKSIG` 操作码的检查, 以打开 `UTXO` 锁。
+比特币中的签名数据是通过私钥对交易数据进行 `ECDSA` 或 `Schnorr` 签名生成的, 签名数据被放置在交易的 `scriptSig` 或 `witness` 字段中。目的是为了在脚本执行时, 通过 `OP_CHECKSIG` 等操作码的检查, 以确认是否可以花费该 `UTXO`。
+
+交易的签名针对的是特定的交易输入, 多个交易输入需要多个签名。
 
 ## 未签名交易
 
-- 交易输入, 来自于另一笔交易的输出的 `UTXO`
+构造未签名交易时, 需要提供:
 
-  - `txid` - 交易哈希, 花费的 `UTXO` 所在的交易哈希
-  - `vout` - 交易输出索引
+- 交易输入
+
+  - `txid` - 要花费的 `UTXO` 来自于哪个交易ID
+  - `vout` - 要花费的 `UTXO` 来自于交易输出的哪个索引号
   - `scriptSigSize` - `scriptSig` 的字节长度
-  - `scriptSig` - 未签名交易中, 暂时替换为要花费的 `UTXO` 的锁定脚本, 即 `scriptPubKey`
+  - `scriptSig` - 解锁脚本。签名时, 需要暂时替换为要花费的 `UTXO` 的锁定脚本。
+  - `sequence` - 设置交易是否可以替换或何时可以挖掘
 
 - 交易输出
 
   - `amount` - 输出的聪的数量
   - `scriptPubKeySize` - `scriptPubKey` 的字节长度
-  - `scriptPubKey` - 根据接收地址生成的锁定脚本, 例如接收地址是 `P2PKH` 类型, 则锁定脚本是 <br /> `OP_DUP OP_HASH160 <pubKeyHash> OP_EQUALVERIFY OP_CHECKSIG`
-
-1. 将交易输入中的 `scriptSig` 替换为 `scriptPubKey`, 生成未签名交易。
-2. 对未签名交易末尾添加哈希类型 `sighash`, 为小端序 4 字节数据, 用于指定签名的数据。
+  - `scriptPubKey` - 锁定脚本。根据接收地址生成的锁定脚本, 例如接收地址是 `P2PKH` 类型, 则锁定脚本格式则为:
 
 <UnSignTransactionBuilder />
 
-<TransactionSplitTab
-  hex='02000000020323f0c5cdd3408336cd7e6b6df9cf0ccde996f363b64a066497a5a60c44f7e40000000000ffffffff24cfd0804d4f59028bfc44af04a8e5c8da35773e1ba24453d3a711d4f592a0ee000000001976a914c189d7f7ea4333daec66a645cb3388163c22900b88acffffffff016400000000000000225120b2049a6d884575fe95e3fcaeaedae4ec4feaecccc30fad156f12923753c0954e00000000'
-  txid='e4f7440ca6a59764064ab663f396e9cd0ccff96d6b7ecd368340d3cdc5f02303'
-/>
+## 签名
 
-最后对未签名交易末尾添加哈希类型 `sighash`, 为小端序 4 字节数据, 用于指定签名的数据, 有以下几种类型:
+交易签名数据针对的是特定的交易输入, 对某个输入签名的过程如下:
 
-- `SIGHASH_ALL` - 签名所有输入和输出, 值为 `0x01`
-- `SIGHASH_NONE` - 签名所有输入, 但不签名输出, 值为 `0x02`
-- `SIGHASH_SINGLE` - 签名所有输入, 但只签名对应的输出, 值为 `0x03`
-- `SIGHASH_ANYONECANPAY` - 只签名当前输入, 不签名其他输入和输出, 值为 `0x80`
+- 当前需要签名的交易输入的 `ScriptSig` 字段临时替换为要花费的 `UTXO` 的 `scriptPubKey` 字段, 其他交易输入的 `scriptSig` 字段保持为空
 
-```text
-02000000010323f0c5cdd3408336cd7e6b6df9cf0ccde996f363b64a066497a5a60c44f7e4000000001976a914c189d7f7ea4333daec66a645cb3388163c22900b88acffffffff016400000000000000225120b2049a6d884575fe95e3fcaeaedae4ec4feaecccc30fad156f12923753c0954e0000000001000000
-```
+- 未签名交易末尾添加哈希类型 `sighash`, 为小端序 4 字节数据, 用于指定签名的数据:
+
+  - `SIGHASH_ALL` - 签名所有输入和输出, 值为 `0x01`
+  - `SIGHASH_NONE` - 签名所有输入, 但不签名输出, 值为 `0x02`
+  - `SIGHASH_SINGLE` - 签名所有输入, 但只签名对应的输出, 值为 `0x03`
+  - `SIGHASH_ANYONECANPAY` - 只签名当前输入, 不签名其他输入和输出, 值为 `0x80`
+
+- 对整个交易进行 `Hash256` 计算, 并生成 `ECDSA` 签名数据
+
+- 将签名数据 `DER` 编码后生成最后签名数据
+
+- 根据花费的 `UTXO` 锁定脚本类型, 生成解锁脚本。
+
+### 替换 ScriptSig
+
+### 添加哈希类型
+
+### 计算签名
+
+### DER 编码
+
+### 生成签名数据
 
 <SignedTransactionBuilder hex='02000000010323f0c5cdd3408336cd7e6b6df9cf0ccde996f363b64a066497a5a60c44f7e4000000001976a914c189d7f7ea4333daec66a645cb3388163c22900b88acffffffff016400000000000000225120b2049a6d884575fe95e3fcaeaedae4ec4feaecccc30fad156f12923753c0954e0000000001000000' />
 
+首先判断是否是 P2TR 锁定。
+
 <TransactionFieldsTable />
 
-## 签名
-
-ecdsa 签名是通过私钥对交易数据进行签名生成的。签名数据是一个数字, 通过公钥可以验证签名的有效性。
-
-schorr 签名是通过私钥对交易数据进行签名生成的。签名数据是一个数字, 通过公钥可以验证签名的有效性。
+## DER 编码
 
 ## PSBT
 
