@@ -26,8 +26,26 @@ export default function SignedTransactionBuilder({
   )
   const [unsignedRawTransaction, setUnsignedRawTransaction] = useState(
     hex ||
-      '02000000020323f0c5cdd3408336cd7e6b6df9cf0ccde996f363b64a066497a5a60c44f7e4000000001976a914c189d7f7ea4333daec66a645cb3388163c22900b88acffffffffcd048bf2054b6885f29246ed1ae55c0e329ed3f0ccaa2d597c6b99b0ed3b9716204e0000160014c189d7f7ea4333daec66a645cb3388163c22900bffffffff016400000000000000225120b2049a6d884575fe95e3fcaeaedae4ec4feaecccc30fad156f12923753c0954e00000000'
+      '02000000020323f0c5cdd3408336cd7e6b6df9cf0ccde996f363b64a066497a5a60c44f7e40000000000ffffffffcd048bf2054b6885f29246ed1ae55c0e329ed3f0ccaa2d597c6b99b0ed3b97160000000000ffffffff016400000000000000225120b2049a6d884575fe95e3fcaeaedae4ec4feaecccc30fad156f12923753c0954e00000000'
   )
+  const [utxos, setUtxos] = useState<
+    {
+      script: string
+      amount: bigint
+      type: Uppercase<ScriptType | 'unknown'>
+    }[]
+  >([
+    {
+      script: '76a914c189d7f7ea4333daec66a645cb3388163c22900b88ac',
+      type: 'P2PKH',
+      amount: 0n
+    },
+    {
+      script: '0014c189d7f7ea4333daec66a645cb3388163c22900b',
+      type: 'P2WPKH',
+      amount: 20000n
+    }
+  ])
 
   const [unsignedTransaction, setUnsignedTransaction] = useState<Transaction>()
   const [signInputIndex, setSignInputIndex] = useState(0)
@@ -51,6 +69,22 @@ export default function SignedTransactionBuilder({
 
   useEffect(() => {
     if (!unsignedTransaction) return
+
+    if (unsignedTransaction.ins.length > utxos.length) {
+      const newUtxos = [...utxos]
+      for (let i = utxos.length; i < unsignedTransaction.ins.length; i++) {
+        newUtxos.push({
+          script: '',
+          amount: 0n,
+          type: 'UNKNOWN'
+        })
+      }
+      setUtxos(newUtxos)
+    } else if (unsignedTransaction.ins.length < utxos.length) {
+      const newUtxos = utxos.slice(0, unsignedTransaction.ins.length)
+      setUtxos(newUtxos)
+    }
+
     signTx()
   }, [unsignedTransaction, signInputIndex])
 
@@ -61,8 +95,17 @@ export default function SignedTransactionBuilder({
 
     const tx = unsignedTransaction.clone()
     tx.ins.forEach((input, index) => {
-      if (index !== signInputIndex) {
-        input.script = Buffer.from('', 'hex')
+      if (index === signInputIndex) {
+        const utxo = utxos[index]
+        if (utxo.type === 'P2TR') {
+        } else if (utxo.type === 'P2WPKH') {
+          input.witness = [
+            Buffer.from(utxo.script, 'hex'),
+            keypair.sign(hash256(Buffer.from(tx.toHex(), 'hex')))
+          ]
+        } else {
+          input.script = Buffer.from(utxo.script, 'hex')
+        }
       }
     })
 
@@ -116,8 +159,7 @@ export default function SignedTransactionBuilder({
                 value={index + ''}
                 className='w-full'
               >
-                Input {index} -{' '}
-                {getScriptType(toHex(unsignedTransaction.ins[index].script))}
+                Input {index} - {utxos[index] ? utxos[index].type : 'UNKNOWN'}
               </TabsTrigger>
             ))}
           </TabsList>
@@ -126,12 +168,43 @@ export default function SignedTransactionBuilder({
             <TabsContent
               value={index + ''}
               key={toHex(input.hash) + index}
+              className='mt-4'
             >
-              <Label className='relative mb-3'>签名数据</Label>
-              <TransactionSplitTab
-                hex={unsignedTransactionForInput?.toHex()}
-                className='mt-0.5'
-              />
+              <ContentCard title='UTXO 信息'>
+                <div className='flex items-center gap-x-4'>
+                  <Input
+                    className='bg-background'
+                    placeholder='ScriptPubKey'
+                    value={utxos[index].script}
+                    onChange={(e) => {
+                      const newUtxos = [...utxos]
+                      newUtxos[index].script = e.target.value
+                      newUtxos[index].type = getScriptType(e.target.value)
+                      setUtxos(newUtxos)
+                    }}
+                  />
+                  {utxos[index].type === 'P2WPKH' && (
+                    <Input
+                      placeholder='Amount'
+                      className='bg-background w-40'
+                      value={utxos[index].amount.toString()}
+                      onChange={(e) => {
+                        const newUtxos = [...utxos]
+                        newUtxos[index].amount = BigInt(e.target.value)
+                        setUtxos(newUtxos)
+                      }}
+                    />
+                  )}
+                </div>
+              </ContentCard>
+
+              <div className='mt-4'>
+                <Label className='relative mb-3'>签名数据</Label>
+                <TransactionSplitTab
+                  hex={unsignedTransactionForInput?.toHex()}
+                  className='mt-0.5'
+                />
+              </div>
               <ContentCard
                 title='Hash256'
                 content={hashedTransaction}

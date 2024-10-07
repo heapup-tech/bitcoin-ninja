@@ -12,7 +12,6 @@ import { toast } from 'sonner'
 import { toHex } from 'uint8array-tools'
 import InteractionCard from '../interaction-card'
 import { Button } from '../ui/button'
-import { Checkbox } from '../ui/checkbox'
 import { Input } from '../ui/input'
 import { Label } from '../ui/label'
 import {
@@ -22,37 +21,24 @@ import {
   SelectTrigger,
   SelectValue
 } from '../ui/select'
-import { Textarea } from '../ui/textarea'
 import TransactionSplitTab from './transaction-split-tab'
 
 export default function UnSignTransactionBuilder() {
-  const [version, setVersion] = useState('01000000')
-  const [isSegwit, setIsSegwit] = useState(false)
-  const [inputs, setInputs] = useState<
-    Array<
-      TransactionInput & {
-        scriptPubKey: string
-        amount: string
-      }
-    >
-  >([
+  const [version, setVersion] = useState('02000000')
+  const [inputs, setInputs] = useState<Array<TransactionInput>>([
     {
       txid: 'e4f7440ca6a59764064ab663f396e9cd0ccff96d6b7ecd368340d3cdc5f02303',
       vout: '0',
       sequence: 'ffffffff',
       scriptSigSize: '00',
-      scriptSig: '',
-      scriptPubKey: '76a914c189d7f7ea4333daec66a645cb3388163c22900b88ac',
-      amount: '0'
+      scriptSig: ''
     },
     {
       txid: '16973bedb0996b7c592daaccf0d39e320e5ce51aed4692f285684b05f28b04cd',
       vout: '0',
       sequence: 'ffffffff',
       scriptSigSize: '00',
-      scriptSig: '',
-      scriptPubKey: '0014c189d7f7ea4333daec66a645cb3388163c22900b',
-      amount: '20000'
+      scriptSig: ''
     }
   ])
 
@@ -75,9 +61,8 @@ export default function UnSignTransactionBuilder() {
   const [rawTransaction, setRawTransaction] = useState('')
 
   useEffect(() => {
-    if (isSegwit) setVersion('02000000')
     buildTransaction()
-  }, [isSegwit, version, inputs, outputs])
+  }, [version, inputs, outputs])
 
   useEffect(() => {
     buildTransaction()
@@ -88,9 +73,6 @@ export default function UnSignTransactionBuilder() {
 
     rawTransaction += version
 
-    if (isSegwit) {
-      rawTransaction += '0001'
-    }
     rawTransaction += decimalToCompactHex(inputs.length)
     inputs.forEach((input) => {
       // txid
@@ -100,9 +82,9 @@ export default function UnSignTransactionBuilder() {
       // vout
       rawTransaction += decimalToFixedByteHex(Number(input.vout), 4, true)
       // scriptSigSize
-      rawTransaction += decimalToCompactHex(input.scriptPubKey.length / 2)
-      // scriptSig
-      rawTransaction += input.scriptPubKey
+      rawTransaction += '00'
+      // // scriptSig
+      // rawTransaction += input.scriptPubKey
       // sequence
       rawTransaction += input.sequence
     })
@@ -127,28 +109,15 @@ export default function UnSignTransactionBuilder() {
       })
     } catch (error) {}
 
-    if (isSegwit) {
-      inputs.forEach(() => {
-        rawTransaction += '00'
-      })
-    }
-
     rawTransaction += '00000000'
+
+    console.log(`rawTransaction: `, rawTransaction)
 
     setRawTransaction(rawTransaction)
   }
 
   return (
     <InteractionCard title='未签名交易构造器'>
-      <div className='flex items-center space-x-2'>
-        <Checkbox
-          id='tx_type'
-          checked={isSegwit}
-          onCheckedChange={(checked: boolean) => setIsSegwit(checked)}
-        />
-        <Label htmlFor='tx_type'>隔离见证交易</Label>
-      </div>
-
       <div className='mt-4'>
         <Label htmlFor='tx_version'>版本</Label>
         <Select
@@ -183,9 +152,7 @@ export default function UnSignTransactionBuilder() {
                   vout: '0',
                   sequence: 'ffffffff',
                   scriptSigSize: '00',
-                  scriptSig: '',
-                  scriptPubKey: '',
-                  amount: '0'
+                  scriptSig: ''
                 }
               ])
             }}
@@ -223,29 +190,7 @@ export default function UnSignTransactionBuilder() {
                       setInputs(newInputs)
                     }}
                   />
-                  <Input
-                    className='bg-background w-40'
-                    placeholder='花费聪数量'
-                    type='number'
-                    value={input.amount}
-                    onChange={(e) => {
-                      const newInputs = [...inputs]
-                      newInputs[index].amount = e.target.value
-                      setInputs(newInputs)
-                    }}
-                  />
                 </div>
-
-                <Textarea
-                  className='bg-background mt-2'
-                  placeholder='ScriptPubKey'
-                  value={input.scriptPubKey}
-                  onChange={(e) => {
-                    const newInputs = [...inputs]
-                    newInputs[index].scriptPubKey = e.target.value
-                    setInputs(newInputs)
-                  }}
-                />
               </div>
 
               <Button
