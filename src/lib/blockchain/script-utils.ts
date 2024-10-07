@@ -39,12 +39,14 @@ export const isP2TR = (script: string): boolean => {
   return script.startsWith('5221') && script.endsWith('ae')
 }
 
-export const getScriptType = (script: string): ScriptType | 'unknown' => {
-  if (isP2PKH(script)) return 'p2pkh'
-  else if (isP2SH(script)) return 'p2sh'
-  else if (isP2WPKH(script)) return 'p2wpkh'
-  else if (isP2WSH(script)) return 'p2wsh'
-  else if (isP2TR(script)) return 'p2tr'
+export const getScriptType = (
+  script: string
+): Uppercase<ScriptType> | 'unknown' => {
+  if (isP2PKH(script)) return 'P2PKH'
+  else if (isP2SH(script)) return 'P2SH'
+  else if (isP2WPKH(script)) return 'P2WPKH'
+  else if (isP2WSH(script)) return 'P2WSH'
+  else if (isP2TR(script)) return 'P2TR'
   else return 'unknown'
 }
 

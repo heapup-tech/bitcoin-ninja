@@ -28,6 +28,16 @@ title: 签名
 
 ## 签名
 
+计算交易签名, 对于隔离见证交易和非隔离见证交易的签名过程有所不同。
+
+:::warning
+
+非隔离见证交易不可花费隔离见证 `UTXO`, 但隔离见证交易可以花费非隔离见证 `UTXO`。
+
+具体表现为非隔离见证的交易输入不能是 `P2WPKH`、`P2WSH`、`P2TR` 类型, 但隔离见证的交易输入可以是 `P2PKH`、`P2SH`、`P2MS` 类型。
+
+:::
+
 ### 非隔离见证
 
 非隔离见证交易的签名数据存储在 `scriptSig` 字段中。
@@ -75,6 +85,7 @@ const ECPair = ECPairFactory(ecc)
 const keypair = ECPair.fromPrivateKey(Buffer.from(privateKey, 'hex'))
 const hashedTransaction = hash256(Buffer.from(waitingForSignTx, 'hex'))
 
+// ecdsa 签名结果
 const ecdsaSignature = keypair.sign(hashedTransaction)
 ```
 
@@ -90,7 +101,7 @@ const ecdsaSignature = keypair.sign(hashedTransaction)
 - `P2PKH` 和 `P2WPKH` 将公钥和签名数据都放在解锁脚本中
 - `P2MS` 将多签用到的公钥都放在了锁定脚本中
 
-而 `P2TR` 使用 `Schnorr` 签名, 并不需要提供原始公钥, 但需要 `Taproot` 公钥。
+而 `P2TR` 使用 `Schnorr` 签名, 并不需要提供原始公钥, 但仍需要 `Taproot` 公钥。
 
 #### DER 编码
 
@@ -146,9 +157,29 @@ OP_PUSHBYTES_71 <签名数据> OP_PUSHBYTES_33 <公钥>
 
 隔离见证交易的签名数据存储在 `witness` 字段中, 和交易输入一一对应。
 
+BIP141
+
 [BIP143](https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki) 定义了隔离见证交易的签名规则。
 
-<SignedSegwitTransactionBuilder />
+- 将所有交易输入的 `txid` 和 `vout` 连接并进行 `Hash256` 计算, 得到 `hashPrevouts`
+
+- 将所有交易输入的 `sequence` 连接并进行 `Hash256` 计算, 得到 `hashSequence`
+
+- 将所有交易输入的 `scriptCode` 连接并进行 `Hash256` 计算, 得到 `hashOutputs`
+
+- 将要签名的输入的 `txid` 和 `vout` 连接并进行 `Hash256` 计算
+
+- 构造 `scriptCode` 字段, 为要签名的输入的 `scriptPubKey` 字段
+
+- 计算交易哈希
+
+  - hashPrevouts: 所有交易输入的 `txid` 和 `vout` 连接后 `Hash256`
+  - hashOutputs: 所有交易输出的 `amount`、`scriptPubKeySize` 和 `scriptPubKey` 连接后 `Hash256`
+  - hashSequence: 将所有交易输入的 `sequence` 连接后 `Hash256`
+
+<TransactionSplitTab hex='02000000020323f0c5cdd3408336cd7e6b6df9cf0ccde996f363b64a066497a5a60c44f7e4000000001976a914c189d7f7ea4333daec66a645cb3388163c22900b88acffffffffcd048bf2054b6885f29246ed1ae55c0e329ed3f0ccaa2d597c6b99b0ed3b97160000000000ffffffff016400000000000000225120b2049a6d884575fe95e3fcaeaedae4ec4feaecccc30fad156f12923753c0954e00000000' />
+
+<SignedTransactionBuilder hex='02000000020323f0c5cdd3408336cd7e6b6df9cf0ccde996f363b64a066497a5a60c44f7e4000000001976a914c189d7f7ea4333daec66a645cb3388163c22900b88acffffffffcd048bf2054b6885f29246ed1ae55c0e329ed3f0ccaa2d597c6b99b0ed3b971600000000160014c189d7f7ea4333daec66a645cb3388163c22900bffffffff016400000000000000225120b2049a6d884575fe95e3fcaeaedae4ec4feaecccc30fad156f12923753c0954e00000000' />
 
 ### 隔离见证 V1
 

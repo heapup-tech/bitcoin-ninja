@@ -32,6 +32,7 @@ export default function UnSignTransactionBuilder() {
     Array<
       TransactionInput & {
         scriptPubKey: string
+        amount: string
       }
     >
   >([
@@ -41,15 +42,17 @@ export default function UnSignTransactionBuilder() {
       sequence: 'ffffffff',
       scriptSigSize: '00',
       scriptSig: '',
-      scriptPubKey: '76a914c189d7f7ea4333daec66a645cb3388163c22900b88ac'
+      scriptPubKey: '76a914c189d7f7ea4333daec66a645cb3388163c22900b88ac',
+      amount: '0'
     },
     {
-      txid: 'eea092f5d411a7d35344a21b3e7735dac8e5a804af44fc8b02594f4d80d0cf24',
+      txid: '16973bedb0996b7c592daaccf0d39e320e5ce51aed4692f285684b05f28b04cd',
       vout: '0',
       sequence: 'ffffffff',
       scriptSigSize: '00',
       scriptSig: '',
-      scriptPubKey: '76a914c189d7f7ea4333daec66a645cb3388163c22900b88ac'
+      scriptPubKey: '0014c189d7f7ea4333daec66a645cb3388163c22900b',
+      amount: '20000'
     }
   ])
 
@@ -181,7 +184,8 @@ export default function UnSignTransactionBuilder() {
                   sequence: 'ffffffff',
                   scriptSigSize: '00',
                   scriptSig: '',
-                  scriptPubKey: ''
+                  scriptPubKey: '',
+                  amount: '0'
                 }
               ])
             }}
@@ -216,6 +220,17 @@ export default function UnSignTransactionBuilder() {
                     onChange={(e) => {
                       const newInputs = [...inputs]
                       newInputs[index].vout = e.target.value
+                      setInputs(newInputs)
+                    }}
+                  />
+                  <Input
+                    className='bg-background w-40'
+                    placeholder='花费聪数量'
+                    type='number'
+                    value={input.amount}
+                    onChange={(e) => {
+                      const newInputs = [...inputs]
+                      newInputs[index].amount = e.target.value
                       setInputs(newInputs)
                     }}
                   />

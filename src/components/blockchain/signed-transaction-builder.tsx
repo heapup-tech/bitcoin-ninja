@@ -1,6 +1,7 @@
 'use client'
 
 import ECPair from '@/lib/blockchain/ecpair'
+import { getScriptType } from '@/lib/blockchain/script-utils'
 import { script, Transaction } from 'bitcoinjs-lib'
 import { hash256 } from 'bitcoinjs-lib/src/crypto'
 import { useEffect, useState } from 'react'
@@ -25,7 +26,7 @@ export default function SignedTransactionBuilder({
   )
   const [unsignedRawTransaction, setUnsignedRawTransaction] = useState(
     hex ||
-      '02000000020323f0c5cdd3408336cd7e6b6df9cf0ccde996f363b64a066497a5a60c44f7e4000000001976a914c189d7f7ea4333daec66a645cb3388163c22900b88acffffffff24cfd0804d4f59028bfc44af04a8e5c8da35773e1ba24453d3a711d4f592a0ee000000001976a914c189d7f7ea4333daec66a645cb3388163c22900b88acffffffff016400000000000000225120b2049a6d884575fe95e3fcaeaedae4ec4feaecccc30fad156f12923753c0954e00000000'
+      '02000000020323f0c5cdd3408336cd7e6b6df9cf0ccde996f363b64a066497a5a60c44f7e4000000001976a914c189d7f7ea4333daec66a645cb3388163c22900b88acffffffffcd048bf2054b6885f29246ed1ae55c0e329ed3f0ccaa2d597c6b99b0ed3b9716204e0000160014c189d7f7ea4333daec66a645cb3388163c22900bffffffff016400000000000000225120b2049a6d884575fe95e3fcaeaedae4ec4feaecccc30fad156f12923753c0954e00000000'
   )
 
   const [unsignedTransaction, setUnsignedTransaction] = useState<Transaction>()
@@ -66,25 +67,21 @@ export default function SignedTransactionBuilder({
     })
 
     const waitingForSignTx = tx.toHex() + '01000000'
+    console.log(`waitingForSignTx: `, waitingForSignTx)
+
     setUnsignedTransactionForInput(tx)
 
+    // hash256
     const hashedTransaction = hash256(Buffer.from(waitingForSignTx, 'hex'))
     setHashedTransaction(toHex(hashedTransaction))
 
-    // 504c3233cdeff27bb141dd3e2bb83f454fd45146e41ed24a25afd011fc996bf41be4584472a75912a797581c33e325fef7c8517d5ce23d83b72027fec69bad89
+    // ecdsa 签名
     const ecdsaSignature = keypair.sign(hashedTransaction)
     setEcdsaSignature(toHex(ecdsaSignature))
 
-    // Der
+    // Der 编码
     const derSignature = script.signature.encode(ecdsaSignature, 0x01)
     setDerSignature(toHex(derSignature))
-
-    const cc = script.signature.decode(
-      Buffer.from(
-        '3044022061c1fc152fe6ebd54c1b5d0961f8aed9ed90a35d1b0d40348b2aa310ab3b2a1a02203477df635026ca5c2f178e97b6f139ce3cd2d9317e75d6ae26c74858158ef45d01',
-        'hex'
-      )
-    )
   }
 
   return (
@@ -119,7 +116,8 @@ export default function SignedTransactionBuilder({
                 value={index + ''}
                 className='w-full'
               >
-                Input {index}
+                Input {index} -{' '}
+                {getScriptType(toHex(unsignedTransaction.ins[index].script))}
               </TabsTrigger>
             ))}
           </TabsList>
@@ -129,7 +127,7 @@ export default function SignedTransactionBuilder({
               value={index + ''}
               key={toHex(input.hash) + index}
             >
-              <Label className='relative mb-3'>未签名交易</Label>
+              <Label className='relative mb-3'>签名数据</Label>
               <TransactionSplitTab
                 hex={unsignedTransactionForInput?.toHex()}
                 className='mt-0.5'

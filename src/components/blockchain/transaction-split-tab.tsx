@@ -21,6 +21,8 @@ export default function TransactionSplitTab({
 }) {
   let rawTx = hex || ''
 
+  if (!rawTx) return null
+
   let decodedTx
   try {
     decodedTx = splitRawTransaction(rawTx)
