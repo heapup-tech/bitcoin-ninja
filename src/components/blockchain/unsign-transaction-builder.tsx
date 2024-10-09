@@ -39,6 +39,13 @@ export default function UnSignTransactionBuilder() {
       sequence: 'ffffffff',
       scriptSigSize: '00',
       scriptSig: ''
+    },
+    {
+      txid: '77360cb76de44cf8a9c096105f6b4a3dee1d3d4ce95a66319f82536af5c31e16',
+      vout: '0',
+      sequence: 'ffffffff',
+      scriptSigSize: '00',
+      scriptSig: ''
     }
   ])
 
@@ -110,8 +117,6 @@ export default function UnSignTransactionBuilder() {
     } catch (error) {}
 
     rawTransaction += '00000000'
-
-    console.log(`rawTransaction: `, rawTransaction)
 
     setRawTransaction(rawTransaction)
   }

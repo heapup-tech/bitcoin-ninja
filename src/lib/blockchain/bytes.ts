@@ -1,5 +1,3 @@
-import { toHex } from 'uint8array-tools'
-
 export const reverseBytes = (bytes: Uint8Array): Uint8Array => {
   const result = new Uint8Array(bytes.length)
   for (let i = 0; i < bytes.length; i++) {
@@ -40,7 +38,23 @@ export const decimalToFixedByteHex = (
   size: number,
   littleEndian = false
 ) => {
-  const buffer = new ArrayBuffer(size)
-  new DataView(buffer).setUint32(0, decimal, littleEndian)
-  return toHex(new Uint8Array(buffer))
+  // const buffer = new ArrayBuffer(size)
+  // new DataView(buffer).setUint32(0, decimal, littleEndian)
+  // return toHex(new Uint8Array(buffer))
+
+  // 确保 decimal 是非负整数
+  const unsignedDecimal = decimal >>> 0
+
+  // 转换为十六进制字符串并填充到指定大小
+  let hex = unsignedDecimal.toString(16).padStart(size * 2, '0')
+
+  // 如果结果超过指定大小，截取最后 size * 2 个字符
+  hex = hex.slice(-size * 2)
+
+  // 如果是小端序，反转字节顺序
+  if (littleEndian) {
+    hex = hex.match(/../g)!.reverse().join('')
+  }
+
+  return hex
 }
