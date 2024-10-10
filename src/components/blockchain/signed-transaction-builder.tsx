@@ -1,20 +1,31 @@
 'use client'
 
-import {
-  decimalToCompactHex,
-  decimalToFixedByteHex
-} from '@/lib/blockchain/bytes'
+import { decimalToFixedByteHex } from '@/lib/blockchain/bytes'
 import ECPair from '@/lib/blockchain/ecpair'
 import { getScriptType } from '@/lib/blockchain/script-utils'
+import {
+  sigMsgForSignature,
+  sigMsgForWitnessV0,
+  sigMsgForWitnessV1
+} from '@/lib/blockchain/signature'
 import { tweakSigner } from '@/lib/blockchain/taproot-signature'
-import { payments, script, Transaction } from 'bitcoinjs-lib'
-import { hash256, sha256, taggedHash } from 'bitcoinjs-lib/src/crypto'
+import { NETWORKS, SIGHASHES } from '@/lib/constants'
+import { script, Transaction } from 'bitcoinjs-lib'
+import { hash256, taggedHash } from 'bitcoinjs-lib/src/crypto'
 import { useEffect, useState } from 'react'
 import { toHex } from 'uint8array-tools'
 import ContentCard from '../content-card'
 import InteractionCard from '../interaction-card'
 import { Input } from '../ui/input'
 import { Label } from '../ui/label'
+import { RadioGroup, RadioGroupItem } from '../ui/radio-group'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '../ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs'
 import { Textarea } from '../ui/textarea'
 import TransactionSplitTab from './transaction-split-tab'
@@ -26,6 +37,8 @@ interface SignTransactionProps {
 export default function SignedTransactionBuilder({
   hex
 }: SignTransactionProps) {
+  const [network, setNetwork] = useState<keyof typeof NETWORKS>('testnet')
+
   const [privateKey, setPrivateKey] = useState(
     '585d4bc6533320c1586cb4c4831818a4e418d1f7d0e2a5313169e65a450f7b9d'
   )
@@ -33,30 +46,28 @@ export default function SignedTransactionBuilder({
     hex ||
       '02000000030323f0c5cdd3408336cd7e6b6df9cf0ccde996f363b64a066497a5a60c44f7e40000000000ffffffffcd048bf2054b6885f29246ed1ae55c0e329ed3f0ccaa2d597c6b99b0ed3b97160000000000ffffffff161ec3f56a53829f31665ae94c3d1dee3d4a6b5f1096c0a9f84ce46db70c36770000000000ffffffff016400000000000000225120b2049a6d884575fe95e3fcaeaedae4ec4feaecccc30fad156f12923753c0954e00000000'
   )
-  const [utxos, setUtxos] = useState<
-    {
-      script: string
-      amount: bigint
-      type: Uppercase<ScriptType | 'unknown'>
-    }[]
-  >([
+  const [utxos, setUtxos] = useState<UTXO[]>([
     {
       script: '76a914c189d7f7ea4333daec66a645cb3388163c22900b88ac',
       type: 'P2PKH',
-      amount: 100000n
+      amount: '100000'
     },
     {
       script: '0014c189d7f7ea4333daec66a645cb3388163c22900b',
       type: 'P2WPKH',
-      amount: 20000n
+      amount: '20000'
     },
     {
       script:
         '5120b2049a6d884575fe95e3fcaeaedae4ec4feaecccc30fad156f12923753c0954e',
       type: 'P2TR',
-      amount: 500000n
+      amount: '500000'
     }
   ])
+
+  const [inputSigHashes, setInputSigHashes] = useState<
+    (keyof typeof SIGHASHES)[]
+  >(['all', 'all', 'default'])
 
   const [unsignedTransaction, setUnsignedTransaction] = useState<Transaction>()
   const [signInputIndex, setSignInputIndex] = useState(2)
@@ -65,7 +76,7 @@ export default function SignedTransactionBuilder({
   const [unsignedTransactionForInput, setUnsignedTransactionForInput] =
     useState<Transaction>()
 
-  const [hashedTransaction, setHashedTransaction] = useState('')
+  const [hashedSigMessage, setHashedSigMessage] = useState('')
   const [ecdsaSignature, setEcdsaSignature] = useState('')
 
   const [derSignature, setDerSignature] = useState('')
@@ -86,7 +97,7 @@ export default function SignedTransactionBuilder({
       for (let i = utxos.length; i < unsignedTransaction.ins.length; i++) {
         newUtxos.push({
           script: '',
-          amount: 0n,
+          amount: '0',
           type: 'UNKNOWN'
         })
       }
@@ -97,7 +108,7 @@ export default function SignedTransactionBuilder({
     }
 
     signTx()
-  }, [unsignedTransaction, signInputIndex])
+  }, [unsignedTransaction, signInputIndex, utxos, network, inputSigHashes])
 
   const signTx = () => {
     if (!unsignedTransaction) return
@@ -108,213 +119,90 @@ export default function SignedTransactionBuilder({
 
     const input = tx.ins[signInputIndex]
     const utxo = utxos[signInputIndex]
-
+    const sigHashValue = SIGHASHES[inputSigHashes[signInputIndex]].value
     if (utxo.type === 'P2TR') {
-      // 1. hashPrevouts = sha256(txid0 + vout0 + txid1 + vout1 + ...)
-      const txidAndVouts = tx.ins.reduce((acc, input) => {
-        const txid = toHex(input.hash)
-        const vout = decimalToFixedByteHex(Number(input.index), 4, true)
-
-        return acc + txid + vout
-      }, '')
-      const hashPrevouts = sha256(Buffer.from(txidAndVouts, 'hex'))
-
-      console.log(`hashPrevouts: `, toHex(hashPrevouts))
-
-      // 2. hashAmounts = sha256(amount0 + amount1 + ...)
-      const allAmounts = tx.ins.reduce((acc, input, index) => {
-        const amount = decimalToFixedByteHex(
-          Number(utxos[index].amount),
-          8,
-          true
-        )
-        return acc + amount
-      }, '')
-      console.log(`allAmounts: `, allAmounts)
-
-      const hashAmounts = sha256(Buffer.from(allAmounts, 'hex'))
-      console.log(`hashAmounts: `, toHex(hashAmounts))
-
-      // 3. hashScriptPubKeys = sha256(scriptPubKeySize0 + scriptPubKey0 + scriptPubKeySize1 + scriptPubKey1 + ...)
-      const allScriptPubKeys = utxos.reduce((acc, utxo) => {
-        const scriptPubKeySize = decimalToCompactHex(utxo.script.length / 2)
-        return acc + scriptPubKeySize + utxo.script
-      }, '')
-      console.log(`allScriptPubKeys: `, allScriptPubKeys)
-      const hashScriptPubKeys = sha256(Buffer.from(allScriptPubKeys, 'hex'))
-      console.log(`hashScriptPubKeys: `, toHex(hashScriptPubKeys))
-
-      // 4. hashSequence = sha256(sequence0 + sequence1 + ...)
-      const sequences = tx.ins.reduce((acc, input) => {
-        const sequence = decimalToFixedByteHex(Number(input.sequence), 4, true)
-        return acc + sequence
-      }, '')
-      const hashSequence = sha256(Buffer.from(sequences, 'hex'))
-      console.log(`hashSequence: `, toHex(hashSequence))
-
-      // 5. hashOutputs = sha256(amount0 + scriptPubKeySize0 + scriptPubKey0 + amount1 + scriptPubKeySize1 + scriptPubKey1 + ...)
-
-      const amountsAndScriptPubKeys = tx.outs.reduce((acc, output) => {
-        const amount = decimalToFixedByteHex(Number(output.value), 8, true)
-        const scriptPubKeySize = decimalToCompactHex(output.script.length)
-        const scriptPubKey = toHex(output.script)
-        return acc + amount + scriptPubKeySize + scriptPubKey
-      }, '')
-      console.log(`amountsAndScriptPubKeys: `, amountsAndScriptPubKeys)
-      const hashOutputs = sha256(Buffer.from(amountsAndScriptPubKeys, 'hex'))
-
-      console.log(`hashOutputs: `, toHex(hashOutputs))
-
-      // 6. 拼接
-      const version = Buffer.from(
-        decimalToFixedByteHex(tx.version, 4, true),
-        'hex'
+      let { sigMsg } = sigMsgForWitnessV1(
+        tx,
+        signInputIndex,
+        utxos,
+        sigHashValue
       )
-      const lockTime = Buffer.from(
-        decimalToFixedByteHex(Number(tx.locktime), 4, true),
-        'hex'
-      )
-      const inIndex = Buffer.from(
-        decimalToFixedByteHex(signInputIndex, 4, true),
-        'hex'
-      )
+      console.log(`sigMsg: `, toHex(sigMsg))
 
-      const leafHash = null
-      const annex = null
-
-      const spendType = Buffer.from(
-        ((leafHash ? 2 : 0) + (annex ? 1 : 0)).toString(16).padStart(2, '0'),
-        'hex'
-      )
-
-      console.log(`spendType: `, spendType)
-      const hashType = Buffer.from('00', 'hex')
-
-      const sigMsg = Buffer.concat([
-        hashType,
-        version,
-        lockTime,
-        hashPrevouts,
-        hashAmounts,
-        hashScriptPubKeys,
-        hashSequence,
-        hashOutputs,
-        spendType,
-        inIndex // if isAnyoneCanPay = true, replace to Input hash + vout + value + scriptPubKey + sequence
-      ])
+      sigMsg = Buffer.concat([Buffer.from([sigHashValue]), sigMsg])
 
       console.log(`sigMsg: `, toHex(sigMsg))
 
       const tapKeyHash = taggedHash(
         'TapSighash',
-        Buffer.concat([Uint8Array.from([0x00]), sigMsg])
+        Buffer.concat([Buffer.from([0x00]), sigMsg])
       )
 
       console.log(`tapKeyHash: `, toHex(tapKeyHash))
+      // setHashedSigMessage(toHex(tapKeyHash))
 
-      const tweakedSigner = tweakSigner(keypair)
+      const tweakedSigner = tweakSigner(keypair, NETWORKS[network].network)
       const signature =
         tweakedSigner.signSchnorr && tweakedSigner.signSchnorr(tapKeyHash)
-      console.log(`signature: `, toHex(signature!))
-    } else if (utxo.type === 'P2WPKH') {
-      // 1. hashPrevouts = hash256(txid0 + vout0 + txid1 + vout1 + ...)
-      const txidAndVouts = tx.ins.reduce((acc, input) => {
-        const txid = toHex(input.hash)
-        const vout = decimalToFixedByteHex(Number(input.index), 4, true)
 
-        return acc + txid + vout
-      }, '')
-      const hashPrevouts = hash256(Buffer.from(txidAndVouts, 'hex'))
-
-      // 2. hashSequence = hash256(sequence0 + sequence1 + ...)
-      const sequences = tx.ins.reduce((acc, input) => {
-        const sequence = decimalToFixedByteHex(Number(input.sequence), 4, true)
-        return acc + sequence
-      }, '')
-      const hashSequence = hash256(Buffer.from(sequences, 'hex'))
-
-      // 3. hashOutputs = hash256(amount0 + scriptPubKeySize0 + scriptPubKey0 + amount1 + scriptPubKeySize1 + scriptPubKey1 + ...)
-      const amountsAndScriptPubKeys = tx.outs.reduce((acc, output) => {
-        const amount = decimalToFixedByteHex(Number(output.value), 8, true)
-        const scriptPubKeySize = decimalToCompactHex(output.script.length)
-        const scriptPubKey = toHex(output.script)
-        return acc + amount + scriptPubKeySize + scriptPubKey
-      }, '')
-      console.log(`amountsAndScriptPubKeys: `, amountsAndScriptPubKeys)
-      const hashOutputs = hash256(Buffer.from(amountsAndScriptPubKeys, 'hex'))
-
-      const version = Buffer.from(
-        decimalToFixedByteHex(tx.version, 4, true),
-        'hex'
-      )
-      const lockTime = Buffer.from(
-        decimalToFixedByteHex(Number(tx.locktime), 4, true),
-        'hex'
-      )
-
-      const vout = Buffer.from(
-        decimalToFixedByteHex(Number(input.index), 4, true),
-        'hex'
-      )
-      const amount = Buffer.from(
-        decimalToFixedByteHex(Number(utxo.amount), 8, true),
-        'hex'
-      )
-
-      const prevOut = payments.p2pkh({
-        hash: Buffer.from(utxo.script, 'hex').subarray(2)
-      }).output!
-      const prevOutSize = Buffer.from(
-        decimalToCompactHex(prevOut.length),
-        'hex'
-      )
-      const sequence = Buffer.from(
-        decimalToFixedByteHex(Number(input.sequence), 4, true),
-        'hex'
-      )
-
-      const sigMsg = Buffer.concat([
-        version,
-        hashPrevouts,
-        hashSequence,
-        input.hash,
-        vout,
-        prevOutSize,
-        prevOut,
-        amount,
-        sequence,
-        hashOutputs,
-        lockTime,
-        Buffer.from('01000000', 'hex')
+      // Serializes a taproot signature.
+      const taprootSignature = Buffer.concat([
+        signature!,
+        (sigHashValue !== 0 && Buffer.from([sigHashValue])) || Buffer.from([])
       ])
 
-      const hash = hash256(sigMsg)
+      console.log(`signature: `, toHex(taprootSignature))
+    } else if (utxo.type === 'P2WPKH' || utxo.type === 'P2WSH') {
+      const { sigMsg } = sigMsgForWitnessV0(
+        tx,
+        signInputIndex,
+        utxo,
+        sigHashValue
+      )
 
+      const sigHashBuffer = Buffer.from(
+        decimalToFixedByteHex(sigHashValue, 4, true),
+        'hex'
+      )
+
+      const sigMsgBuffer = Buffer.concat([sigMsg, sigHashBuffer])
+      console.log(`sigMsgBuffer: `, toHex(sigMsgBuffer))
+
+      const hash = hash256(sigMsgBuffer)
+      setHashedSigMessage(toHex(hash))
       console.log(`hash: `, toHex(hash))
       // ecdsa 签名
       const ecdsaSignature = keypair.sign(hash)
       setEcdsaSignature(toHex(ecdsaSignature))
 
       // Der 编码
-      const derSignature = script.signature.encode(ecdsaSignature, 0x01)
+      const derSignature = script.signature.encode(ecdsaSignature, sigHashValue)
       setDerSignature(toHex(derSignature))
     } else {
-      tx.ins[signInputIndex].script = Buffer.from(utxo.script, 'hex')
-      const waitingForSignTx = tx.toHex() + '01000000'
+      const txTemp = sigMsgForSignature(
+        tx,
+        signInputIndex,
+        utxos[signInputIndex],
+        sigHashValue
+      )
+
+      const hashTypeHex = decimalToFixedByteHex(sigHashValue, 4, true)
+
+      const waitingForSignTx = txTemp.toHex() + hashTypeHex
       console.log(`waitingForSignTx: `, waitingForSignTx)
 
-      setUnsignedTransactionForInput(tx)
+      setUnsignedTransactionForInput(txTemp)
 
       // hash256
       const hashedTransaction = hash256(Buffer.from(waitingForSignTx, 'hex'))
-      setHashedTransaction(toHex(hashedTransaction))
+      setHashedSigMessage(toHex(hashedTransaction))
 
       // ecdsa 签名
       const ecdsaSignature = keypair.sign(hashedTransaction)
       setEcdsaSignature(toHex(ecdsaSignature))
 
       // Der 编码
-      const derSignature = script.signature.encode(ecdsaSignature, 0x01)
+      const derSignature = script.signature.encode(ecdsaSignature, sigHashValue)
       setDerSignature(toHex(derSignature))
     }
   }
@@ -338,6 +226,28 @@ export default function SignedTransactionBuilder({
           onChange={(e) => setPrivateKey(e.target.value)}
         />
       </ContentCard>
+
+      <RadioGroup
+        className='flex mt-4'
+        value={network}
+        onValueChange={(v: keyof typeof NETWORKS) => setNetwork(v)}
+      >
+        {Object.keys(NETWORKS).map((key) => (
+          <div
+            className='flex items-center space-x-2'
+            key={key}
+          >
+            <RadioGroupItem
+              value={key}
+              id={`signature_${key}`}
+            />
+            <Label htmlFor={`signature_${key}`}>
+              {NETWORKS[key as keyof typeof NETWORKS].label}
+            </Label>
+          </div>
+        ))}
+      </RadioGroup>
+
       {unsignedTransaction && unsignedTransaction.ins.length > 0 && (
         <Tabs
           defaultValue={signInputIndex + ''}
@@ -376,16 +286,42 @@ export default function SignedTransactionBuilder({
                     }}
                   />
                   <Input
-                    placeholder='Amount'
                     className='bg-background w-40'
-                    value={utxos[index].amount.toString()}
+                    placeholder='Amount'
+                    value={utxos[index].amount}
+                    type='number'
                     onChange={(e) => {
                       const newUtxos = [...utxos]
-                      newUtxos[index].amount = BigInt(e.target.value)
+                      newUtxos[index].amount = e.target.value
                       setUtxos(newUtxos)
                     }}
                   />
                 </div>
+              </ContentCard>
+
+              <ContentCard title='签名哈希类型'>
+                <Select
+                  value={inputSigHashes[index]}
+                  onValueChange={(v: keyof typeof SIGHASHES) => {
+                    const newInputSigHashes = [...inputSigHashes]
+                    newInputSigHashes[index] = v
+                    setInputSigHashes(newInputSigHashes)
+                  }}
+                >
+                  <SelectTrigger className='bg-background'>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.keys(SIGHASHES).map((key) => (
+                      <SelectItem
+                        key={key}
+                        value={key}
+                      >
+                        {SIGHASHES[key as keyof typeof SIGHASHES].name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </ContentCard>
 
               <div className='mt-4'>
@@ -397,7 +333,7 @@ export default function SignedTransactionBuilder({
               </div>
               <ContentCard
                 title='Hash256'
-                content={hashedTransaction}
+                content={hashedSigMessage}
               />
 
               <ContentCard

@@ -1,19 +1,16 @@
 'use client'
 
-import {
-  decimalToCompactHex,
-  decimalToFixedByteHex
-} from '@/lib/blockchain/bytes'
-import { networks } from 'bitcoinjs-lib'
+import { NETWORKS } from '@/lib/constants'
+import { Transaction } from 'bitcoinjs-lib'
 import { toOutputScript } from 'bitcoinjs-lib/src/address'
 import { CircleMinus, CirclePlus } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
-import { toHex } from 'uint8array-tools'
 import InteractionCard from '../interaction-card'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import { Label } from '../ui/label'
+import { RadioGroup, RadioGroupItem } from '../ui/radio-group'
 import {
   Select,
   SelectContent,
@@ -24,7 +21,9 @@ import {
 import TransactionSplitTab from './transaction-split-tab'
 
 export default function UnSignTransactionBuilder() {
-  const [version, setVersion] = useState('02000000')
+  const [network, setNetwork] = useState<keyof typeof NETWORKS>('testnet')
+
+  const [version, setVersion] = useState('2')
   const [inputs, setInputs] = useState<Array<TransactionInput>>([
     {
       txid: 'e4f7440ca6a59764064ab663f396e9cd0ccff96d6b7ecd368340d3cdc5f02303',
@@ -62,6 +61,12 @@ export default function UnSignTransactionBuilder() {
       scriptPubKey: 'ffffffff',
       recipient:
         'tb1pkgzf5mvgg46la90rljh2akhya3874mxvcv8669t0z2frw57qj48qa5x5y6'
+    },
+    {
+      amount: '500',
+      scriptPubKeySize: '0',
+      scriptPubKey: 'ffffffff',
+      recipient: 'tb1qxrm7leyx9mlmpakygy68upjn6uqny8awzps3w6'
     }
   ])
 
@@ -69,60 +74,83 @@ export default function UnSignTransactionBuilder() {
 
   useEffect(() => {
     buildTransaction()
-  }, [version, inputs, outputs])
+  }, [version, inputs, outputs, network])
 
   useEffect(() => {
     buildTransaction()
   }, [])
 
   const buildTransaction = () => {
-    let rawTransaction = ''
+    const tx = new Transaction()
 
-    rawTransaction += version
+    tx.version = Number(version)
 
-    rawTransaction += decimalToCompactHex(inputs.length)
     inputs.forEach((input) => {
-      // txid
-      rawTransaction += toHex(
-        Uint8Array.from(Buffer.from(input.txid, 'hex')).reverse()
-      )
-      // vout
-      rawTransaction += decimalToFixedByteHex(Number(input.vout), 4, true)
-      // scriptSigSize
-      rawTransaction += '00'
-      // // scriptSig
-      // rawTransaction += input.scriptPubKey
-      // sequence
-      rawTransaction += input.sequence
+      tx.addInput(Buffer.from(input.txid, 'hex').reverse(), Number(input.vout))
     })
-
-    rawTransaction += decimalToCompactHex(outputs.length)
 
     try {
       outputs.forEach((output) => {
-        // amount
-        rawTransaction += decimalToFixedByteHex(Number(output.amount), 8, true)
-
         let script: Buffer = Buffer.from('')
         if (output.recipient) {
-          script = toOutputScript(output.recipient, networks.testnet)
+          script = toOutputScript(output.recipient, NETWORKS[network].network)
         }
-
-        // scriptPubKeySize
-        rawTransaction += decimalToCompactHex(script.length)
-
-        // scriptPubKey
-        rawTransaction += toHex(script)
+        tx.addOutput(script, Number(output.amount))
       })
-    } catch (error) {}
+    } catch (error: any) {
+      console.log(error)
 
-    rawTransaction += '00000000'
+      toast.error((error && error.message) || '构造交易失败')
+    }
 
-    setRawTransaction(rawTransaction)
+    // rawTransaction += version
+
+    // rawTransaction += decimalToCompactHex(inputs.length)
+    // inputs.forEach((input) => {
+    //   // txid
+    //   rawTransaction += toHex(
+    //     Uint8Array.from(Buffer.from(input.txid, 'hex')).reverse()
+    //   )
+    //   // vout
+    //   rawTransaction += decimalToFixedByteHex(Number(input.vout), 4, true)
+    //   // scriptSigSize
+    //   rawTransaction += '00'
+    //   // // scriptSig
+    //   // rawTransaction += input.scriptPubKey
+    //   // sequence
+    //   rawTransaction += input.sequence
+    // })
+
+    // rawTransaction += decimalToCompactHex(outputs.length)
+
+    // rawTransaction += '00000000'
+
+    setRawTransaction(tx.toHex())
   }
 
   return (
     <InteractionCard title='未签名交易构造器'>
+      <RadioGroup
+        className='flex mt-4'
+        value={network}
+        onValueChange={(v: keyof typeof NETWORKS) => setNetwork(v)}
+      >
+        {Object.keys(NETWORKS).map((key) => (
+          <div
+            className='flex items-center space-x-2'
+            key={key}
+          >
+            <RadioGroupItem
+              value={key}
+              id={`unsignature_${key}`}
+            />
+            <Label htmlFor={`unsignature_${key}`}>
+              {NETWORKS[key as keyof typeof NETWORKS].label}
+            </Label>
+          </div>
+        ))}
+      </RadioGroup>
+
       <div className='mt-4'>
         <Label htmlFor='tx_version'>版本</Label>
         <Select
@@ -133,8 +161,8 @@ export default function UnSignTransactionBuilder() {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value='01000000'>0x00000001</SelectItem>
-            <SelectItem value='02000000'>0x00000002</SelectItem>
+            <SelectItem value='1'>0x00000001</SelectItem>
+            <SelectItem value='2'>0x00000002</SelectItem>
           </SelectContent>
         </Select>
       </div>

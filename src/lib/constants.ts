@@ -1,3 +1,6 @@
+import { networks } from 'bitcoinjs-lib'
+import { fromHex } from 'uint8array-tools'
+
 const COLORS = [
   'text-emerald-500',
   'text-amber-500',
@@ -67,6 +70,52 @@ export const WIF_PREFIX = {
   testnet: 0xef
 }
 
+export const NETWORKS = {
+  mainnet: {
+    label: '主网',
+    network: networks.bitcoin
+  },
+  testnet: {
+    label: '测试网',
+    network: networks.testnet
+  },
+  regtest: {
+    label: '回归测试网',
+    network: networks.regtest
+  }
+} as const
+
+export const SIGHASHES = {
+  default: {
+    name: 'SIGHASH_DEFAULT',
+    value: 0x00
+  },
+  all: {
+    name: 'SIGHASH_ALL',
+    value: 0x01
+  },
+  none: {
+    name: 'SIGHASH_NONE',
+    value: 0x02
+  },
+  single: {
+    name: 'SIGHASH_SINGLE',
+    value: 0x03
+  },
+  allAnyoneCanPay: {
+    name: 'SIGHASH_ALL | SIGHASH_ANYONECANPAY',
+    value: 0x81
+  },
+  noneAnyoneCanPay: {
+    name: 'SIGHASH_NONE | SIGHASH_ANYONECANPAY',
+    value: 0x82
+  },
+  singleAnyoneCanPay: {
+    name: 'SIGHASH_SINGLE | SIGHASH_ANYONECANPAY',
+    value: 0x83
+  }
+} as const
+
 export const HALFING_INTERVAL = 210000
 export const INITIAL_SUBSIDY = 50 * 1e8
 export const SCRIPTS: Array<ScriptType> = [
@@ -132,3 +181,18 @@ export const MNEMONIC_LANGUAGES = [
     value: 'portuguese'
   }
 ]
+
+export const EMPTY_BUFFER = new Uint8Array(0)
+export const EMPTY_WITNESS: Uint8Array[] = []
+export const ZERO = fromHex(
+  '0000000000000000000000000000000000000000000000000000000000000000'
+)
+export const ONE = fromHex(
+  '0000000000000000000000000000000000000000000000000000000000000001'
+)
+
+export const VALUE_UINT64_MAX = fromHex('ffffffffffffffff')
+export const BLANK_OUTPUT = {
+  script: EMPTY_BUFFER,
+  valueBuffer: VALUE_UINT64_MAX
+}

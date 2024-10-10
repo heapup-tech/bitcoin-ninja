@@ -42,9 +42,26 @@ title: 签名
 
 :::
 
-### 1. 构造未签名数据
+<SignedTransactionBuilder hex='02000000030323f0c5cdd3408336cd7e6b6df9cf0ccde996f363b64a066497a5a60c44f7e40000000000ffffffffcd048bf2054b6885f29246ed1ae55c0e329ed3f0ccaa2d597c6b99b0ed3b97160000000000ffffffff161ec3f56a53829f31665ae94c3d1dee3d4a6b5f1096c0a9f84ce46db70c36770000000000ffffffff026400000000000000225120b2049a6d884575fe95e3fcaeaedae4ec4feaecccc30fad156f12923753c0954ef40100000000000016001430f7efe4862effb0f6c441347e0653d701321fae00000000' />
 
-对不同的类型的 `UTXO` 锁, 则有不同的构造未签名数据的过程。
+<TransactionSplitTab hex='020000000001030323f0c5cdd3408336cd7e6b6df9cf0ccde996f363b64a066497a5a60c44f7e4000000006a473044022061b7910b08f04f5f46058469624f6c0df175b1738e6b1d499f3ee8dd42620db302205685480b9a964e7cf742702a5d660b906c309e99a2561bfed46ed7c232625925012102e80f2893a4879f747c0536c4fe79b3a735eee28a275035b47f8263763166ead9ffffffffcd048bf2054b6885f29246ed1ae55c0e329ed3f0ccaa2d597c6b99b0ed3b97160000000000ffffffff161ec3f56a53829f31665ae94c3d1dee3d4a6b5f1096c0a9f84ce46db70c36770000000000ffffffff026400000000000000225120b2049a6d884575fe95e3fcaeaedae4ec4feaecccc30fad156f12923753c0954ef40100000000000016001430f7efe4862effb0f6c441347e0653d701321fae00024730440220495d6829574b57bcecd4c2b4ec220ad291b07c01510f39ef21456e6e8044244f022060fb52d7b0794252e9601565f146b10136ae8226f4de54a92cc2d0634fc84065012102e80f2893a4879f747c0536c4fe79b3a735eee28a275035b47f8263763166ead901412793020f137b23d115273bdc39766aec456f3089fdfadfb4213440c8a06453a597839276247b9bafac80b270f285951fd4031a28310de8bf3b6e9bb6b6f8070d0200000000' />
+
+### 1. 确认签名哈希类型
+
+签名哈希类型 `sighash`, 用于**指定签名的数据**。
+
+- `SIGHASH_DEFAULT` - 值为 `0x00`, 用于 `P2TR` 默认值, 等同于 `SIGHASH_ALL`, 签名所有输入和输出。
+- `SIGHASH_ALL` - 值为 `0x01`, 默认值, 签名所有输入和输出, 意味着交易的输入和输出有任何变动, 签名将失效。
+- `SIGHASH_NONE` - 值为 `0x02`, 签名所有输入, 但不签名任何输出, 除当前要签名的输入外, 其他交易输入的 `sequence` 设置为0, 意味着生成的签名可以用于相同输入但有不同输出的交易。
+- `SIGHASH_SINGLE` - 值为 `0x03`, 签名所有输入, 但只签名对应索引的输出。交易输出的数量最多等于要签名的输入的索引号加 1, 例如签名的输入索引是 3, 则输出数量最多为 4。同时在输出中, 除了对应索引的输出外, 其他输出的金额设置为最大值, 锁定脚本为空。最后除当前要签名的输入外, 其他交易输入的 `sequence` 设置为0
+- `SIGHASH_ANYONECANPAY` - 值为 `0x80`, 与其他类型组合使用:
+  - `SIGHASH_ALL | SIGHASH_ANYONECANPAY` - 值为 `0x81`, 签名当前输入和所有输出
+  - `SIGHASH_NONE | SIGHASH_ANYONECANPAY` - 值为 `0x82`, 签名当前输入, 但不签名输出
+  - `SIGHASH_SINGLE | SIGHASH_ANYONECANPAY` - 值为 `0x83`, 签名当前输入, 但只签名对应索引的输出
+
+### 2. 构造未签名数据
+
+对不同的类型的 `UTXO` 锁, 有不同的构造过程。
 
 #### 非隔离见证锁
 
@@ -52,15 +69,92 @@ title: 签名
 
 当要签名的交易输入的 `UTXO` 锁是非隔离见证锁时, 则需要将 `scriptSig` 字段临时替换为 `UTXO` 的 `scriptPubKey` 字段, 其他交易输入的 `scriptSig` 字段保持为空。
 
-例如有如下交易时:
+例如有如下交易
 
 <TransactionSplitTab hex='02000000020323f0c5cdd3408336cd7e6b6df9cf0ccde996f363b64a066497a5a60c44f7e40000000000ffffffffcd048bf2054b6885f29246ed1ae55c0e329ed3f0ccaa2d597c6b99b0ed3b97160000000000ffffffff016400000000000000225120b2049a6d884575fe95e3fcaeaedae4ec4feaecccc30fad156f12923753c0954e00000000' />
 
-要签名的第 0 个交易输入的 `UTXO` 锁是 `P2PKH` 类型, 将 `scriptSig` 字段替换为 `scriptPubKey` 字段后为
+要签名的第 0 个交易输入的 `UTXO` 锁是 `P2PKH` 类型,需将第 0 个交易输入`scriptSig` 字段替换为 `scriptPubKey` 字段, 当签名哈希类型是 `SIGHASH_ALL` 时, 得到签名数据是:
 
 <TransactionSplitTab hex='02000000020323f0c5cdd3408336cd7e6b6df9cf0ccde996f363b64a066497a5a60c44f7e4000000001976a914c189d7f7ea4333daec66a645cb3388163c22900b88acffffffffcd048bf2054b6885f29246ed1ae55c0e329ed3f0ccaa2d597c6b99b0ed3b97160000000000ffffffff016400000000000000225120b2049a6d884575fe95e3fcaeaedae4ec4feaecccc30fad156f12923753c0954e00000000' />
 
-`scriptSigSize` 也要同步更新。
+当 `sigHash` 不同时, 需要对交易数据进行不同的处理:
+
+```ts
+/**
+ *
+ * @param tx 未签名交易
+ * @param inIndex 签名的输入索引
+ * @param utxo inIndex 对应的 UTXO 信息, 包括 script、value、type
+ * @param sigHashValue 哈希类型
+ * @returns tx
+ */
+export const sigMsgForSignature = (
+  tx: Transaction,
+  inIndex: number,
+  utxo: UTXO,
+  sigHashValue: number
+) => {
+  // 复制 tx
+  const txTemp = tx.clone()
+
+  // sigHash === SIGHASH_NONE
+  if ((sigHashValue & 0x1f) === Transaction.SIGHASH_NONE) {
+    // 清空输出
+    txTemp.outs = []
+
+    // 清空非签名输入的 sequence
+    txTemp.ins.forEach((input, i) => {
+      if (i === inIndex) return
+      input.sequence = 0
+    })
+  } else if ((sigHashValue & 0x1f) === Transaction.SIGHASH_SINGLE) {
+    // sigHash === SIGHASH_SINGLE
+
+    // 如果输入索引大于输出数量, 抛出异常
+    if (inIndex >= txTemp.outs.length) {
+      throw new Error('Input index is out of range')
+    }
+
+    // 移除多余的输出
+    txTemp.outs.length = inIndex + 1
+
+    // 设置非签名输入的索引对应的输出的 amount 为最大值, `scriptPubKey` 为空
+    for (let i = 0; i < inIndex; i++) {
+      ;(txTemp.outs as any)[i] = BLANK_OUTPUT
+      ;(txTemp.outs as any)[i] = {
+        script: new Uint8Array(0),
+        valueBuffer: fromHex('ffffffffffffffff')
+      }
+    }
+
+    // 清空非签名输入的 sequence
+    txTemp.ins.forEach((input, i) => {
+      if (i === inIndex) return
+      input.sequence = 0
+    })
+  }
+
+  if (sigHashValue & Transaction.SIGHASH_ANYONECANPAY) {
+    console.log(`SIGHASH_ANYONECANPAY: ${sigHashValue} \n`)
+
+    // 只保留当前要签名的输入
+    txTemp.ins = [txTemp.ins[inIndex]]
+    // 设置 `scriptSig` 为 `scriptPubKey`
+    txTemp.ins[0].script = Buffer.from(utxo.script, 'hex')
+  } else {
+    // SIGHASH_ALL
+
+    // 所有输入的 `scriptSig` 字段设置为空
+    txTemp.ins.forEach((input) => {
+      input.script = Buffer.from('')
+    })
+    // 设置当前要签名的输入的 `scriptSig` 为 `scriptPubKey`
+    txTemp.ins[inIndex].script = Buffer.from(utxo.script, 'hex')
+  }
+
+  return txTemp
+}
+```
 
 #### 隔离见证V0
 
@@ -68,9 +162,12 @@ title: 签名
 
 [BIP143](https://github.com/bitcoin/bips/blob/master/bip-0143.mediawiki) 定义了隔离见证交易的签名规则, 如果要签名的交易输入的 `UTXO` 锁是隔离见证V0类型 则首先需要分别计算下列数据:
 
-- `hashPrevouts` - 所有交易输入的 `txid` 和 `vout` 拼接后进行 `Hash256` 计算
-- `hashSequence` - 所有交易输入的 `sequence` 拼接后进行 `Hash256` 计算
-- `hashOutputs` - 所有交易输出的 `amount`、`scriptPubKeySize` 和 `scriptPubKey` 拼接后进行 `Hash256` 计算
+- `hashPrevouts` - `sigHash` 不包含 `SIGHASH_ANYONECANPAY` 时存在, `hashPrevouts` 等于所有交易输入的 `txid` 和 `vout` 拼接后进行 `Hash256` 计算
+- `hashSequence` - `sigHash` 等于 `SIGHASH_ALL` 时存在, `hashSequence` 等于所有交易输入的 `sequence` 拼接后进行 `Hash256` 计算
+- `hashOutputs`
+
+  - `sigHash` 不包含 `SIGHASH_SINGLE` 和 `SIGHASH_NONE` 时, `hashOutputs` 等于所有交易输出的 `amount`、`scriptPubKeySize` 和 `scriptPubKey` 拼接后进行 `Hash256` 计算
+  - `sigHash` 等于 `SIGHASH_SINGLE` 且要签名的交易输入索引小于输出数量时, `hashOutputs` 等于要签名的交易输入索引对应的输出的 `amount`、`scriptPubKeySize` 和 `scriptPubKey` 拼接后进行 `Hash256` 计算
 
 其次依次拼接:
 
@@ -138,21 +235,6 @@ function tapTweakHash(pubKey: Buffer, h: Buffer | undefined): Buffer {
 ```
 
 :::
-
-#### 非隔离见证交易
-
-<SignedTransactionBuilder hex='02000000030323f0c5cdd3408336cd7e6b6df9cf0ccde996f363b64a066497a5a60c44f7e40000000000ffffffffcd048bf2054b6885f29246ed1ae55c0e329ed3f0ccaa2d597c6b99b0ed3b97160000000000ffffffff161ec3f56a53829f31665ae94c3d1dee3d4a6b5f1096c0a9f84ce46db70c36770000000000ffffffff016400000000000000225120b2049a6d884575fe95e3fcaeaedae4ec4feaecccc30fad156f12923753c0954e00000000' />
-
-<TransactionSplitTab hex='02000000030323f0c5cdd3408336cd7e6b6df9cf0ccde996f363b64a066497a5a60c44f7e40000000000ffffffffcd048bf2054b6885f29246ed1ae55c0e329ed3f0ccaa2d597c6b99b0ed3b97160000000000ffffffff161ec3f56a53829f31665ae94c3d1dee3d4a6b5f1096c0a9f84ce46db70c36770000000000ffffffff016400000000000000225120b2049a6d884575fe95e3fcaeaedae4ec4feaecccc30fad156f12923753c0954e00000000' />
-
-### 2. 添加哈希类型
-
-对上一步生成的交易数据的末尾添加哈希类型 `sighash`, 为小端序 4 字节数据, 用于指定签名的数据。
-
-- `SIGHASH_ALL` - 签名所有输入和输出, 值为 `0x01`
-- `SIGHASH_NONE` - 签名所有输入, 但不签名输出, 值为 `0x02`
-- `SIGHASH_SINGLE` - 签名所有输入, 但只签名对应的输出, 值为 `0x03`
-- `SIGHASH_ANYONECANPAY` - 只签名当前输入, 不签名其他输入和输出, 值为 `0x80`
 
 ### 3. 数据签名
 

@@ -42,3 +42,9 @@ type ScriptType =
   | 'p2wpkh'
   | 'p2wsh'
   | 'p2tr'
+
+type UTXO = {
+  script: string
+  amount: string
+  type: Uppercase<ScriptType | 'unknown'>
+}
