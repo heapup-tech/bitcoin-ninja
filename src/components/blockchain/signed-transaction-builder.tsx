@@ -74,7 +74,7 @@ export default function SignedTransactionBuilder({
   >(['all', 'all', 'default'])
 
   const [unsignedTransaction, setUnsignedTransaction] = useState<Transaction>()
-  const [signInputIndex, setSignInputIndex] = useState(2)
+  const [signInputIndex, setSignInputIndex] = useState(0)
 
   // 特定输入的未签名交易
   const [unsignedTransactionForInput, setUnsignedTransactionForInput] =
