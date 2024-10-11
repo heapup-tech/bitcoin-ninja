@@ -255,7 +255,7 @@ export default function WitnessV0Signature({
               </span>
             </TooltipTrigger>
             <TooltipContent>
-              <span>签名前32字节: R</span>
+              <span>签名结果前32字节: R</span>
             </TooltipContent>
           </Tooltip>
 
@@ -266,7 +266,7 @@ export default function WitnessV0Signature({
               </span>
             </TooltipTrigger>
             <TooltipContent>
-              <span>签名后32字节: S</span>
+              <span>签名结果后32字节: S</span>
             </TooltipContent>
           </Tooltip>
         </div>

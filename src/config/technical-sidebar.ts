@@ -73,23 +73,6 @@ export const technicalSidebar: SidebarNavItem[] = [
     ]
   },
   {
-    title: '秘钥',
-    items: [
-      {
-        title: '私钥和地址',
-        href: '/technical/keys/secret'
-      },
-      {
-        title: 'HD 钱包',
-        href: '/technical/keys/hd-wallet'
-      },
-      {
-        title: '签名',
-        href: '/technical/keys/signature'
-      }
-    ]
-  },
-  {
     title: '交易',
     items: [
       {
@@ -115,6 +98,27 @@ export const technicalSidebar: SidebarNavItem[] = [
       {
         title: '交易加速',
         href: '/technical/transaction/speed'
+      }
+    ]
+  },
+  {
+    title: '秘钥',
+    items: [
+      {
+        title: '私钥和地址',
+        href: '/technical/keys/secret'
+      },
+      {
+        title: 'HD 钱包',
+        href: '/technical/keys/hd-wallet'
+      },
+      {
+        title: '签名',
+        href: '/technical/keys/signature'
+      },
+      {
+        title: 'PSBT',
+        href: '/technical/keys/psbt'
       }
     ]
   },
