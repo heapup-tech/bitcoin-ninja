@@ -15,7 +15,7 @@ export const tweakSigner = (
   signer: Signer,
   network = networks.testnet,
   opts: any = {}
-): Signer => {
+) => {
   // @ts-ignore
   let privateKey: Uint8Array | undefined = signer.privateKey!
   if (!privateKey) {
@@ -25,15 +25,17 @@ export const tweakSigner = (
     privateKey = ecc.privateNegate(privateKey)
   }
 
-  const tweakedPrivateKey = ecc.privateAdd(
-    privateKey,
-    tapTweakHash(toXOnly(signer.publicKey), opts.tweakHash)
-  )
+  const tweak = tapTweakHash(toXOnly(signer.publicKey), opts.tweakHash)
+  const tweakedPrivateKey = ecc.privateAdd(privateKey, tweak)
   if (!tweakedPrivateKey) {
     throw new Error('Invalid tweaked private key!')
   }
 
-  return ECPair.fromPrivateKey(Buffer.from(tweakedPrivateKey), {
-    network
-  })
+  return {
+    tweak,
+    tweakedPrivateKey: tweakedPrivateKey,
+    tweakedSigner: ECPair.fromPrivateKey(Buffer.from(tweakedPrivateKey), {
+      network
+    })
+  }
 }

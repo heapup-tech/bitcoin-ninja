@@ -1,18 +1,18 @@
 'use client'
 
 import { decimalToFixedByteHex } from '@/lib/blockchain/bytes'
-import ECPair from '@/lib/blockchain/ecpair'
 import { getScriptType } from '@/lib/blockchain/script-utils'
 import {
   sigMsgForSignature,
   sigMsgForWitnessV0,
   sigMsgForWitnessV1
 } from '@/lib/blockchain/signature'
-import { tweakSigner } from '@/lib/blockchain/taproot-signature'
 import { NETWORKS, SIGHASHES } from '@/lib/constants'
-import { script, Transaction } from 'bitcoinjs-lib'
-import { hash256, taggedHash } from 'bitcoinjs-lib/src/crypto'
+import { cn } from '@/lib/utils'
+import { isValidPrivateKey } from '@/lib/validator'
+import { Transaction } from 'bitcoinjs-lib'
 import { useEffect, useState } from 'react'
+import { toast } from 'sonner'
 import { toHex } from 'uint8array-tools'
 import ContentCard from '../content-card'
 import InteractionCard from '../interaction-card'
@@ -28,7 +28,9 @@ import {
 } from '../ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs'
 import { Textarea } from '../ui/textarea'
-import TransactionSplitTab from './transaction-split-tab'
+import NoWitnessSignature from './no-witness-signature'
+import WitnessV0Signature from './witness-v0-signature'
+import WitnessV1Signature from './witness-v1-signature'
 
 interface SignTransactionProps {
   hex: string // unsigned transaction hex
@@ -42,6 +44,8 @@ export default function SignedTransactionBuilder({
   const [privateKey, setPrivateKey] = useState(
     '585d4bc6533320c1586cb4c4831818a4e418d1f7d0e2a5313169e65a450f7b9d'
   )
+  const [validPrivateKey, setValidPrivateKey] = useState(privateKey)
+
   const [unsignedRawTransaction, setUnsignedRawTransaction] = useState(
     hex ||
       '02000000030323f0c5cdd3408336cd7e6b6df9cf0ccde996f363b64a066497a5a60c44f7e40000000000ffffffffcd048bf2054b6885f29246ed1ae55c0e329ed3f0ccaa2d597c6b99b0ed3b97160000000000ffffffff161ec3f56a53829f31665ae94c3d1dee3d4a6b5f1096c0a9f84ce46db70c36770000000000ffffffff016400000000000000225120b2049a6d884575fe95e3fcaeaedae4ec4feaecccc30fad156f12923753c0954e00000000'
@@ -75,18 +79,23 @@ export default function SignedTransactionBuilder({
   // 特定输入的未签名交易
   const [unsignedTransactionForInput, setUnsignedTransactionForInput] =
     useState<Transaction>()
+  const [witnessV0Msg, setWitnessV0Msg] = useState<
+    WitnessV0Message | undefined
+  >(undefined)
 
-  const [hashedSigMessage, setHashedSigMessage] = useState('')
-  const [ecdsaSignature, setEcdsaSignature] = useState('')
-
-  const [derSignature, setDerSignature] = useState('')
+  const [witnessV1Msg, setWitnessV1Msg] = useState<
+    WitnessV1Message | undefined
+  >(undefined)
 
   useEffect(() => {
     if (!unsignedRawTransaction || !privateKey) return
 
-    try {
-      setUnsignedTransaction(Transaction.fromHex(unsignedRawTransaction))
-    } catch (error) {}
+    if (isValidPrivateKey(privateKey)) {
+      try {
+        setValidPrivateKey(privateKey)
+        setUnsignedTransaction(Transaction.fromHex(unsignedRawTransaction))
+      } catch (error) {}
+    }
   }, [unsignedRawTransaction, privateKey])
 
   useEffect(() => {
@@ -112,72 +121,67 @@ export default function SignedTransactionBuilder({
 
   const signTx = () => {
     if (!unsignedTransaction) return
-
-    const keypair = ECPair.fromPrivateKey(Buffer.from(privateKey, 'hex'))
-
     const tx = unsignedTransaction.clone()
 
-    const input = tx.ins[signInputIndex]
     const utxo = utxos[signInputIndex]
     const sigHashValue = SIGHASHES[inputSigHashes[signInputIndex]].value
     if (utxo.type === 'P2TR') {
-      let { sigMsg } = sigMsgForWitnessV1(
+      let witnessV1Msg = sigMsgForWitnessV1(
         tx,
         signInputIndex,
         utxos,
         sigHashValue
       )
-      console.log(`sigMsg: `, toHex(sigMsg))
-
-      sigMsg = Buffer.concat([Buffer.from([sigHashValue]), sigMsg])
-
-      console.log(`sigMsg: `, toHex(sigMsg))
-
-      const tapKeyHash = taggedHash(
-        'TapSighash',
-        Buffer.concat([Buffer.from([0x00]), sigMsg])
-      )
-
-      console.log(`tapKeyHash: `, toHex(tapKeyHash))
-      // setHashedSigMessage(toHex(tapKeyHash))
-
-      const tweakedSigner = tweakSigner(keypair, NETWORKS[network].network)
-      const signature =
-        tweakedSigner.signSchnorr && tweakedSigner.signSchnorr(tapKeyHash)
-
-      // Serializes a taproot signature.
-      const taprootSignature = Buffer.concat([
-        signature!,
-        (sigHashValue !== 0 && Buffer.from([sigHashValue])) || Buffer.from([])
-      ])
-
-      console.log(`signature: `, toHex(taprootSignature))
+      let witnessV1MsgStr: Record<keyof WitnessV1Message, string> = {
+        sigMsg: '',
+        version: '',
+        lockTime: '',
+        hashPrevouts: '',
+        hashAmounts: '',
+        hashScriptPubKeys: '',
+        hashSequences: '',
+        hashOutputs: '',
+        spendType: '',
+        inputHash: '',
+        vout: '',
+        value: '',
+        scriptPubKeySize: '',
+        scriptPubKey: '',
+        sequence: '',
+        inIndex: ''
+      }
+      Object.keys(witnessV1Msg).forEach((key) => {
+        const typedKey = key as keyof WitnessV1Message
+        witnessV1MsgStr[typedKey] = toHex((witnessV1Msg as any)[typedKey])
+      })
+      setWitnessV1Msg(witnessV1MsgStr)
     } else if (utxo.type === 'P2WPKH' || utxo.type === 'P2WSH') {
-      const { sigMsg } = sigMsgForWitnessV0(
+      const witnessV0Msg = sigMsgForWitnessV0(
         tx,
         signInputIndex,
         utxo,
         sigHashValue
       )
 
-      const sigHashBuffer = Buffer.from(
-        decimalToFixedByteHex(sigHashValue, 4, true),
-        'hex'
-      )
-
-      const sigMsgBuffer = Buffer.concat([sigMsg, sigHashBuffer])
-      console.log(`sigMsgBuffer: `, toHex(sigMsgBuffer))
-
-      const hash = hash256(sigMsgBuffer)
-      setHashedSigMessage(toHex(hash))
-      console.log(`hash: `, toHex(hash))
-      // ecdsa 签名
-      const ecdsaSignature = keypair.sign(hash)
-      setEcdsaSignature(toHex(ecdsaSignature))
-
-      // Der 编码
-      const derSignature = script.signature.encode(ecdsaSignature, sigHashValue)
-      setDerSignature(toHex(derSignature))
+      let witnessV0MsgStr: Record<keyof WitnessV0Message, string> = {
+        sigMsg: '',
+        version: '',
+        hashPrevouts: '',
+        hashSequence: '',
+        inputHash: '',
+        vout: '',
+        prevOutSize: '',
+        prevOut: '',
+        amount: '',
+        sequence: '',
+        hashOutputs: '',
+        lockTime: ''
+      }
+      Object.keys(witnessV0Msg).forEach((key) => {
+        const typedKey = key as keyof WitnessV0Message
+        witnessV0MsgStr[typedKey] = toHex((witnessV0Msg as any)[typedKey])
+      })
+      setWitnessV0Msg(witnessV0MsgStr)
     } else {
       const txTemp = sigMsgForSignature(
         tx,
@@ -192,18 +196,6 @@ export default function SignedTransactionBuilder({
       console.log(`waitingForSignTx: `, waitingForSignTx)
 
       setUnsignedTransactionForInput(txTemp)
-
-      // hash256
-      const hashedTransaction = hash256(Buffer.from(waitingForSignTx, 'hex'))
-      setHashedSigMessage(toHex(hashedTransaction))
-
-      // ecdsa 签名
-      const ecdsaSignature = keypair.sign(hashedTransaction)
-      setEcdsaSignature(toHex(ecdsaSignature))
-
-      // Der 编码
-      const derSignature = script.signature.encode(ecdsaSignature, sigHashValue)
-      setDerSignature(toHex(derSignature))
     }
   }
 
@@ -220,10 +212,15 @@ export default function SignedTransactionBuilder({
 
       <ContentCard title='私钥'>
         <Input
-          className='bg-background'
+          className={cn(
+            'bg-background',
+            !isValidPrivateKey(privateKey) && 'bg-red-200'
+          )}
           type='text'
           value={privateKey}
-          onChange={(e) => setPrivateKey(e.target.value)}
+          onChange={(e) => {
+            setPrivateKey(e.target.value)
+          }}
         />
       </ContentCard>
 
@@ -303,6 +300,9 @@ export default function SignedTransactionBuilder({
                 <Select
                   value={inputSigHashes[index]}
                   onValueChange={(v: keyof typeof SIGHASHES) => {
+                    if (utxos[index].type !== 'P2TR' && v === 'default') {
+                      return toast.error('非 P2TR 不能选择 SIGHASH_DEFAULT')
+                    }
                     const newInputSigHashes = [...inputSigHashes]
                     newInputSigHashes[index] = v
                     setInputSigHashes(newInputSigHashes)
@@ -323,28 +323,32 @@ export default function SignedTransactionBuilder({
                   </SelectContent>
                 </Select>
               </ContentCard>
-
-              <div className='mt-4'>
-                <Label className='relative mb-3'>签名数据</Label>
-                <TransactionSplitTab
-                  hex={unsignedTransactionForInput?.toHex()}
-                  className='mt-0.5'
+              {(utxos[index].type === 'P2PKH' ||
+                utxos[index].type === 'P2SH') && (
+                <NoWitnessSignature
+                  unsignedTransactionForInput={unsignedTransactionForInput}
+                  privateKey={validPrivateKey}
+                  sigHash={SIGHASHES[inputSigHashes[signInputIndex]].value}
                 />
-              </div>
-              <ContentCard
-                title='Hash256'
-                content={hashedSigMessage}
-              />
+              )}
 
-              <ContentCard
-                title='ECDSA 签名'
-                content={ecdsaSignature}
-              />
+              {(utxos[index].type === 'P2WPKH' ||
+                utxos[index].type === 'P2WSH') && (
+                <WitnessV0Signature
+                  witnessV0Msg={witnessV0Msg}
+                  privateKey={validPrivateKey}
+                  sigHash={SIGHASHES[inputSigHashes[signInputIndex]].value}
+                />
+              )}
 
-              <ContentCard
-                title='DER 编码'
-                content={derSignature}
-              />
+              {utxos[index].type === 'P2TR' && (
+                <WitnessV1Signature
+                  witnessV1Msg={witnessV1Msg}
+                  privateKey={validPrivateKey}
+                  sigHash={SIGHASHES[inputSigHashes[signInputIndex]].value}
+                  network={network}
+                />
+              )}
             </TabsContent>
           ))}
         </Tabs>

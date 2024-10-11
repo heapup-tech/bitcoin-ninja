@@ -168,8 +168,6 @@ export const sigMsgForSignature = (
   }
 
   if (sigHashValue & Transaction.SIGHASH_ANYONECANPAY) {
-    console.log(`SIGHASH_ANYONECANPAY: ${sigHashValue} \n`)
-
     // 只保留当前要签名的输入
     txTemp.ins = [txTemp.ins[inIndex]]
     // 设置 `scriptSig` 为 `scriptPubKey`
@@ -237,23 +235,15 @@ export const sigMsgForWitnessV0 = (
     (sigHashValue & 0x1f) === Transaction.SIGHASH_SINGLE &&
     inIndex < txTemp.outs.length
   ) {
-    console.log('SIGHASH_SINGLE')
-
     const output = txTemp.outs[inIndex]
-
-    console.log(output)
 
     const amount = decimalToFixedByteHex(Number(output.value), 8, true)
     const scriptPubKeySize = decimalToCompactHex(output.script.length)
     const scriptPubKey = toHex(output.script)
 
-    console.log(`amount22313: ${amount + scriptPubKeySize + scriptPubKey}`)
-    // f40100000000000016001430f7efe4862effb0f6c441347e0653d701321fae
-    // f40100000000000016001430f7efe4862effb0f6c441347e0653d701321fae
     hashOutputs = hash256(
       Buffer.from(amount + scriptPubKeySize + scriptPubKey, 'hex')
     )
-    console.log(`hashOutputs: ${toHex(hashOutputs)} \n`)
   }
 
   // Combine Fields
@@ -287,6 +277,10 @@ export const sigMsgForWitnessV0 = (
     'hex'
   )
 
+  console.log(`hashPrevouts: ${toHex(hashPrevouts)} \n`)
+  console.log(`hashSequence: ${toHex(hashSequence)} \n`)
+  console.log(`hashOutputs: ${toHex(hashOutputs)} \n`)
+
   const sigMsg = Buffer.concat([
     version,
     hashPrevouts,
@@ -303,9 +297,17 @@ export const sigMsgForWitnessV0 = (
 
   return {
     sigMsg,
-    hashOutputs,
+    version,
     hashPrevouts,
-    hashSequence
+    hashSequence,
+    inputHash: input.hash,
+    vout,
+    prevOutSize,
+    prevOut,
+    amount,
+    sequence,
+    hashOutputs,
+    lockTime
   }
 }
 
@@ -370,7 +372,6 @@ export const sigMsgForWitnessV1 = (
     if (!txTemp.outs.length) {
       throw new Error('No outputs')
     }
-    console.log('=======================')
 
     // 5. hashOutputs = sha256(amount0 + scriptPubKeySize0 + scriptPubKey0 + amount1 + scriptPubKeySize1 + scriptPubKey1 + ...)
 
@@ -382,8 +383,6 @@ export const sigMsgForWitnessV1 = (
     }, '')
     hashOutputs = sha256(Buffer.from(amountsAndScriptPubKeys, 'hex'))
   } else if (isSingle && inIndex < txTemp.outs.length) {
-    console.log('-------------')
-
     const output = txTemp.outs[inIndex]
 
     const amount = decimalToFixedByteHex(Number(output.value), 8, true)
@@ -408,8 +407,6 @@ export const sigMsgForWitnessV1 = (
     'hex'
   )
 
-  console.log(`spendType: `, spendType)
-
   // 6. 拼接
   const version = Buffer.from(
     decimalToFixedByteHex(txTemp.version, 4, true),
@@ -420,6 +417,7 @@ export const sigMsgForWitnessV1 = (
     'hex'
   )
 
+  hashOutputs = (!(isNone || isSingle) && hashOutputs) || EMPTY_BUFFER
   let sigMsg = Buffer.concat([
     version,
     lockTime,
@@ -427,9 +425,22 @@ export const sigMsgForWitnessV1 = (
     hashAmounts,
     hashScriptPubKeys,
     hashSequences,
-    (!(isNone || isSingle) && hashOutputs) || EMPTY_BUFFER,
+    hashOutputs,
     spendType
   ])
+  let message: {
+    [k in string]: Buffer | Uint8Array
+  } = {
+    sigMsg,
+    version,
+    lockTime,
+    hashPrevouts,
+    hashAmounts,
+    hashScriptPubKeys,
+    hashSequences,
+    hashOutputs,
+    spendType
+  }
   if (isAnyoneCanPay) {
     const input = txTemp.ins[inIndex]
 
@@ -437,7 +448,6 @@ export const sigMsgForWitnessV1 = (
       decimalToFixedByteHex(input.index, 4, true),
       'hex'
     )
-    console.log(`input.index: ${input.index}`)
 
     const utxo = utxos[inIndex]
     const value = Buffer.from(
@@ -455,8 +465,6 @@ export const sigMsgForWitnessV1 = (
       'hex'
     )
 
-    console.log(`inindexbuffer: `, toHex(inputIndex))
-
     sigMsg = Buffer.concat([
       sigMsg,
       input.hash,
@@ -466,20 +474,21 @@ export const sigMsgForWitnessV1 = (
       scriptPubKey,
       sequence
     ])
+    message.inputHash = input.hash
+    message.vout = inputIndex
+    message.value = value
+    message.scriptPubKeySize = scriptPubKeySize
+    message.scriptPubKey = scriptPubKey
+    message.sequence = sequence
   } else {
     const inIndexBuffer = Buffer.from(
       decimalToFixedByteHex(inIndex, 4, true),
       'hex'
     )
     sigMsg = Buffer.concat([sigMsg, inIndexBuffer])
+    message.inIndex = inIndexBuffer
   }
+  message.sigMsg = sigMsg
 
-  return {
-    sigMsg,
-    hashOutputs,
-    hashPrevouts,
-    hashAmounts,
-    hashScriptPubKeys,
-    hashSequences
-  }
+  return message
 }

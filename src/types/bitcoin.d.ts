@@ -48,3 +48,37 @@ type UTXO = {
   amount: string
   type: Uppercase<ScriptType | 'unknown'>
 }
+
+type WitnessV0Message = {
+  sigMsg: string
+  version: string
+  hashPrevouts: string
+  hashSequence: string
+  inputHash: string
+  vout: string
+  prevOutSize: string
+  prevOut: string
+  amount: string
+  sequence: string
+  hashOutputs: string
+  lockTime: string
+}
+
+type WitnessV1Message = {
+  sigMsg: string
+  version: string
+  lockTime: string
+  hashPrevouts: string
+  hashAmounts: string
+  hashScriptPubKeys: string
+  hashSequences: string
+  hashOutputs?: string
+  spendType: string
+  inputHash?: string
+  vout?: string
+  value?: string
+  scriptPubKeySize?: string
+  scriptPubKey?: string
+  sequence?: string
+  inIndex?: string
+}
