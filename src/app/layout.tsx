@@ -2,12 +2,12 @@ import AppFooter from '@/components/app-footer'
 import AppHeader from '@/components/app-header'
 import { siteConfig } from '@/config/site'
 import '@/styles/globals.css'
+import { Analytics } from '@vercel/analytics/react'
 import 'katex/dist/katex.min.css'
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import { Toaster } from 'sonner'
 import Providers from './providers'
-
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
@@ -35,6 +35,8 @@ export default function RootLayout({
             richColors
           />
         </Providers>
+
+        <Analytics />
       </body>
     </html>
   )
