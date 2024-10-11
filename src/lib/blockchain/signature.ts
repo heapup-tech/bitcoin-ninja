@@ -264,7 +264,7 @@ export const sigMsgForWitnessV0 = (
     'hex'
   )
 
-  let prevOut: Buffer<ArrayBufferLike> = Buffer.from(utxo.script, 'hex')
+  let prevOut: Buffer = Buffer.from(utxo.script, 'hex')
   if (utxo.type === 'P2WPKH') {
     prevOut = payments.p2pkh({
       hash: Buffer.from(utxo.script, 'hex').subarray(2)
@@ -330,11 +330,11 @@ export const sigMsgForWitnessV1 = (
   const isNone = outputType === Transaction.SIGHASH_NONE
   const isSingle = outputType === Transaction.SIGHASH_SINGLE
 
-  let hashPrevouts: Uint8Array<ArrayBufferLike> = EMPTY_BUFFER
-  let hashAmounts: Uint8Array<ArrayBufferLike> = EMPTY_BUFFER
-  let hashScriptPubKeys: Uint8Array<ArrayBufferLike> = EMPTY_BUFFER
-  let hashSequences: Uint8Array<ArrayBufferLike> = EMPTY_BUFFER
-  let hashOutputs: Uint8Array<ArrayBufferLike> = EMPTY_BUFFER
+  let hashPrevouts: Uint8Array = EMPTY_BUFFER
+  let hashAmounts: Uint8Array = EMPTY_BUFFER
+  let hashScriptPubKeys: Uint8Array = EMPTY_BUFFER
+  let hashSequences: Uint8Array = EMPTY_BUFFER
+  let hashOutputs: Uint8Array = EMPTY_BUFFER
 
   if (!isAnyoneCanPay) {
     // 1. hashPrevouts = sha256(txid0 + vout0 + txid1 + vout1 + ...)

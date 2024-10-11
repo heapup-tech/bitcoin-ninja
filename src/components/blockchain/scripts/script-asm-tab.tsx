@@ -1,8 +1,12 @@
-import CodeBlock from '@/components/code-block'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { script } from 'bitcoinjs-lib'
+import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import ScriptAsm from './script-asm'
+
+const CodeBlock = dynamic(() => import('@/components/code-block'), {
+  ssr: false
+})
 
 export default function ScriptAsmTab({
   txid,

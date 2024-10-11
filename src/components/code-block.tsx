@@ -2,7 +2,8 @@
 
 import { themes } from '@/config/theme'
 import { cn } from '@/lib/utils'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { codeToHtml } from 'shiki'
 import { CopyButton } from './copy-button'
 
 export default function CodeBlock({
@@ -14,9 +15,9 @@ export default function CodeBlock({
 }) {
   const [htmlCode, setHtmlCode] = useState('')
 
-  import('shiki')
-    .then((shiki) => {
-      return shiki.codeToHtml(code, {
+  useEffect(() => {
+    if (code) {
+      codeToHtml(code, {
         lang: language,
         themes: themes,
         transformers: [
@@ -43,11 +44,11 @@ export default function CodeBlock({
             }
           }
         ]
+      }).then((html) => {
+        setHtmlCode(html)
       })
-    })
-    .then((html) => {
-      setHtmlCode(html)
-    })
+    }
+  }, [code, language])
 
   return (
     <div className='relative'>
