@@ -221,7 +221,7 @@ export const sigMsgForSignature = (
 
 #### ECDSA 签名
 
-对于非 `P2TR` 类型的锁定脚本使用 `ECDSA` 签名。签名前需要在上一步构造的未签名数据末尾添加4字节小端序签名哈希类型, 并进行 `sha256` 运算。将运算结果作为 `ECDSA` 签名的消息。
+对于非 `P2TR` 类型的锁定脚本使用 `ECDSA` 签名。签名前需要在上一步构造的未签名数据末尾添加4字节小端序签名哈希类型, 并进行 `Hash256` 运算。将运算结果作为 `ECDSA` 签名的消息。
 
 ```ts
 import ecc from '@bitcoinerlab/secp256k1'
