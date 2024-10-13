@@ -277,9 +277,9 @@ export const sigMsgForWitnessV0 = (
     'hex'
   )
 
-  console.log(`hashPrevouts: ${toHex(hashPrevouts)} \n`)
-  console.log(`hashSequence: ${toHex(hashSequence)} \n`)
-  console.log(`hashOutputs: ${toHex(hashOutputs)} \n`)
+  // console.log(`hashPrevouts: ${toHex(hashPrevouts)} \n`)
+  // console.log(`hashSequence: ${toHex(hashSequence)} \n`)
+  // console.log(`hashOutputs: ${toHex(hashOutputs)} \n`)
 
   const sigMsg = Buffer.concat([
     version,
@@ -393,11 +393,11 @@ export const sigMsgForWitnessV1 = (
       Buffer.from(amount + scriptPubKeySize + scriptPubKey, 'hex')
     )
   }
-  console.log(`hashPrevouts: ${toHex(hashPrevouts)} \n`)
-  console.log(`hashAmounts: ${toHex(hashAmounts)} \n`)
-  console.log(`hashScriptPubKeys: ${toHex(hashScriptPubKeys)} \n`)
-  console.log(`hashSequences: ${toHex(hashSequences)} \n`)
-  console.log(`hashOutputs: ${toHex(hashOutputs)} \n`)
+  // console.log(`hashPrevouts: ${toHex(hashPrevouts)} \n`)
+  // console.log(`hashAmounts: ${toHex(hashAmounts)} \n`)
+  // console.log(`hashScriptPubKeys: ${toHex(hashScriptPubKeys)} \n`)
+  // console.log(`hashSequences: ${toHex(hashSequences)} \n`)
+  // console.log(`hashOutputs: ${toHex(hashOutputs)} \n`)
 
   const leafHash = null
   const annex = null

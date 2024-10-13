@@ -98,8 +98,6 @@ export default function UnSignTransactionBuilder() {
         tx.addOutput(script, Number(output.amount))
       })
     } catch (error: any) {
-      console.log(error)
-
       toast.error((error && error.message) || '构造交易失败')
     }
 

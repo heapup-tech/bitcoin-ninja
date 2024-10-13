@@ -1,6 +1,5 @@
 'use client'
 
-import { decimalToFixedByteHex } from '@/lib/blockchain/bytes'
 import { getScriptType } from '@/lib/blockchain/script-utils'
 import {
   sigMsgForSignature,
@@ -189,11 +188,6 @@ export default function SignedTransactionBuilder({
         utxos[signInputIndex],
         sigHashValue
       )
-
-      const hashTypeHex = decimalToFixedByteHex(sigHashValue, 4, true)
-
-      const waitingForSignTx = txTemp.toHex() + hashTypeHex
-      console.log(`waitingForSignTx: `, waitingForSignTx)
 
       setUnsignedTransactionForInput(txTemp)
     }

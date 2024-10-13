@@ -37,7 +37,6 @@ export default function NoWitnessSignature({
     const hashTypeHex = decimalToFixedByteHex(sigHash, 4, true)
 
     const waitingForSignTx = unsignedTransactionForInput.toHex() + hashTypeHex
-    console.log(`waitingForSignTx: `, waitingForSignTx)
 
     // hash256
     const hashedTransaction = hash256(Buffer.from(waitingForSignTx, 'hex'))

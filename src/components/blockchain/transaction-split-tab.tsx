@@ -31,9 +31,7 @@ export default function TransactionSplitTab({
   let decodedTx
   try {
     decodedTx = splitRawTransaction(rawTx)
-  } catch (error) {
-    console.log(error)
-  }
+  } catch (error) {}
 
   return (
     <div className={cn('mt-4', className)}>

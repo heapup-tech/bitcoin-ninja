@@ -42,8 +42,6 @@ export const isP2TR = (script: string): boolean => {
 export const getScriptType = (
   script: string
 ): Uppercase<ScriptType | 'unknown'> => {
-  console.log(`script: `, script)
-
   if (isP2PKH(script)) return 'P2PKH'
   else if (isP2SH(script)) return 'P2SH'
   else if (isP2WPKH(script)) return 'P2WPKH'

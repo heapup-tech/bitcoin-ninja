@@ -41,7 +41,6 @@ export default function WitnessV0Signature({
 
     const hash = hash256(sigMsgBuffer)
     setHashedSigMessage(toHex(hash))
-    console.log(`hash: `, toHex(hash))
 
     // ecdsa 签名
     const ecdsaSignature = keypair.sign(hash)
