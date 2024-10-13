@@ -6,7 +6,6 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table'
-import { cn } from '@/lib/utils'
 import Code from '../code'
 
 const PSBTGlobalFields = [
@@ -21,8 +20,7 @@ const PSBTGlobalFields = [
         原始交易数据, 每个输入中的 <Code>scriptSig</Code> 和{' '}
         <Code>witness</Code>必须为空
       </>
-    ),
-    isAccent: true
+    )
   },
   {
     name: 'Extended Public Key',
@@ -38,8 +36,7 @@ const PSBTGlobalFields = [
     keydata: '-',
     keydataDescription: '-',
     valuedata: '4字节小端序',
-    valuedataDescription: '交易版本号',
-    isAccent: true
+    valuedataDescription: '交易版本号'
   },
   {
     name: 'Locktime',
@@ -47,8 +44,7 @@ const PSBTGlobalFields = [
     keydata: '-',
     keydataDescription: '-',
     valuedata: '4字节小端序',
-    valuedataDescription: '交易 Locktime',
-    isAccent: true
+    valuedataDescription: '交易 Locktime'
   },
   {
     name: 'Input Count',
@@ -56,34 +52,41 @@ const PSBTGlobalFields = [
     keydata: '-',
     keydataDescription: '-',
     valuedata: 'Compact Size',
-    valuedataDescription: '交易输入数量',
-    isAccent: true
+    valuedataDescription: '交易输入数量'
   },
   {
-    name: 'Transaction Modifiable Flags',
-    keytype: '0x06',
+    name: 'Output Count',
+    keytype: '0x05',
     keydata: '-',
     keydataDescription: '-',
-    valuedata: '1 字节标识',
-    valuedataDescription:
-      '8个比特位, 第 0 位表示是否可修改输入, 第 1 位表示是否可修改输出, 第 2 位表示是否有 SIGHASH_SINGLE 标志'
-  },
-  {
-    name: 'PSBT Version Number',
-    keytype: '0xfb',
-    keydata: '-',
-    keydataDescription: '-',
-    valuedata: '',
-    valuedataDescription: 'PSBT 版本号, 若省略则默认为 0'
-  },
-  {
-    name: 'Proprietary Use Type',
-    keytype: '0xfc',
-    keydata: '-',
-    keydataDescription: '-',
-    valuedata: '-',
-    valuedataDescription: '-'
+    valuedata: 'Compact Size',
+    valuedataDescription: '交易输出数量'
   }
+  // {
+  //   name: 'Transaction Modifiable Flags',
+  //   keytype: '0x06',
+  //   keydata: '-',
+  //   keydataDescription: '-',
+  //   valuedata: '1 字节标识',
+  //   valuedataDescription:
+  //     '8个比特位, 第 0 位表示是否可修改输入, 第 1 位表示是否可修改输出, 第 2 位表示是否有 SIGHASH_SINGLE 标志'
+  // },
+  // {
+  //   name: 'PSBT Version Number',
+  //   keytype: '0xfb',
+  //   keydata: '-',
+  //   keydataDescription: '-',
+  //   valuedata: '',
+  //   valuedataDescription: 'PSBT 版本号, 若省略则默认为 0'
+  // },
+  // {
+  //   name: 'Proprietary Use Type',
+  //   keytype: '0xfc',
+  //   keydata: '-',
+  //   keydataDescription: '-',
+  //   valuedata: '-',
+  //   valuedataDescription: '-'
+  // }
 ]
 
 export default function PSBTGlobalFieldTable() {
@@ -104,7 +107,7 @@ export default function PSBTGlobalFieldTable() {
           {PSBTGlobalFields.map((field, index) => (
             <TableRow
               key={'global-' + field.name}
-              className={cn(field.isAccent && 'bg-green-100 dark:bg-green-900')}
+              // className={cn(field.isAccent && 'bg-green-100 dark:bg-green-900')}
             >
               <TableCell className='border-r'>{field.name}</TableCell>
               <TableCell className='border-r'>{field.keytype}</TableCell>

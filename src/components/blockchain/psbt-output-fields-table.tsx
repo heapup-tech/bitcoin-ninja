@@ -6,7 +6,6 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table'
-import { cn } from '@/lib/utils'
 
 const PSBTOutputFields = [
   {
@@ -27,14 +26,14 @@ const PSBTOutputFields = [
     valuedataDescription: 'P2WSH 自定义脚本',
     isAccent: true
   },
-  {
-    name: 'BIP32 Derivation Path',
-    keytype: '0x02',
-    keydata: '公钥',
-    keydataDescription: 'BIP32 指纹和路径',
-    valuedata: '4字节指纹 + 32字节路径',
-    valuedataDescription: 'BIP32 指纹和路径'
-  },
+  // {
+  //   name: 'BIP32 Derivation Path',
+  //   keytype: '0x02',
+  //   keydata: '公钥',
+  //   keydataDescription: 'BIP32 指纹和路径',
+  //   valuedata: '4字节指纹 + 32字节路径',
+  //   valuedataDescription: 'BIP32 指纹和路径'
+  // },
   {
     name: 'Output Amount',
     keytype: '0x03',
@@ -68,36 +67,36 @@ const PSBTOutputFields = [
     keydataDescription: '-',
     valuedata: '(1字节深度 + 1字节叶子版本 + 脚本长度 + 脚本)*',
     valuedataDescription: 'Taproot 脚本树, 按照深度构建脚本树 '
-  },
-  {
-    name: 'Taproot Key BIP 32 Derivation Path',
-    keytype: '0x07',
-    keydata: '-',
-    keydataDescription: '-',
-    valuedata: '-',
-    valuedataDescription: '-'
-  },
-  {
-    name: 'MuSig2 Participant Public Keys',
-    keytype: '0x08',
-    description: ''
-  },
-  {
-    name: 'BIP 353 DNSSEC proof',
-    keytype: '0x35',
-    keydata: '-',
-    keydataDescription: '-',
-    valuedata: 'DNSSEC 证明',
-    valuedataDescription: 'BIP353 DNSSEC 证明'
-  },
-  {
-    name: 'Proprietary Use Type',
-    keytype: '0xfc',
-    keydata: '-',
-    keydataDescription: '-',
-    valuedata: '-',
-    valuedataDescription: '-'
   }
+  // {
+  //   name: 'Taproot Key BIP 32 Derivation Path',
+  //   keytype: '0x07',
+  //   keydata: '-',
+  //   keydataDescription: '-',
+  //   valuedata: '-',
+  //   valuedataDescription: '-'
+  // },
+  // {
+  //   name: 'MuSig2 Participant Public Keys',
+  //   keytype: '0x08',
+  //   description: ''
+  // },
+  // {
+  //   name: 'BIP 353 DNSSEC proof',
+  //   keytype: '0x35',
+  //   keydata: '-',
+  //   keydataDescription: '-',
+  //   valuedata: 'DNSSEC 证明',
+  //   valuedataDescription: 'BIP353 DNSSEC 证明'
+  // },
+  // {
+  //   name: 'Proprietary Use Type',
+  //   keytype: '0xfc',
+  //   keydata: '-',
+  //   keydataDescription: '-',
+  //   valuedata: '-',
+  //   valuedataDescription: '-'
+  // }
 ]
 
 export default function PSBTOutputFieldTable() {
@@ -118,7 +117,7 @@ export default function PSBTOutputFieldTable() {
           {PSBTOutputFields.map((field, index) => (
             <TableRow
               key={'global-' + field.name}
-              className={cn(field.isAccent && 'bg-green-100 dark:bg-green-900')}
+              // className={cn(field.isAccent && 'bg-green-100 dark:bg-green-900')}
             >
               <TableCell className='border-r'>{field.name}</TableCell>
               <TableCell className='border-r'>{field.keytype}</TableCell>

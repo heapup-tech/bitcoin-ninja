@@ -6,7 +6,6 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table'
-import { GETBGCOLORS } from '@/lib/constants'
 import { cn } from '@/lib/utils'
 import Code from '../code'
 import PSBTGlobalFieldTable from './psbt-global-fields-table'
@@ -35,7 +34,7 @@ export default function PSBTFieldsTable() {
             </TableCell>
           </TableRow>
           <TableRow>
-            <TableCell className={cn('border-r', GETBGCOLORS(0))}>
+            <TableCell className={cn('border-r')}>
               <strong>Global</strong>
             </TableCell>
             <TableCell>
@@ -44,7 +43,7 @@ export default function PSBTFieldsTable() {
           </TableRow>
 
           <TableRow>
-            <TableCell className={cn('border-r', GETBGCOLORS(1))}>
+            <TableCell className={cn('border-r')}>
               <strong>Inputs</strong>
             </TableCell>
             <TableCell>
@@ -53,7 +52,7 @@ export default function PSBTFieldsTable() {
           </TableRow>
 
           <TableRow>
-            <TableCell className={cn('border-r', GETBGCOLORS(2))}>
+            <TableCell className={cn('border-r')}>
               <strong>Outputs</strong>
             </TableCell>
             <TableCell>

@@ -2,7 +2,7 @@
 title: PSBT
 ---
 
-[BIP174](https://github.com/bitcoin/bips/blob/master/bip-0174.mediawiki) 定义了 `PSBT` 标准, 全称是 `Partially Signed Bitcoin Transaction Format`, 是一种用于多签交易的签名格式, 便于在不同参与者之间传递和更新比特币交易信息, 而无需将私钥暴露给其他参与者。
+[BIP174](https://github.com/bitcoin/bips/blob/master/bip-0174.mediawiki) 定义了 `PSBT` 标准, 全称是 `Partially Signed Bitcoin Transaction Format`, 是一种用于交易的部分签名格式, 便于在不同参与者之间传递和更新比特币交易信息, 而无需将私钥暴露给其他参与者。
 
 ## PSBT 结构
 
@@ -58,32 +58,21 @@ PSBT 结构由 4 部分组成:
 
 ## 流程
 
-假设现在有一个 2-3 多签交易, 由 Alice, Bob 和 Carol 共同签名。
+假设现在有三个用户, 分别为 Alice, Bob 和 Carol。
 
 Alice 创建了一个 `PSBT`
 
-```ts
+```ts title="Alice创建PSBT"
 import { initEccLib, networks, Psbt } from 'bitcoinjs-lib'
 import * as ecc from 'tiny-secp256k1'
-import ECPairFactory from 'ecpair'
 
 const network = networks.testnet
 initEccLib(ecc)
 
-const ECPair = ECPairFactory(ecc)
-
-const keyPair = ECPair.fromWIF(
-  'cQYUFDYTEK1LW6tneZnWu9rQSJxDvqsh7SzzbCSK4DSCBpvtAkh3',
-  network
-)
-
 const psbt = new Psbt({ network })
 
-function toXOnly(pubkey: Buffer): Buffer {
-  return pubkey.subarray(1, 33)
-}
-
 // 非隔离见证输入需要提供产出该输入的完整的交易信息
+// 假设该输入只能 Bob 的签名才能花费
 psbt.addInput({
   hash: 'e4f7440ca6a59764064ab663f396e9cd0ccff96d6b7ecd368340d3cdc5f02303',
   index: 0,
@@ -94,6 +83,7 @@ psbt.addInput({
 })
 
 // 隔离见证V0输入需要提供 witnessUtxo, 包括了锁定脚本和金额
+// 假设该输入只能 Carol 的签名才能花费
 psbt.addInput({
   hash: '16973bedb0996b7c592daaccf0d39e320e5ce51aed4692f285684b05f28b04cd',
   index: 0,
@@ -101,22 +91,6 @@ psbt.addInput({
     script: Buffer.from('0014c189d7f7ea4333daec66a645cb3388163c22900b', 'hex'),
     value: 20000
   }
-})
-
-// T2TR 输入, 除了提供 witnessUtxo, 还要根据花费路径的不同
-// 秘钥路径: 只要提供 tapInternalKey 是内部公钥, 为用户私钥对应的公钥的 X 坐标
-// 脚本路径: 另外提供 tapLeafHash 是叶子节点的哈希值
-psbt.addInput({
-  hash: '77360cb76de44cf8a9c096105f6b4a3dee1d3d4ce95a66319f82536af5c31e16',
-  index: 0,
-  witnessUtxo: {
-    script: Buffer.from(
-      '5120b2049a6d884575fe95e3fcaeaedae4ec4feaecccc30fad156f12923753c0954e',
-      'hex'
-    ),
-    value: 500000
-  },
-  tapInternalKey: toXOnly(keyPair.publicKey)
 })
 
 // 添加输出
@@ -129,9 +103,203 @@ psbt.addOutput({
   value: 500
 })
 
+// PSBT 两种序列化方式: base64 和 hex
+
 const psbtBase64 = psbt.toBase64()
 console.log(psbtBase64 + '\n')
 
 const psbtHex = psbt.toHex()
 console.log(psbtHex)
 ```
+
+Alice 创建的 `PSBT` 交易中, 包含了两个输入和两个输出, 这两个输入分别只能由 Bob 和 Carol 可以生成有效签名
+
+之后 Alice 将 `PSBT` 序列化后的数据同时传递给 Bob 和 Carol, 如果他们同意该花费可以使用对应的私钥对交易输入生成有效的签名。
+
+```ts title="Bob签名"
+import { initEccLib, networks, Psbt } from 'bitcoinjs-lib'
+import * as ecc from 'tiny-secp256k1'
+import ECPairFactory from 'ecpair'
+
+const network = networks.testnet
+initEccLib(ecc)
+
+const ECPair = ECPairFactory(ecc)
+
+const BobPrivateKey = ''
+const keyPair = ECPair.fromPrivateKey(Buffer.from(BobPrivateKey, 'hex'), {
+  network
+})
+
+const psbt = Psbt.fromHex(
+  '70736274ff0100a602000000020323f0c5cdd3408336cd7e6b6df9cf0ccde996f363b64a066497a5a60c44f7e40000000000ffffffffcd048bf2054b6885f29246ed1ae55c0e329ed3f0ccaa2d597c6b99b0ed3b97160000000000ffffffff026400000000000000225120b2049a6d884575fe95e3fcaeaedae4ec4feaecccc30fad156f12923753c0954ef40100000000000016001430f7efe4862effb0f6c441347e0653d701321fae00000000000100c4020000000001011b2ffe749d2333c5dbcbe9b812e1aef49cb6e0f0143151f1b44c5d0f20b13ca00100000000fdffffff02a0860100000000001976a914c189d7f7ea4333daec66a645cb3388163c22900b88ac67360a0000000000225120b494169f485231b6f428d3ce782cdaccc6b6bfd5d1a45802b62848d1b74c04f1014060269c7979be5a482056745ec5d51b5292cbc7e329cf7b932db67287e04ab7366ba50b747d83ee2e563ef8b9b4dbeb277fe81c093be1641254a866cba70cbbf5000000000001011f204e000000000000160014c189d7f7ea4333daec66a645cb3388163c22900b000000',
+  { network }
+)
+
+// 签署第 0 个输入
+psbt.signInput(0, keyPair)
+
+console.log(psbt.toHex())
+```
+
+```ts title="Carol签名"
+import { initEccLib, networks, Psbt } from 'bitcoinjs-lib'
+import * as ecc from 'tiny-secp256k1'
+import ECPairFactory from 'ecpair'
+
+const network = networks.testnet
+initEccLib(ecc)
+
+const ECPair = ECPairFactory(ecc)
+
+const CarolPrivateKey = ''
+const keyPair = ECPair.fromPrivateKey(Buffer.from(CarolPrivateKey, 'hex'), {
+  network
+})
+
+const psbt = Psbt.fromHex(
+  '70736274ff0100a602000000020323f0c5cdd3408336cd7e6b6df9cf0ccde996f363b64a066497a5a60c44f7e40000000000ffffffffcd048bf2054b6885f29246ed1ae55c0e329ed3f0ccaa2d597c6b99b0ed3b97160000000000ffffffff026400000000000000225120b2049a6d884575fe95e3fcaeaedae4ec4feaecccc30fad156f12923753c0954ef40100000000000016001430f7efe4862effb0f6c441347e0653d701321fae00000000000100c4020000000001011b2ffe749d2333c5dbcbe9b812e1aef49cb6e0f0143151f1b44c5d0f20b13ca00100000000fdffffff02a0860100000000001976a914c189d7f7ea4333daec66a645cb3388163c22900b88ac67360a0000000000225120b494169f485231b6f428d3ce782cdaccc6b6bfd5d1a45802b62848d1b74c04f1014060269c7979be5a482056745ec5d51b5292cbc7e329cf7b932db67287e04ab7366ba50b747d83ee2e563ef8b9b4dbeb277fe81c093be1641254a866cba70cbbf5000000000001011f204e000000000000160014c189d7f7ea4333daec66a645cb3388163c22900b000000',
+  { network }
+)
+
+// 签署第 1 个输入
+psbt.signInput(1, keyPair)
+
+console.log(psbt.toHex())
+```
+
+Bob 和 Carol 分别完成对 `PSBT` 交易的第 0 和第 1 个输入签名, 并将签名后的 `PSBT` 发送给 Alice, Alice 接收到后可以将两个签名合并到一起。
+
+```ts title="Alice合并签名"
+// 来自 Bob 的 PSBT
+const psbtFromBob = Psbt.fromHex(
+  '70736274ff0100a602000000020323f0c5cdd3408336cd7e6b6df9cf0ccde996f363b64a066497a5a60c44f7e40000000000ffffffffcd048bf2054b6885f29246ed1ae55c0e329ed3f0ccaa2d597c6b99b0ed3b97160000000000ffffffff026400000000000000225120b2049a6d884575fe95e3fcaeaedae4ec4feaecccc30fad156f12923753c0954ef40100000000000016001430f7efe4862effb0f6c441347e0653d701321fae00000000000100c4020000000001011b2ffe749d2333c5dbcbe9b812e1aef49cb6e0f0143151f1b44c5d0f20b13ca00100000000fdffffff02a0860100000000001976a914c189d7f7ea4333daec66a645cb3388163c22900b88ac67360a0000000000225120b494169f485231b6f428d3ce782cdaccc6b6bfd5d1a45802b62848d1b74c04f1014060269c7979be5a482056745ec5d51b5292cbc7e329cf7b932db67287e04ab7366ba50b747d83ee2e563ef8b9b4dbeb277fe81c093be1641254a866cba70cbbf500000000220202e80f2893a4879f747c0536c4fe79b3a735eee28a275035b47f8263763166ead9483045022100bacde815274c2760fdaf63c5ac76f71b16e226d80d31535b334acbc688ced60602202d854860951c1837dae25710a49e930ca96d74991a06ad71863ac0cb228b79c8010001011f204e000000000000160014c189d7f7ea4333daec66a645cb3388163c22900b000000'
+)
+// 来自 Carol 的 PSBT
+const psbtFromCarol = Psbt.fromHex(
+  '70736274ff0100a602000000020323f0c5cdd3408336cd7e6b6df9cf0ccde996f363b64a066497a5a60c44f7e40000000000ffffffffcd048bf2054b6885f29246ed1ae55c0e329ed3f0ccaa2d597c6b99b0ed3b97160000000000ffffffff026400000000000000225120b2049a6d884575fe95e3fcaeaedae4ec4feaecccc30fad156f12923753c0954ef40100000000000016001430f7efe4862effb0f6c441347e0653d701321fae00000000000100c4020000000001011b2ffe749d2333c5dbcbe9b812e1aef49cb6e0f0143151f1b44c5d0f20b13ca00100000000fdffffff02a0860100000000001976a914c189d7f7ea4333daec66a645cb3388163c22900b88ac67360a0000000000225120b494169f485231b6f428d3ce782cdaccc6b6bfd5d1a45802b62848d1b74c04f1014060269c7979be5a482056745ec5d51b5292cbc7e329cf7b932db67287e04ab7366ba50b747d83ee2e563ef8b9b4dbeb277fe81c093be1641254a866cba70cbbf5000000000001011f204e000000000000160014c189d7f7ea4333daec66a645cb3388163c22900b220202e80f2893a4879f747c0536c4fe79b3a735eee28a275035b47f8263763166ead94730440220795541fcdde828b372f8d26a8482c28cebf95491561beedb1c598baccf1a233d022020ef82593290be1317722ec00cfcf0dc072ceb87482e9fde8fe32401cff875f701000000'
+)
+
+// 合并 PSBT
+psbt.combine(psbtFromBob, psbtFromCarol)
+
+// 定稿所有输入, 不再接受新的签名
+psbt.finalizeAllInputs()
+
+// 提取交易
+const tx = psbt.extractTransaction()
+
+// 提取交易的 Hex 格式, 最后通过 rpc 方法 `sendrawtransaction` 发送到比特币网络
+const rawTx = tx.toHex()
+
+// 或者直接通过链式调用
+// psbt.finalizeAllInputs().extractTransaction().toHex()
+```
+
+在调用 `finalizeAllInputs` 前, 如果打印交易输入信息, 可以看到 `PSBT` 交易中的签名信息。
+
+```ts
+console.log(psbt.data.inputs[0])
+{
+  nonWitnessUtxo: Buffer(...), // 第 0 个输入所在交易的完整交易信息
+  partialSig: [
+    {
+      pubkey: Buffer(...), // Bob 公钥
+      signature: Buffer(...) // Bob 签名,
+    }
+  ],
+}
+
+console.log(psbt.data.inputs[1])
+{
+  witnessUtxo: { // 第 1 个输入的锁定脚本和金额
+    script: Buffer(...),
+    value: 20000
+  },
+  partialSig: [
+    {
+      pubkey: Buffer(...), // Carol 公钥
+      signature: Buffer(...) // Carol 签名,
+    }
+  ],
+}
+```
+
+:::note
+
+`partialSig` 用于存储部分签名信息, 为数组结构, 每个元素包含 `pubkey` 和 `signature` 字段。
+
+对于多签的交易输入, 则 `partialSig` 会有多个元素。
+
+:::
+
+而在调用 `finalizeAllInputs` 后, `PSBT` 交易中的签名信息会被最终定稿, 此时打印交易输入信息。
+
+```ts
+console.log(psbt.data.inputs[0])
+{
+  nonWitnessUtxo: Buffer(...),
+  finalScriptSig: Buffer(...),
+}
+
+console.log(psbt.data.inputs[1])
+
+{
+  witnessUtxo: {
+    script: Buffer(...),
+    value: 20000
+  },
+  finalScriptWitness: Buffer(...)
+}
+```
+
+`finalScriptSig` 和 `finalScriptWitness` 为最终的解锁脚本, 被放置在交易输入中的 `scriptSig` 和 `witness` 字段中。
+
+:::warning
+
+PSBT 为花费别人的 `UTXO` 提供了一种标准的数据交换格式。
+
+:::
+
+## 多签
+
+假设 Alice 将一个 2-of-3 `P2MS` 作为交易输入。要使交易有效, 则至少需要 Alice、Bob 和 Carol 中的两个人签名。
+
+在 Alice 创建完 `PSBT` 后并签名后, 将其序列化数据传递给 `Bob` 和 `Carol`。
+
+```ts title="Alice创建多签 PSBT"
+const psbt = new Psbt({ network })
+psbt.addInput({
+  hash: '...',
+  index: 0,
+  nonWitnessUtxo: Buffer.from('...', 'hex')
+})
+psbt.addOutput(...)
+
+const AlicePrivateKey = ''
+const AliceKeyPair = ECPair.fromPrivateKey(
+  Buffer.from(AlicePrivateKey, 'hex'),
+  {
+    network
+  }
+)
+
+// Alice 签名
+psbt.signInput(0, AliceKeyPair)
+
+psbt.toHex() // 0x70736274ff...
+```
+
+`Bob` 和 `Carol` 接收到 `PSBT` 数据后, 只要有一方同意花费, 则可以签名。
+
+```ts title="Bob 或 Carol签名"
+const psbt = Psbt.fromHex('70736274ff...')
+
+// Bob 或 Carol 签名
+psbt.signInput(0, BobKeyPair)
+
+// or
+psbt.signInput(0, CarolKeyPair)
+```
+
+最后 Alice 合并签名, 并提取交易, 最终发送到比特币网络。
