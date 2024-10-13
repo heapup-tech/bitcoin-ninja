@@ -3,3 +3,135 @@ title: PSBT
 ---
 
 [BIP174](https://github.com/bitcoin/bips/blob/master/bip-0174.mediawiki) 定义了 `PSBT` 标准, 全称是 `Partially Signed Bitcoin Transaction Format`, 是一种用于多签交易的签名格式, 便于在不同参与者之间传递和更新比特币交易信息, 而无需将私钥暴露给其他参与者。
+
+## PSBT 结构
+
+PSBT 结构由 4 部分组成:
+
+- `Magic` - 固定为 `0x70736274FF`
+- `Global Map` - 全局信息, 用于存储交易的全局信息, 如版本号、锁定时间等
+- `Input Map` - 多个输入信息
+- `Output Map` - 多个输出信息
+
+:::note
+
+\<psbt> := \<magic> \<global-map> \<input-map>\* \<output-map>\*
+
+\<magic> := 0x70 0x73 0x62 0x74 0xFF
+
+\<global-map> := \<keypair>\* 0x00
+
+\<input-map> := \<keypair>\* 0x00
+
+\<output-map> := \<keypair>\* 0x00
+
+:::
+
+除 `Magic` 外, 其他部分都是以 `keypair` 开头, `0x00` 结尾。
+
+`keypair` 是键值对字节数据, 由 `key` 和 `value` 组成。
+
+:::tip
+
+\<keypair> := \<key> \<value>
+
+\<key> := \<keylen> \<keytype> \<keydata>
+
+\<value> := \<valuelen> \<valuedata>
+
+:::
+
+`key` 是一个字节序列, 包括
+
+- `keylen` - 格式为 `Compact Size` 类型, 表示 `keytype` 和 `keydata` 总字节长度
+- `keytype` - 表示 `key` 的类型
+- `keydata` - `key` 数据
+
+`value` 是一个字节序列, 包括
+
+- `valuelen` - 格式为 `Compact Size` 类型, 表示 `valuedata` 的长度
+- `valuedata` - `valuelen` 字节的数据
+
+每一部分具体的 `key-value` 见下表:
+
+<PSBTFieldsTable />
+
+## 流程
+
+假设现在有一个 2-3 多签交易, 由 Alice, Bob 和 Carol 共同签名。
+
+Alice 创建了一个 `PSBT`
+
+```ts
+import { initEccLib, networks, Psbt } from 'bitcoinjs-lib'
+import * as ecc from 'tiny-secp256k1'
+import ECPairFactory from 'ecpair'
+
+const network = networks.testnet
+initEccLib(ecc)
+
+const ECPair = ECPairFactory(ecc)
+
+const keyPair = ECPair.fromWIF(
+  'cQYUFDYTEK1LW6tneZnWu9rQSJxDvqsh7SzzbCSK4DSCBpvtAkh3',
+  network
+)
+
+const psbt = new Psbt({ network })
+
+function toXOnly(pubkey: Buffer): Buffer {
+  return pubkey.subarray(1, 33)
+}
+
+// 非隔离见证输入需要提供产出该输入的完整的交易信息
+psbt.addInput({
+  hash: 'e4f7440ca6a59764064ab663f396e9cd0ccff96d6b7ecd368340d3cdc5f02303',
+  index: 0,
+  nonWitnessUtxo: Buffer.from(
+    '020000000001011b2ffe749d2333c5dbcbe9b812e1aef49cb6e0f0143151f1b44c5d0f20b13ca00100000000fdffffff02a0860100000000001976a914c189d7f7ea4333daec66a645cb3388163c22900b88ac67360a0000000000225120b494169f485231b6f428d3ce782cdaccc6b6bfd5d1a45802b62848d1b74c04f1014060269c7979be5a482056745ec5d51b5292cbc7e329cf7b932db67287e04ab7366ba50b747d83ee2e563ef8b9b4dbeb277fe81c093be1641254a866cba70cbbf500000000',
+    'hex'
+  )
+})
+
+// 隔离见证V0输入需要提供 witnessUtxo, 包括了锁定脚本和金额
+psbt.addInput({
+  hash: '16973bedb0996b7c592daaccf0d39e320e5ce51aed4692f285684b05f28b04cd',
+  index: 0,
+  witnessUtxo: {
+    script: Buffer.from('0014c189d7f7ea4333daec66a645cb3388163c22900b', 'hex'),
+    value: 20000
+  }
+})
+
+// T2TR 输入, 除了提供 witnessUtxo, 还要根据花费路径的不同
+// 秘钥路径: 只要提供 tapInternalKey 是内部公钥, 为用户私钥对应的公钥的 X 坐标
+// 脚本路径: 另外提供 tapLeafHash 是叶子节点的哈希值
+psbt.addInput({
+  hash: '77360cb76de44cf8a9c096105f6b4a3dee1d3d4ce95a66319f82536af5c31e16',
+  index: 0,
+  witnessUtxo: {
+    script: Buffer.from(
+      '5120b2049a6d884575fe95e3fcaeaedae4ec4feaecccc30fad156f12923753c0954e',
+      'hex'
+    ),
+    value: 500000
+  },
+  tapInternalKey: toXOnly(keyPair.publicKey)
+})
+
+// 添加输出
+psbt.addOutput({
+  address: 'tb1pkgzf5mvgg46la90rljh2akhya3874mxvcv8669t0z2frw57qj48qa5x5y6',
+  value: 100
+})
+psbt.addOutput({
+  address: 'tb1qxrm7leyx9mlmpakygy68upjn6uqny8awzps3w6',
+  value: 500
+})
+
+const psbtBase64 = psbt.toBase64()
+console.log(psbtBase64 + '\n')
+
+const psbtHex = psbt.toHex()
+console.log(psbtHex)
+```

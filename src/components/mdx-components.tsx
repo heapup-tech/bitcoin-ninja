@@ -44,6 +44,7 @@ import MempoolOverview from './blockchain/mempool-overview'
 import MnemonicGenerator from './blockchain/mnemonic-generator'
 import NetworkHashps from './blockchain/network-hashps'
 import PrivateKeyGenerator from './blockchain/private-key-generator'
+import PSBTFieldsTable from './blockchain/psbt-fields-table'
 import PublicKeyGenerator from './blockchain/public-key-generator'
 import ReplaceBlockPowerTable from './blockchain/replace-block-power-table'
 import RpcMethodTable from './blockchain/rpc-method-table'
@@ -86,6 +87,7 @@ const components = {
   TransactionOutputFieldsTable,
   TransactionWitnessFieldsTable,
   TransactionSplitTab,
+  PSBTFieldsTable,
   HalvingTable,
   ReplaceBlockPowerTable,
   TransactionTxidCalculator,

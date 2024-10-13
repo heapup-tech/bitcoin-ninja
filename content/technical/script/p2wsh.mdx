@@ -6,6 +6,8 @@ title: P2WSH
 
 自隔离见证升级后, `UTXO` 的解锁脚本便从 `ScriptSig` 字段移动到了 `Witness` 字段, `P2SH` 也就升级成了 `P2WSH`, 由于是隔离见证的第 0 个版本, 所以也叫 `V0_P2WSH`。
 
+`P2WSH` 中的自定义脚本不再称为 `Redeem Script`, 而是称为 `Witness Script`。
+
 ## 锁定脚本
 
 `P2WSH` 锁定脚本的操作码模板:
