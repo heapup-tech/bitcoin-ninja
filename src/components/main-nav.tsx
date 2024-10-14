@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils'
 import { ExternalLinkIcon } from '@radix-ui/react-icons'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { Icons } from './icons'
 import { Badge } from './ui/badge'
 
 export function MainNav() {
@@ -17,6 +18,7 @@ export function MainNav() {
         href='/'
         className='relative mr-6 flex items-center space-x-2'
       >
+        <Icons.logo className='size-6' />
         <span className='hidden font-bold sm:inline-block'>
           {siteConfig.name}
         </span>

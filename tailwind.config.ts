@@ -58,6 +58,12 @@ const config = {
         md: 'calc(var(--radius) - 2px)',
         sm: 'calc(var(--radius) - 4px)'
       },
+      animation: {
+        'accordion-down': 'accordion-down 0.2s ease-out',
+        'accordion-up': 'accordion-up 0.2s ease-out',
+        'code-block-hide': 'code-block-hide 1.25s forwards',
+        'code-block-show': 'code-block-show 1.25s .15s forwards'
+      },
       keyframes: {
         'accordion-down': {
           from: { height: '0' },
@@ -80,12 +86,6 @@ const config = {
           '80%': { opacity: '0', transform: 'translate(-50%,-50%) scale(.5)' },
           to: { opacity: '0', transform: 'translate(-50%,-50%) scale(.5)' }
         }
-      },
-      animation: {
-        'accordion-down': 'accordion-down 0.2s ease-out',
-        'accordion-up': 'accordion-up 0.2s ease-out',
-        'code-block-hide': 'code-block-hide 1.25s forwards',
-        'code-block-show': 'code-block-show 1.25s .15s forwards'
       },
       gridTemplateColumns: {
         'auto-fill-40': 'repeat(auto-fill, 40px)'

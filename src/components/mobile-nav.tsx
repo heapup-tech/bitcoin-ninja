@@ -36,10 +36,10 @@ export function MobileNav() {
       >
         <MobileLink
           href='/'
-          className='flex items-center'
+          className='flex items-center gap-x-2'
           onOpenChange={setOpen}
         >
-          <span className='font-bold'>{siteConfig.name}</span>
+          <span className='font-bold'>{siteConfig.name}213123</span>
         </MobileLink>
         <ScrollArea className='my-4 h-[calc(100vh-8rem)] pb-10 pl-6'>
           <div className='flex flex-col space-y-3'>
