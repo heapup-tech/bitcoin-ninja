@@ -16,11 +16,13 @@ import Balancer from 'react-wrap-balancer'
 export async function generateStaticParams(): Promise<
   DocPageProps['params'][]
 > {
-  return allDocs.map((doc) => {
-    return {
-      slug: doc.slugAsParams.split('/')
-    }
-  })
+  return allDocs
+    .filter((doc) => doc.slugAsParams.split('/').length >= 2)
+    .map((doc) => {
+      return {
+        slug: doc.slugAsParams.split('/')
+      }
+    })
 }
 
 export default async function DocPage({ params }: DocPageProps) {

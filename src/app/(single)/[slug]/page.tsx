@@ -7,14 +7,25 @@ import { cn } from '@/lib/utils'
 import { notFound } from 'next/navigation'
 import Balancer from 'react-wrap-balancer'
 
+// export async function generateStaticParams(): Promise<
+//   DocPageProps['params'][]
+// > {
+//   return allDocs
+//     .filter((doc) => doc.slugAsParams.split('/').length === 1)
+//     .map((doc) => {
+//       return {
+//         slug: doc.slugAsParams.split('/')
+//       }
+//     })
+// }
+
 export default async function SingleSlugPage({ params }: DocPageProps) {
   const doc = await getDocFromParams({ params })
 
   if (!doc) notFound()
 
   const toc = await getTableOfContents(doc.body.raw)
-  console.log(toc)
-  // container flex-1 items-start md:grid md:grid-cols-[220px_minmax(0,1fr)] md:gap-6 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-10
+
   return (
     <main className={cn('relative py-6 flex-1')}>
       <div className='relative max-w-[1280px] px-4 mx-auto lg:grid lg:grid-cols-[1fr_200px] lg:gap-10'>
