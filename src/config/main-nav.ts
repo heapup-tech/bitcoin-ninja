@@ -5,11 +5,11 @@ export const mainNav: Array<MainNavItem> = [
     title: '深入技术',
     href: '/technical/basic/blockchain'
   },
-  // {
-  //   title: '密码学',
-  //   href: '/cryptography',
-  //   comingSoon: true
-  // },
+  {
+    title: '密码学',
+    href: '/cryptography',
+    comingSoon: true
+  },
   // {
   //   title: '工具集',
   //   href: '/tools',

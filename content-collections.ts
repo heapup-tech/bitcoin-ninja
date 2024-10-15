@@ -10,8 +10,8 @@ import { visit } from 'unist-util-visit'
 import { themes } from './src/config/theme'
 import { rehypeCodeBlockTitle } from './src/lib/rehype-plugin/codeblock-title'
 import { remarkAdmonition } from './src/lib/remark-plugin/admonition'
-export const TechnicalDoc = defineCollection({
-  name: 'TechnicalDoc',
+export const Docs = defineCollection({
+  name: 'Docs',
   directory: 'content',
   include: '**/*.mdx',
   schema: (z) => ({
@@ -73,7 +73,7 @@ export const TechnicalDoc = defineCollection({
     return {
       ...document,
       slug: `/${document._meta.path}`,
-      slugAsParams: document._meta.path.split('/').slice(1).join('/'),
+      slugAsParams: document._meta.path.split('/').slice(0).join('/'),
       body: {
         raw: document.content,
         code: body
@@ -83,5 +83,5 @@ export const TechnicalDoc = defineCollection({
 })
 
 export default defineConfig({
-  collections: [TechnicalDoc]
+  collections: [Docs]
 })

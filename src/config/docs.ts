@@ -4,10 +4,10 @@ import { technicalSidebar } from './technical-sidebar'
 
 interface DocsConfig {
   mainNav: MainNavItem[]
-  technicalSidebarNav: SidebarNavItem[]
+  technical: SidebarNavItem[]
 }
 
 export const docsConfig: DocsConfig = {
   mainNav: mainNav,
-  technicalSidebarNav: technicalSidebar
+  technical: technicalSidebar
 }

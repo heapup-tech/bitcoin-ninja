@@ -6,15 +6,20 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import { docsConfig } from '@/config/docs'
 import { siteConfig } from '@/config/site'
 import { cn } from '@/lib/utils'
+import { SidebarNavItem } from '@/types/nav'
 import { SidebarOpen } from 'lucide-react'
 import Link, { LinkProps } from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import * as React from 'react'
 
 export function MobileNav() {
   const [open, setOpen] = React.useState(false)
+  const { slug } = useParams()
 
-  const sidebarNav = docsConfig.technicalSidebarNav
+  let sidebarNav: SidebarNavItem[] = []
+  if (Array.isArray(slug) && slug[0]) {
+    sidebarNav = docsConfig[slug[0] as keyof typeof docsConfig]
+  }
 
   return (
     <Sheet
@@ -32,16 +37,16 @@ export function MobileNav() {
       </SheetTrigger>
       <SheetContent
         side='left'
-        className='pr-0'
+        className='pr-0 pb-4'
       >
         <MobileLink
           href='/'
           className='flex items-center gap-x-2'
           onOpenChange={setOpen}
         >
-          <span className='font-bold'>{siteConfig.name}213123</span>
+          <span className='font-bold'>{siteConfig.name}</span>
         </MobileLink>
-        <ScrollArea className='my-4 h-[calc(100vh-8rem)] pb-10 pl-6'>
+        <ScrollArea className='my-4 h-[calc(100vh-5rem)] pl-6 mb-0'>
           <div className='flex flex-col space-y-3'>
             {docsConfig.mainNav?.map(
               (item) =>

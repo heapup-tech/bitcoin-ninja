@@ -2,45 +2,31 @@ import { Mdx } from '@/components/mdx-components'
 import { DocPager } from '@/components/pager'
 import { TableOfContents } from '@/components/toc'
 import { docsConfig } from '@/config/docs'
+import { DocPageProps, getDocFromParams } from '@/lib/doc'
 import { getTableOfContents } from '@/lib/toc'
 import { cn } from '@/lib/utils'
 import '@/styles/mdx.css'
 import { ChevronRightIcon } from '@radix-ui/react-icons'
 import { ScrollArea } from '@radix-ui/react-scroll-area'
-import { allTechnicalDocs } from 'content-collections'
+import { allDocs } from 'content-collections'
+
 import { notFound } from 'next/navigation'
 import Balancer from 'react-wrap-balancer'
-
-interface DocPageProps {
-  params: {
-    slug: string[]
-  }
-}
-async function getDocFromParams({ params }: DocPageProps) {
-  const slug = params.slug?.join('/') || ''
-  const doc = allTechnicalDocs.find((doc) => doc.slugAsParams === slug)
-
-  if (!doc) {
-    return null
-  }
-
-  return doc
-}
 
 export async function generateStaticParams(): Promise<
   DocPageProps['params'][]
 > {
-  return allTechnicalDocs.map((doc) => ({
-    slug: doc.slugAsParams.split('/')
-  }))
+  return allDocs.map((doc) => {
+    return {
+      slug: doc.slugAsParams.split('/')
+    }
+  })
 }
 
 export default async function DocPage({ params }: DocPageProps) {
   const doc = await getDocFromParams({ params })
 
-  if (!doc) {
-    notFound()
-  }
+  if (!doc) notFound()
 
   const toc = await getTableOfContents(doc.body.raw)
 
@@ -73,7 +59,7 @@ export default async function DocPage({ params }: DocPageProps) {
         </div>
         <DocPager
           doc={doc}
-          sidebarNav={docsConfig.technicalSidebarNav}
+          sidebarNav={docsConfig.technical}
         />
       </div>
       {doc.toc && (
