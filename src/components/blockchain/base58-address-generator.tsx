@@ -12,7 +12,8 @@ import {
   GETHOVERBGCOLORS
 } from '@/lib/constants'
 import { cn } from '@/lib/utils'
-import { isValidPrivateKey } from '@/lib/validator'
+import { isHexadecimal, isValidPrivateKey } from '@/lib/validator'
+import { payments } from 'bitcoinjs-lib'
 import { ripemd160, sha256 } from 'bitcoinjs-lib/src/crypto'
 import base58 from 'bs58'
 import { CircleHelp } from 'lucide-react'
@@ -25,8 +26,11 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip'
 export default function Base58AddressGenerator() {
   const [privateKey, setPrivateKey] = useState('')
   const [isErrorPublicKey, setIsErrorPublicKey] = useState(false)
+
   const [publicKey, setPublicKey] = useState('')
-  const [hash160PublicKey, setHash160PublicKey] = useState('')
+  const [redeemScript, setRedeemScript] = useState('')
+
+  const [hash160Res, setHash160Res] = useState('')
   const [versionedHash160, setVersionedHash160] = useState('')
 
   const [checksum, setChecksum] = useState('')
@@ -58,16 +62,21 @@ export default function Base58AddressGenerator() {
   }
 
   const calculateAddress = () => {
-    const publicKeyBuffer = Buffer.from(publicKey, 'hex')
+    let hash160Res: Buffer = Buffer.alloc(0)
+    if (addressType === 'p2pkh') {
+      const publicKeyBuffer = Buffer.from(publicKey, 'hex')
+      hash160Res = ripemd160(sha256(publicKeyBuffer))
+      setHash160Res(hash160Res.toString('hex'))
+    } else if (addressType === 'p2sh') {
+      console.log(`redeemScript: ${redeemScript}`)
 
-    const hash160PublicKey = ripemd160(sha256(publicKeyBuffer))
-    setHash160PublicKey(hash160PublicKey.toString('hex'))
+      const redeemScriptBuffer = Buffer.from(redeemScript, 'hex')
+      hash160Res = ripemd160(sha256(redeemScriptBuffer))
+      setHash160Res(hash160Res.toString('hex'))
+    }
 
     const prefix = ADDRESS_BASE58_PREFIX[network][addressType]
-    const versionHash160 = Buffer.concat([
-      Buffer.from([prefix]),
-      hash160PublicKey
-    ])
+    const versionHash160 = Buffer.concat([Buffer.from([prefix]), hash160Res])
     setVersionedHash160(versionHash160.toString('hex'))
 
     let doubleSha256 = sha256(sha256(versionHash160))
@@ -88,13 +97,24 @@ export default function Base58AddressGenerator() {
       return
     }
     setIsErrorPublicKey(false)
+
+    if (!redeemScript) {
+      setRedeemScript(
+        payments
+          .p2wpkh({
+            pubkey: Buffer.from(publicKey, 'hex')
+          })
+          .output!.toString('hex')
+      )
+    }
     calculateAddress()
   }, [publicKey])
 
   useEffect(() => {
     if (!publicKey || !privateKey) return
+
     calculateAddress()
-  }, [network, addressType])
+  }, [network, addressType, redeemScript])
 
   return (
     <InteractionCard
@@ -128,23 +148,66 @@ export default function Base58AddressGenerator() {
         onChange={(e) => setPublicKey(e.target.value)}
       />
 
-      <div className='text-sm font-medium mt-4 mb-0.5 flex items-center gap-x-2'>
-        Step 1: 公钥哈希
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <CircleHelp className='w-4' />
-          </TooltipTrigger>
-          <TooltipContent>
-            <div className='text-sm'>
-              公钥哈希(Hash160) = Ripemd160(Sha256(CompressedPublicKey))
-            </div>
-          </TooltipContent>
-        </Tooltip>
-      </div>
-      <div className='bg-background text-base break-all border rounded-md shadow-sm px-3 py-1.5 min-h-9'>
-        <span className={cn(GETCOLORS(0))}>{hash160PublicKey}</span>
-      </div>
+      {addressType === 'p2pkh' && (
+        <>
+          <div className='text-sm font-medium mt-4 mb-0.5 flex items-center gap-x-2'>
+            Step 1: 公钥哈希
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <CircleHelp className='w-4' />
+              </TooltipTrigger>
+              <TooltipContent>
+                <div className='text-sm'>
+                  公钥哈希(Hash160) = Ripemd160(Sha256(CompressedPublicKey))
+                </div>
+              </TooltipContent>
+            </Tooltip>
+          </div>
+          <div className='bg-background text-base break-all border rounded-md shadow-sm px-3 py-1.5 min-h-9'>
+            <span className={cn(GETCOLORS(0))}>{hash160Res}</span>
+          </div>
+        </>
+      )}
 
+      {addressType === 'p2sh' && (
+        <>
+          <div className='text-sm font-medium mt-4 mb-0.5 flex items-center gap-x-2'>
+            赎回脚本
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <CircleHelp className='w-4' />
+              </TooltipTrigger>
+              <TooltipContent>
+                <div className='text-sm'>默认为 P2WPKH 锁定脚本</div>
+              </TooltipContent>
+            </Tooltip>
+          </div>
+          <Input
+            value={redeemScript}
+            className={cn(
+              'bg-background text-base',
+              !isHexadecimal(redeemScript) && 'bg-red-200' && 'bg-red-200'
+            )}
+            onChange={(e) => setRedeemScript(e.target.value)}
+          />
+          <div className='text-sm font-medium mt-4 mb-0.5 flex items-center gap-x-2'>
+            Step 1: 脚本哈希
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <CircleHelp className='w-4' />
+              </TooltipTrigger>
+              <TooltipContent>
+                <div className='text-sm'>
+                  公钥哈希(Hash160) = Ripemd160(Sha256(CompressedPublicKey))
+                </div>
+              </TooltipContent>
+            </Tooltip>
+          </div>
+          <div className='bg-background text-base break-all border rounded-md shadow-sm px-3 py-1.5 min-h-9'>
+            <span className={cn(GETCOLORS(0))}>{hash160Res}</span>
+          </div>
+        </>
+      )}
       <RadioGroup
         className='flex mt-4'
         value={network}
