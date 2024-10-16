@@ -17,6 +17,7 @@ import {
   GETHOVERBGCOLORS
 } from '@/lib/constants'
 import { cn } from '@/lib/utils'
+import { isValidPrivateKey } from '@/lib/validator'
 import { bech32 } from 'bech32'
 import { ripemd160, sha256 } from 'bitcoinjs-lib/src/crypto'
 import { CircleHelp } from 'lucide-react'
@@ -48,7 +49,9 @@ export default function Bech32AddressGenerator() {
 
   useEffect(() => {
     if (!privateKey) return
-    getPublicKeyPoint()
+    if (isValidPrivateKey(privateKey)) {
+      getPublicKeyPoint()
+    }
   }, [privateKey])
 
   const getPublicKeyPoint = async () => {
@@ -100,8 +103,18 @@ export default function Bech32AddressGenerator() {
         size='sm'
         onClick={generateRandomPrivateKey}
       >
-        随机生成压缩公钥
+        随机生成私钥
       </Button>
+
+      <div className='text-sm font-medium mt-4 mb-0.5'>私钥</div>
+      <Input
+        value={privateKey}
+        className={cn(
+          'bg-background text-base',
+          !isValidPrivateKey(privateKey) && 'bg-red-200'
+        )}
+        onChange={(e) => setPrivateKey(e.target.value)}
+      />
 
       <div className='text-sm font-medium mt-4 mb-0.5'>公钥</div>
       <Input

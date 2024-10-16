@@ -107,7 +107,7 @@ export default function WIFPrivateKeyGenerator() {
         随机生成私钥
       </Button>
 
-      <div className='text-sm font-medium mt-4 mb-0.5'>原始私钥</div>
+      <div className='text-sm font-medium mt-4 mb-0.5'>私钥</div>
       <Input
         value={privateKey}
         className={cn(
