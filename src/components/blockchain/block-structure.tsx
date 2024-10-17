@@ -66,7 +66,7 @@ export default function BlockStructure({
   highlightFieldName: Array<(typeof fields)[number]['name']>
 }) {
   return (
-    <div className='border rounded-md mt-4 bg-background'>
+    <div className='border rounded-md mt-4 bg-background overflow-hidden'>
       <div className='border-b p-2 bg-muted font-semibold text-lg'>
         区块结构
       </div>

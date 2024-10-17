@@ -148,6 +148,52 @@ export default function Base58AddressGenerator() {
         onChange={(e) => setPublicKey(e.target.value)}
       />
 
+      <RadioGroup
+        className='flex mt-4'
+        value={network}
+        onValueChange={(v: keyof typeof ADDRESS_BASE58_PREFIX) => setNetwork(v)}
+      >
+        <div className='flex items-center space-x-2'>
+          <RadioGroupItem
+            value='mainnet'
+            id='mainnet'
+          />
+          <Label htmlFor='mainnet'>主网</Label>
+        </div>
+
+        <div className='flex items-center space-x-2'>
+          <RadioGroupItem
+            value='testnet'
+            id='testnet'
+          />
+          <Label htmlFor='testnet'>测试网</Label>
+        </div>
+      </RadioGroup>
+
+      <RadioGroup
+        className='flex mt-4'
+        value={addressType}
+        onValueChange={(v: keyof (typeof ADDRESS_BASE58_PREFIX)['mainnet']) =>
+          setAddressType(v)
+        }
+      >
+        <div className='flex items-center space-x-2'>
+          <RadioGroupItem
+            value='p2pkh'
+            id='base58_p2pkh'
+          />
+          <Label htmlFor='base58_p2pkh'>P2PKH</Label>
+        </div>
+
+        <div className='flex items-center space-x-2'>
+          <RadioGroupItem
+            value='p2sh'
+            id='base58_p2sh'
+          />
+          <Label htmlFor='base58_p2sh'>P2SH</Label>
+        </div>
+      </RadioGroup>
+
       {addressType === 'p2pkh' && (
         <>
           <div className='text-sm font-medium mt-4 mb-0.5 flex items-center gap-x-2'>
@@ -208,51 +254,6 @@ export default function Base58AddressGenerator() {
           </div>
         </>
       )}
-      <RadioGroup
-        className='flex mt-4'
-        value={network}
-        onValueChange={(v: keyof typeof ADDRESS_BASE58_PREFIX) => setNetwork(v)}
-      >
-        <div className='flex items-center space-x-2'>
-          <RadioGroupItem
-            value='mainnet'
-            id='mainnet'
-          />
-          <Label htmlFor='mainnet'>主网</Label>
-        </div>
-
-        <div className='flex items-center space-x-2'>
-          <RadioGroupItem
-            value='testnet'
-            id='testnet'
-          />
-          <Label htmlFor='testnet'>测试网</Label>
-        </div>
-      </RadioGroup>
-
-      <RadioGroup
-        className='flex mt-4'
-        value={addressType}
-        onValueChange={(v: keyof (typeof ADDRESS_BASE58_PREFIX)['mainnet']) =>
-          setAddressType(v)
-        }
-      >
-        <div className='flex items-center space-x-2'>
-          <RadioGroupItem
-            value='p2pkh'
-            id='base58_p2pkh'
-          />
-          <Label htmlFor='base58_p2pkh'>P2PKH</Label>
-        </div>
-
-        <div className='flex items-center space-x-2'>
-          <RadioGroupItem
-            value='p2sh'
-            id='base58_p2sh'
-          />
-          <Label htmlFor='base58_p2sh'>P2SH</Label>
-        </div>
-      </RadioGroup>
 
       <div className='text-sm font-medium mt-4 mb-0.5 flex items-center gap-x-2 '>
         Step 2: 添加版本前缀

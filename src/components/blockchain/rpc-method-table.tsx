@@ -42,7 +42,7 @@ export default function RpcMethodTable({
   demoLog?: string
 }) {
   return (
-    <div className='border rounded-md mt-4 bg-background'>
+    <div className='border rounded-md mt-4 bg-background overflow-hidden'>
       <div className='border-b p-2 bg-muted font-semibold text-xl'>
         <div>
           <Link
