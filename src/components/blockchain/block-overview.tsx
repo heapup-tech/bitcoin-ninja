@@ -72,7 +72,7 @@ export default async function BlockOverview({
         </div>
 
         <div>
-          <span className='font-bold'>区块补跌: </span>
+          <span className='font-bold'>区块补贴: </span>
           <span className='text-primary'>
             {numericFormatter(String(latestBlock.subsidy / 1e8), {
               decimalScale: 3
