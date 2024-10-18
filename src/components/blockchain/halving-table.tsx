@@ -70,7 +70,7 @@ export default function HalvingTable() {
           <TableRow>
             <TableHead>减半次数</TableHead>
             <TableHead>区块高度</TableHead>
-            <TableHead>区块补跌(BTC)</TableHead>
+            <TableHead>区块补贴(BTC)</TableHead>
             <TableHead>日期(东八区)</TableHead>
             <TableHead>已挖总量(BTC)</TableHead>
           </TableRow>
