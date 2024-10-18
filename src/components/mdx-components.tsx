@@ -63,9 +63,11 @@ import TransactionTxidCalculator from './blockchain/transaction-txid-calculator'
 import TransactionWitnessFieldsTable from './blockchain/transaction-witness-fields-table'
 import UnSignTransactionBuilder from './blockchain/unsign-transaction-builder'
 import WIFPrivateKeyGenerator from './blockchain/wif-private-key-generator'
+import EccGraph from './cryptology/ecc-graph'
 import ScaleableImage from './scaleable-image'
 
 const components = {
+  EccGraph,
   BitcoinOverview,
   BlockHeaderHex,
   BlockHex,
