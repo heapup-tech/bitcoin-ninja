@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "build": "next build",
+    "build:docs": "content-collections build",
     "dev": "next dev",
     "format": "prettier -w --ignore-unknown .",
     "lint": "next lint",
@@ -54,6 +55,7 @@
   },
   "devDependencies": {
     "@changesets/cli": "^2.27.8",
+    "@content-collections/cli": "^0.1.5",
     "@content-collections/core": "^0.7.1",
     "@content-collections/mdx": "^0.1.5",
     "@content-collections/next": "^0.2.2",

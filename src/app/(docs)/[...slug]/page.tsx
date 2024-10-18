@@ -2,6 +2,7 @@ import { Mdx } from '@/components/mdx-components'
 import { DocPager } from '@/components/pager'
 import { TableOfContents } from '@/components/toc'
 import { docsConfig } from '@/config/docs'
+import { mainNav } from '@/config/main-nav'
 import { DocPageProps, getDocFromParams } from '@/lib/doc'
 import { getTableOfContents } from '@/lib/toc'
 import { cn } from '@/lib/utils'
@@ -32,6 +33,17 @@ export default async function DocPage({ params }: DocPageProps) {
 
   const toc = await getTableOfContents(doc.body.raw)
 
+  let currentNav = mainNav[0]
+  mainNav.forEach((item) => {
+    if (
+      params &&
+      Array.isArray(params.slug) &&
+      item.href?.split('/').includes(params.slug[0])
+    ) {
+      currentNav = item
+    }
+  })
+
   return (
     <main
       className={cn('relative py-6 lg:gap-10 lg:py-8 xl:grid ', {
@@ -41,7 +53,7 @@ export default async function DocPage({ params }: DocPageProps) {
       <div className='mx-auto w-full min-w-0'>
         <div className='mb-4 flex items-center space-x-1 text-sm text-muted-foreground'>
           <div className='overflow-hidden text-ellipsis whitespace-nowrap'>
-            深入技术
+            {currentNav.title}
           </div>
           <ChevronRightIcon className='h-4 w-4' />
           <div className='font-medium text-foreground'>{doc.title}</div>

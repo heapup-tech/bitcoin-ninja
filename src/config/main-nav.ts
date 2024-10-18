@@ -7,8 +7,7 @@ export const mainNav: Array<MainNavItem> = [
   },
   {
     title: '密码学',
-    href: '/cryptography',
-    comingSoon: true
+    href: '/cryptology/ecc/ecc'
   },
   // {
   //   title: '工具集',

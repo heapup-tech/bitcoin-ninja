@@ -12,6 +12,16 @@ import { Badge } from './ui/badge'
 export function MainNav() {
   const pathname = usePathname()
 
+  const isActiveMainNav = (href: string) => {
+    if (
+      pathname.split('/').filter(Boolean)[0] ===
+      href?.split('/').filter(Boolean)[0]
+    ) {
+      return true
+    }
+    return false
+  }
+
   return (
     <div className='mr-4 hidden sm:flex'>
       <Link
@@ -42,8 +52,8 @@ export function MainNav() {
                 target={item.external ? '_blank' : undefined}
                 className={cn(
                   'flex items-center justify-center transition-colors hover:text-foreground/80',
-                  pathname?.startsWith(item.href!)
-                    ? 'text-foreground'
+                  isActiveMainNav(item.href!)
+                    ? 'text-foreground font-semibold'
                     : 'text-foreground/60'
                 )}
               >
