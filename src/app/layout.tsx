@@ -1,6 +1,7 @@
 import AppFooter from '@/components/app-footer'
 import AppHeader from '@/components/app-header'
 import { siteConfig } from '@/config/site'
+import '@/styles/function-plot.css'
 import '@/styles/globals.css'
 import { Analytics } from '@vercel/analytics/react'
 import 'katex/dist/katex.min.css'

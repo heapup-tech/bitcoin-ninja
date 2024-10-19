@@ -2,10 +2,71 @@
 title: ECC
 ---
 
+## 椭圆曲线定义
+
 椭圆曲线加密算法(Elliptic curve cryptography)简称 ECC, 是一种非对称加密算法。方程式为
 
 $$
 y^2 = x^3 + ax +b，4a^3 + 27b^2 \neq 0
 $$
 
+不同的参数 a 和 b 会产生不同的曲线，如下图所示
+
 <EccGraph />
+
+从图中可以看出，椭圆曲线是关于 `x` 轴对称的一条曲线。
+
+需要注意的是 $a$ 和 $b$ 须满足条件 $4a^3 + 27b^2 \neq 0$，这个条件确保了曲线的光滑，即曲线中不存在尖点，自相交点和孤立点，从而保证曲线上的点都有切线。
+
+## 四则运算
+
+椭圆曲线的四则运算不同于代数中的四则运算。其有自己的运算法则。
+
+<EccGraph
+  initA={-3}
+  initB={1}
+  variable={false}
+  disableZoom={true}
+  fnData={[
+    {
+      fn: '0.2 * x + 1'
+    },
+    {
+      graphType: 'scatter',
+      fnType: 'points',
+      points: [
+        [0, 1],
+        [1.864, 1.3728],
+        [-1.824, 0.6352],
+        [1.864, -1.3728]
+      ],
+      color: 'blue'
+    },
+    {
+      points: [
+        [1.864, -10],
+        [1.864, 10]
+      ],
+      fnType: 'points',
+      graphType: 'polyline',
+      color: 'red'
+    }
+  ]}
+  annotations={[
+    {
+      x: 1.864,
+      y: 1.3728,
+      text: 'P'
+    },
+    {
+      x: -1.824,
+      y: 0.6352,
+      text: 'Q'
+    },
+    {
+      x: 1.864,
+      y: -1.3728,
+      text: 'R'
+    }
+  ]}
+/>

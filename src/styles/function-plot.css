@@ -1,0 +1,37 @@
+.function-plot {
+  .title {
+    @apply fill-foreground;
+  }
+  .top-right-legend {
+    @apply invisible;
+  }
+  .content {
+    .x.origin {
+      @apply stroke-foreground;
+    }
+    .y.origin {
+      @apply stroke-foreground;
+    }
+    .graph {
+      .scatter {
+        @apply fill-foreground;
+        r: 3px;
+      }
+    }
+  }
+  .x.axis {
+    .tick {
+      line {
+        @apply stroke-foreground;
+      }
+    }
+  }
+
+  .y.axis {
+    .tick {
+      line {
+        @apply stroke-foreground;
+      }
+    }
+  }
+}
