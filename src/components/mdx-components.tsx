@@ -64,10 +64,12 @@ import TransactionWitnessFieldsTable from './blockchain/transaction-witness-fiel
 import UnSignTransactionBuilder from './blockchain/unsign-transaction-builder'
 import WIFPrivateKeyGenerator from './blockchain/wif-private-key-generator'
 import EccGraph from './cryptology/ecc-graph'
+import FiniteEccGraph from './cryptology/finite-ecc-graph'
 import ScaleableImage from './scaleable-image'
 
 const components = {
   EccGraph,
+  FiniteEccGraph,
   BitcoinOverview,
   BlockHeaderHex,
   BlockHex,

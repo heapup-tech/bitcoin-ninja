@@ -1,76 +1,47 @@
 import KaTeX from 'katex'
-import React, { PropsWithChildren, useMemo } from 'react'
 
-const createMathComponent = (
-  Component: React.FC<{ html: string }>,
-  { displayMode }: { displayMode: boolean }
-) => {
-  const MathComponent = ({
-    children,
-    errorColor,
-    math,
-    renderError
-  }: PropsWithChildren<{
-    errorColor?: string
-    math?: string
-    renderError?: (error: Error) => React.ReactNode
-  }>) => {
-    const formula = math ?? children
+interface MathProps {
+  formula: string
 
-    const { html, error } = useMemo(() => {
-      try {
-        const html = KaTeX.renderToString(formula, {
-          displayMode,
-          errorColor,
-          throwOnError: !!renderError
-        })
+  errorColor?: string
 
-        return { html, error: undefined }
-      } catch (error) {
-        if (error instanceof KaTeX.ParseError || error instanceof TypeError) {
-          return { error }
-        }
-        throw error
-      }
-    }, [formula, errorColor, renderError])
-
-    if (error as Error) {
-      return renderError ? (
-        // @ts-ignore
-        renderError(error)
-      ) : (
-        // @ts-ignore
-        <Component html={`${error.message}`} />
-      )
-    }
-
-    return <Component html={html} />
-  }
-
-  return MathComponent
+  className?: string
 }
 
-const InternalBlockMath = ({ html }: { html: string }) => {
+export const BlockMath = ({
+  formula,
+  errorColor = '',
+  className = ''
+}: MathProps) => {
+  const html = KaTeX.renderToString(formula, {
+    displayMode: true,
+    errorColor
+  })
+
   return (
     <div
       data-testid='react-katex'
+      className={className}
       dangerouslySetInnerHTML={{ __html: html }}
     />
   )
 }
 
-const InternalInlineMath = ({ html }: { html: string }) => {
+export const InlineMath = ({
+  formula,
+  errorColor = '',
+  className = ''
+}: MathProps) => {
+  const html = KaTeX.renderToString(formula, {
+    displayMode: false,
+    errorColor
+  })
+
   return (
     <span
       data-testid='react-katex'
+      className={className}
       dangerouslySetInnerHTML={{ __html: html }}
     />
   )
 }
-
-export const BlockMath = createMathComponent(InternalBlockMath, {
-  displayMode: true
-})
-export const InlineMath = createMathComponent(InternalInlineMath, {
-  displayMode: false
-})

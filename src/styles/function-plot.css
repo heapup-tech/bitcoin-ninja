@@ -1,9 +1,14 @@
 .function-plot {
+  font-size: 12px;
+
   .title {
     @apply fill-foreground;
   }
   .top-right-legend {
-    @apply invisible;
+    @apply hidden;
+  }
+  .canvas {
+    transform: translate(40px, 10px) !important;
   }
   .content {
     .x.origin {

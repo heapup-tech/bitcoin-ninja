@@ -1,3 +1,36 @@
 ---
 title: Secp256k1
 ---
+
+`Secp256k1` 是一条特定的椭圆曲线。
+
+`Secp256k1` 椭圆曲线方程中 $a =0, b = 7$, 方程式为 $y^2 = x^3 + 7 \mod \ p$。曲线图如下:
+
+<EccGraph
+  initA={0}
+  initB={3}
+  disableZoom={true}
+/>
+
+其中 $p=2^{256} - 2^{32}-2^{9}-2^8-2^7-2^6-2^4-1$
+
+转换为16进制为:
+
+```text
+0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F
+```
+
+基点 `G` 的坐标
+
+```text
+Gx = 0x79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798
+Gy = 0x483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8
+```
+
+基点 `G` 的阶 `n`
+
+```text
+n = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141
+```
+
+从 `[1, n-1]` 中选择一个随机数 `k` 作为私钥，公钥 `Q = k * G`

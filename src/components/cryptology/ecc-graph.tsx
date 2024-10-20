@@ -1,5 +1,6 @@
 'use client'
 
+import { getEccFormula } from '@/lib/math'
 import functionPlot, {
   FunctionPlotAnnotation,
   type FunctionPlotDatum
@@ -20,7 +21,7 @@ interface EccGraphProps {
   annotations?: FunctionPlotAnnotation[]
 }
 export default function EccGraph({
-  variable = true,
+  variable = false,
   initA = -1,
   initB = 1,
   disableZoom = false,
@@ -29,6 +30,7 @@ export default function EccGraph({
 }: EccGraphProps) {
   const [a, setA] = useState(initA)
   const [b, setB] = useState(initB)
+  const [equation, setEquation] = useState('')
   const [isValidate, setIsValidate] = useState(true)
 
   const targetRef = useRef<HTMLDivElement>(null)
@@ -41,6 +43,8 @@ export default function EccGraph({
     } else {
       setIsValidate(true)
     }
+
+    setEquation(getEccFormula(a, b))
   }, [a, b])
 
   useEffect(() => {
@@ -64,7 +68,6 @@ export default function EccGraph({
 
     functionPlot({
       target,
-      title: `y² = x³ ${a < 0 ? '-' : '+'} ${Math.abs(a) === 1 ? '' : Math.abs(a)}x ${b < 0 ? '-' : '+'} ${Math.abs(b)}`,
       width: width,
       height: height,
       grid: true,
@@ -90,40 +93,43 @@ export default function EccGraph({
 
   return (
     <div>
-      <div
-        ref={targetRef}
-        className='w-full mt-4'
-      />
+      <div className='flex flex-col items-center mt-4'>
+        <InlineMath
+          formula={equation}
+          className='text-xl text-primary'
+        />
+        <div ref={targetRef} />
 
-      {variable && (
-        <div className='flex items-center gap-y-4 space-x-6 ml-10 mt-4'>
-          <div className='flex items-center'>
-            <span>a&nbsp;</span>
-            <Input
-              className='w-20'
-              value={a}
-              onChange={(e) => setA(Number(e.target.value))}
-              type='number'
-            />
-          </div>
+        {variable && (
+          <div className='flex items-center gap-y-4 space-x-6'>
+            <div className='flex items-center'>
+              <span>a&nbsp;</span>
+              <Input
+                className='w-20 h-7 bg-background'
+                defaultValue={a}
+                onChange={(e) => setA(Number(e.target.value))}
+                type='number'
+              />
+            </div>
 
-          <div className='flex items-center'>
-            <span>b&nbsp;</span>
-            <Input
-              className='w-20'
-              value={b}
-              onChange={(e) => setB(Number(e.target.value))}
-              type='number'
-            />
+            <div className='flex items-center'>
+              <span>b&nbsp;</span>
+              <Input
+                className='w-20 h-7  bg-background'
+                defaultValue={b}
+                onChange={(e) => setB(Number(e.target.value))}
+                type='number'
+              />
+            </div>
+            {!isValidate && (
+              <>
+                <span className='text-destructive'>无效值</span>{' '}
+                <InlineMath formula='4a^3 + 27b^2 = 0' />
+              </>
+            )}
           </div>
-          {!isValidate && (
-            <>
-              <span className='text-destructive'>无效值</span>{' '}
-              <InlineMath>{`4a^3 + 27b^2 = 0`}</InlineMath>
-            </>
-          )}
-        </div>
-      )}
+        )}
+      </div>
     </div>
   )
 }
