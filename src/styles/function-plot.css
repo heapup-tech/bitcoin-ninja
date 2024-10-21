@@ -4,6 +4,11 @@
   .title {
     @apply fill-foreground;
   }
+  .annotations {
+    path {
+      @apply stroke-primary;
+    }
+  }
   .top-right-legend {
     @apply hidden;
   }

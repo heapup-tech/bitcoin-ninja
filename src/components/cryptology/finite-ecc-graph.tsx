@@ -27,7 +27,7 @@ interface FiniteEccGraphProps {
 export default function FiniteEccGraph({
   a: initA = 1,
   b: initB = 1,
-  p: initP = 5
+  p: initP = 7
 }: FiniteEccGraphProps) {
   const [a, setA] = useState(initA)
   const [b, setB] = useState(initB)
