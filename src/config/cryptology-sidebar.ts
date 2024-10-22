@@ -13,20 +13,12 @@ export const cryptologySidebar: SidebarNavItem[] = [
         href: '/cryptology/ecc/secp256k1'
       },
       {
-        title: 'ECDH',
-        href: '/cryptology/ecc/ecdh'
-      },
-      {
         title: 'ECDSA',
         href: '/cryptology/ecc/ecdsa'
       },
       {
         title: 'Schnorr',
         href: '/cryptology/ecc/schnorr'
-      },
-      {
-        title: '实现',
-        href: '/cryptology/ecc/mnist'
       }
     ]
   }

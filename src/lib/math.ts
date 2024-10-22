@@ -18,7 +18,7 @@ export const getEccFormula = (a: number, b: number, p?: number) => {
     bPart = ''
   }
 
-  return `y^2 = x^3 ${axPart} ${bPart} ${p ? `\\ mod \\ ${p}` : ''}`
+  return `y^2 = x^3 ${axPart} ${bPart} ${p ? `\\mod ${p}` : ''}`
 }
 
 export const isPrime = (n: number) => {
