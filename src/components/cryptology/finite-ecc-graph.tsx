@@ -23,27 +23,33 @@ interface FiniteEccGraphProps {
   a?: number
   b?: number
   p?: number
+
+  P?: Point
+
+  Q?: Point
+
+  G?: Point
 }
 
 export default function FiniteEccGraph({
   a: initA = 1,
   b: initB = 1,
-  p: initP = 7
+  p: initP = 7,
+  P,
+  Q,
+  G
 }: FiniteEccGraphProps) {
   const [a, setA] = useState(initA)
   const [b, setB] = useState(initB)
   const [p, setP] = useState(initP)
-  const [pointP, setPointP] = useState<Point | null>(null)
-  const [pointQ, setPointQ] = useState<Point | null>(null)
-  const [pointPQ, setPointPQ] = useState<Point | null>(null)
+  const [pointP, setPointP] = useState<Point | undefined>(P)
+  const [pointQ, setPointQ] = useState<Point | undefined>(Q)
+  const [pointPQ, setPointPQ] = useState<Point | undefined>(undefined)
   const [errorMsg, setErrorMsg] = useState('')
 
   const ec = useRef<EllipticCurve>(new EllipticCurve(a, b, p))
 
-  const [selectedPoint, setSelectedPoint] = useState<{
-    x: number
-    y: number
-  } | null>(null)
+  const [selectedPoint, setSelectedPoint] = useState<Point | undefined>(G)
 
   const [equation, setEquation] = useState('')
 
@@ -58,7 +64,9 @@ export default function FiniteEccGraph({
 
     setEquation(getEccFormula(a, b, p))
 
-    setPointPQ(ec.current.addPoints(pointP, pointQ))
+    if (pointP && pointQ) {
+      setPointPQ(ec.current.addPoints(pointP, pointQ))
+    }
   }, [a, b, p])
 
   const onScatterClick = ({ payload }: any) => {
@@ -86,7 +94,7 @@ export default function FiniteEccGraph({
     }
   }, [pointP, pointQ])
   return (
-    <div className='grid grid-cols-1 md:grid-cols-2 gap-x-8 mt-4'>
+    <div className='lg:grid lg:grid-cols-2 gap-x-8 mt-4'>
       <div className='flex flex-col items-center'>
         <InlineMath
           formula={equation}
