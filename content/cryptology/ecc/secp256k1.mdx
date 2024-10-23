@@ -2,9 +2,9 @@
 title: Secp256k1
 ---
 
-`Secp256k1` 是一条特定的椭圆曲线。
+`Secp256k1` 是一条特定的椭圆曲线。其中 `Sec` 是 `Standards for Efficient Cryptography` 的缩写, `p` 是素数 `prime` 的缩写, `256` 表示素数是 256 位, `k` 表示 `Koblitz` 曲线的缩写, `1` 表示是第一个具有这些特征的曲线。其他类似的还有 `secp256r1`、`secp384r1`、`secp521r1` 等。
 
-`Secp256k1` 椭圆曲线方程中 $a =0, b = 7$, 方程式为 $y^2 = x^3 + 7 \mod \ p$。曲线图如下:
+在 `Secp256k1` 椭圆曲线方程中 $a =0, b = 7$, 方程式为 $y^2 = x^3 + 7 \mod \ p$。实数域上的曲线图如下:
 
 <EccGraph
   initA={0}
@@ -33,6 +33,6 @@ Gy = 0x483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8
 n = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141
 ```
 
-从 `[1, n-1]` 中选择一个随机数 `k` 作为私钥，公钥 `Q = k * G`
+从 `[1, n-1]` 中选择一个随机数 `k` 作为私钥，公钥 `H = k * G`
 
 比特币的私钥和公钥基于 `Secp256k1` 椭圆曲线生成, 包括签名数据也是基于 `Secp256k1` 椭圆曲线。

@@ -2,6 +2,15 @@
   "name": "bitcoin-ninja",
   "version": "0.1.0",
   "private": true,
+  "keywords": [
+    "bitcoin",
+    "bitcoin-ninja",
+    "heapup",
+    "blockchain",
+    "elliptic curve",
+    "nextjs",
+    "mdx"
+  ],
   "scripts": {
     "build": "next build",
     "build:docs": "content-collections build",
