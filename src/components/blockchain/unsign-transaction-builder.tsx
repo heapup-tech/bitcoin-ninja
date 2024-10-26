@@ -1,6 +1,7 @@
 'use client'
 
 import { NETWORKS } from '@/lib/constants'
+import { isHexadecimal } from '@/lib/validator'
 import { Transaction } from 'bitcoinjs-lib'
 import { toOutputScript } from 'bitcoinjs-lib/src/address'
 import { CircleMinus, CirclePlus } from 'lucide-react'
@@ -86,6 +87,7 @@ export default function UnSignTransactionBuilder() {
     tx.version = Number(version)
 
     inputs.forEach((input) => {
+      if (!isHexadecimal(input.txid, 64, 64)) return
       tx.addInput(Buffer.from(input.txid, 'hex').reverse(), Number(input.vout))
     })
 
