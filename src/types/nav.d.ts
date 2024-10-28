@@ -15,6 +15,7 @@ export interface NavItemWithChildren extends NavItem {
 
 export interface MainNavItem extends NavItem {
   comingSoon?: boolean
+  items?: NavItemWithChildren[]
 }
 
 export interface SidebarNavItem extends NavItemWithChildren {}
