@@ -11,24 +11,8 @@ export const mainNav: Array<MainNavItem> = [
   },
   {
     title: '拓展协议',
-    href: '/extension',
-    items: [
-      {
-        title: 'BIP',
-        href: '/extension/bip/bip'
-      }
-    ]
+    href: '/supplement/ordinals/basic'
   },
-  // {
-  //   title: '工具集',
-  //   href: '/tools',
-  //   comingSoon: true
-  // },
-  // {
-  //   title: '测验',
-  //   href: '/tools',
-  //   comingSoon: true
-  // },
   {
     title: '关于',
     href: '/about'

@@ -12,8 +12,9 @@ interface DocsLayoutProps {
 export default function DocsLayout({ children, params }: DocsLayoutProps) {
   let sidebar = docsConfig.technical
 
-  if (params && Array.isArray(params.slug) && params.slug[0] === 'cryptology') {
-    sidebar = docsConfig.cryptology
+  if (params && Array.isArray(params.slug)) {
+    if (params.slug[0] === 'cryptology') sidebar = docsConfig.cryptology
+    if (params.slug[0] === 'supplement') sidebar = docsConfig.supplement
   }
 
   return (
