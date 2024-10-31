@@ -17,5 +17,32 @@ export const supplementSidebar: SidebarNavItem[] = [
         href: '/supplement/ordinals/rune'
       }
     ]
+  },
+  {
+    title: 'Atomicals',
+    items: [
+      {
+        title: '基础',
+        href: '/supplement/atomicals/basic'
+      }
+    ]
+  },
+  {
+    title: '闪电网络',
+    items: [
+      {
+        title: '基础',
+        href: '/supplement/atomicals/basic'
+      }
+    ]
+  },
+  {
+    title: '染色协议',
+    items: [
+      {
+        title: '基础',
+        href: '/supplement/rgb/basic'
+      }
+    ]
   }
 ]
