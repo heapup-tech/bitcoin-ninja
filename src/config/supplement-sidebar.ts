@@ -19,30 +19,12 @@ export const supplementSidebar: SidebarNavItem[] = [
     ]
   },
   {
-    title: 'Atomicals',
-    items: [
-      {
-        title: '基础',
-        href: '/supplement/atomicals/basic'
-      }
-    ]
+    title: 'Atomicals'
   },
   {
-    title: '闪电网络',
-    items: [
-      {
-        title: '基础',
-        href: '/supplement/atomicals/basic'
-      }
-    ]
+    title: '闪电网络'
   },
   {
-    title: '染色协议',
-    items: [
-      {
-        title: '基础',
-        href: '/supplement/rgb/basic'
-      }
-    ]
+    title: '染色协议'
   }
 ]

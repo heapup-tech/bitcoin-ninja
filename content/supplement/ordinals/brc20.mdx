@@ -1,3 +1,30 @@
 ---
 title: Brc20
 ---
+
+TODO
+
+两笔交易
+
+Commit: https://mempool.space/tx/26877b8e3d64a8688ba01f7fa62c26e2b4f4034dfb44029246c92643b2f1a93b
+
+Reveal: https://mempool.space/tx/00274fdd890873da479a51896f328665a71d2f3c1dff00fbb20155e9fcda2c50
+
+Commit Tx to P2tr address with scripttree
+
+tapScript:
+
+```text
+OP_PUSHBYTES_32 521c70a059f55a3518489ce12f6b56902cd55e9f0a2f0b5dc0614f6a1dc49a79  # 推入公钥
+OP_CHECKSIG                                                                        # 检查签名
+
+# 铭文数据部分
+OP_0                                                                  # OP_FALSE
+OP_IF                                                                # 开始条件块
+    OP_PUSHBYTES_3 6f7264                                           # "ord"
+    OP_PUSHBYTES_1 01
+    OP_PUSHBYTES_24 746578742f706c61696e3b636861727365743d7574662d38  # "text/plain;charset=utf-8"
+    OP_0
+    OP_PUSHBYTES_57 7b2270223a...                                   # BRC-20 transfer 数据
+OP_ENDIF
+```
