@@ -43,6 +43,7 @@ import Hash256Calculator from './blockchain/hash256-calculator'
 import MempoolOverview from './blockchain/mempool-overview'
 import MnemonicGenerator from './blockchain/mnemonic-generator'
 import NetworkHashps from './blockchain/network-hashps'
+import OrdinalsUtxoFlow from './blockchain/ordinals-utxo-flow'
 import PrivateKeyGenerator from './blockchain/private-key-generator'
 import PSBTFieldsTable from './blockchain/psbt-fields-table'
 import PublicKeyGenerator from './blockchain/public-key-generator'
@@ -81,6 +82,7 @@ const components = {
   BlockSubsidyCalculator,
   MempoolOverview,
   BlockList,
+  OrdinalsUtxoFlow,
   ExtendedKey,
   DeriveSubKey,
   MnemonicGenerator,
