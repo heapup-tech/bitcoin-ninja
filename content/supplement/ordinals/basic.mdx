@@ -68,9 +68,69 @@ Ordinals 协议最初由 [Casey](https://x.com/rodarmor) 在 2022 年提出, 是
 
 该 `UTXO` 包含的聪编号范围在 $0 \sim 4999999999$。
 
-假设花费该 `UTXO` 时, 会产生两个 `UTXO`
+假设花费该 `UTXO` 时, 输出了两个 `UTXO`
 
-<OrdinalsUtxoFlow />
+<OrdinalsUtxoFlow
+  nodes={[
+    {
+      id: 'input-0',
+      position: { x: 0, y: 50 },
+      data: {
+        type: 'input',
+        amount: 5000000000,
+        index: 0,
+        ordinalsStart: 0,
+        ordinalsEnd: 4999999999
+      },
+      type: 'utxo'
+    },
+    {
+      id: 'output-0',
+      position: { x: 350, y: 0 },
+      type: 'utxo',
+      data: {
+        type: 'output',
+        amount: 2000000000,
+        index: 0,
+        ordinalsStart: 0,
+        ordinalsEnd: 1999999999
+      }
+    },
+    {
+      id: 'output-1',
+      position: { x: 350, y: 100 },
+      type: 'utxo',
+      data: {
+        type: 'output',
+        amount: 3000000000,
+        index: 1,
+        ordinalsStart: 2000000000,
+        ordinalsEnd: 4999999999
+      }
+    }
+  ]}
+  edges={[
+    {
+      id: 'i0-o0',
+      source: 'input-0',
+      target: 'output-0',
+      animated: true,
+      style: { stroke: 'purple' }
+    },
+    {
+      id: 'i0-o1',
+      source: 'input-0',
+      target: 'output-1',
+      animated: true,
+      style: { stroke: 'purple' }
+    }
+  ]}
+/>
+
+根据聪在交易中的转移遵循先进先出的原则, 可以确定交易输出中的聪的编号范围:
+
+- 输出 0 的聪的编号范围在 $0 \sim 1999999999$
+- 输出 1 的聪的编号范围在 $2000000000 \sim 4999999999$
 
 ## 铭刻
 

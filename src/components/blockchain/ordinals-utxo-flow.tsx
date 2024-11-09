@@ -1,7 +1,7 @@
 'use client'
 
+import { cn } from '@/lib/utils'
 import {
-  Background,
   ColorMode,
   Edge,
   Handle,
@@ -14,18 +14,46 @@ import { useTheme } from 'next-themes'
 import { useEffect, useState } from 'react'
 
 interface UTXOFlowProps {
-  nodes: Node[]
+  nodes: Node<UtxoNodeData>[]
   edges: Edge[]
 }
 
-function UtxoNode() {
+interface UtxoNodeData extends Record<string, unknown> {
+  type: 'input' | 'output' | 'fee'
+  index: number
+  amount: bigint
+  ordinalsStart: number
+  ordinalsEnd: number
+}
+
+type UtxoNodeType = {
+  data: UtxoNodeData
+}
+
+function UtxoNode({ data }: UtxoNodeType) {
   return (
     <>
       <Handle
-        type='source'
-        position={Position.Right}
+        type={data.type === 'input' ? 'source' : 'target'}
+        position={data.type === 'input' ? Position.Right : Position.Left}
       />
-      <div className='border border-green-300 p-2'>Input</div>
+      <div
+        className={cn(
+          'border py-0.5 px-2 bg-background rounded-md flex flex-col',
+          {
+            'border-green-400': data.type === 'input',
+            'border-amber-400': data.type === 'output'
+          }
+        )}
+      >
+        <div className='font-semibold'>
+          {data.type === 'input' ? 'Input' : 'Output'} {data.index}
+        </div>
+        <div className={cn('text-sm')}>{data.amount} sats</div>
+        <div className='text-sm'>
+          ordinals: {data.ordinalsStart} ~ {data.ordinalsEnd}
+        </div>
+      </div>
     </>
   )
 }
@@ -44,30 +72,13 @@ export default function OrdinalsUtxoFlow({
 
   const nodeTypes = { utxo: UtxoNode }
 
-  const nodes: Node[] = [
-    {
-      id: '1',
-      position: { x: 0, y: 0 },
-      data: { label: 'Node 1' },
-      type: 'utxo'
-    },
-    {
-      id: '2',
-      position: { x: 100, y: 100 },
-      data: { label: 'Node 2' }
-    }
-  ]
-  const edges: Edge[] = [
-    {
-      id: '1-2',
-      source: '1',
-      target: '2',
-      animated: true
-    }
-  ]
+  const [nodes, setNodes] = useState<Node<UtxoNodeData>[]>(initialNodes)
+  const [edges, setEdges] = useState<Edge[]>(initialEdges)
+
   return (
-    <div className='h-64 border rounded overflow-hidden'>
+    <div className='h-80 overflow-hidden'>
       <ReactFlow
+        className='bg-transparent'
         nodes={nodes}
         edges={edges}
         panOnDrag={false}
@@ -76,12 +87,9 @@ export default function OrdinalsUtxoFlow({
         zoomOnDoubleClick={false}
         nodeTypes={nodeTypes}
         colorMode={colorMode}
-      >
-        <Background
-          color='#ff0000'
-          gap={16}
-        />
-      </ReactFlow>
+        fitView
+        fitViewOptions={{ maxZoom: 1.2, minZoom: 1 }}
+      ></ReactFlow>
     </div>
   )
 }
