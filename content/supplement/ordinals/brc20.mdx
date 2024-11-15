@@ -2,13 +2,20 @@
 title: Brc20
 ---
 
-TODO
+<Brc20Pub />
 
 两笔交易
-
+208ac66a3c51520a65f500edf36516a51e0f6ee3929f795c4495cdaddb0bed4424ac0063036f7264010118746578742f706c61696e3b636861727365743d7574662d3800337b2270223a226272632d3230222c226f70223a226d696e74222c227469636b223a2273617473222c22616d74223a223130227d68
 Commit: https://mempool.space/tx/26877b8e3d64a8688ba01f7fa62c26e2b4f4034dfb44029246c92643b2f1a93b
-
 Reveal: https://mempool.space/tx/00274fdd890873da479a51896f328665a71d2f3c1dff00fbb20155e9fcda2c50
+
+testnet:
+
+tx1 commit: https://mempool.space/testnet/tx/50c2a1e54f305426d0fcc47caa8f07322ac149838aa27912343503080bc221b0
+tx2 reveal: https://mempool.space/testnet/tx/ea58f831e9d532bab8985e94def57a3e2c992e8018f80c11a81f5dfcd643a42c
+
+tx2 commit: https://mempool.space/testnet/tx/a4813cd17b2fefd618f54af6d2849de245ced9950c1b8ee06fab628412e936d4
+tx2 reveal: https://mempool.space/testnet/tx/b159d03058115115b209b4dbff51d75175225320349762011fdefda66a3cbe2d
 
 Commit Tx to P2tr address with scripttree
 
@@ -25,6 +32,6 @@ OP_IF                                                                # 开始条
     OP_PUSHBYTES_1 01
     OP_PUSHBYTES_24 746578742f706c61696e3b636861727365743d7574662d38  # "text/plain;charset=utf-8"
     OP_0
-    OP_PUSHBYTES_57 7b2270223a...                                   # BRC-20 transfer 数据
+    OP_PUSHBYTES_57 7b2270223a...                                   # BRC-20
 OP_ENDIF
 ```

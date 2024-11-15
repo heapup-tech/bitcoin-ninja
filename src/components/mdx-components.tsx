@@ -35,6 +35,7 @@ import BlockOverview from './blockchain/block-overview'
 import BlockStructure from './blockchain/block-structure'
 import BlockSubsidyCalculator from './blockchain/block-subsidy-calculator'
 import BlockTransaction from './blockchain/block-transaction'
+import Brc20Pub from './blockchain/brc20-pub'
 import DeriveSubKey from './blockchain/derive-sub-key'
 import ExtendedKey from './blockchain/extended-key'
 import HalvingTable from './blockchain/halving-table'
@@ -74,6 +75,7 @@ const components = {
   BlockMath,
   EccGraph,
   FiniteEccGraph,
+  Brc20Pub,
   BitcoinOverview,
   BlockHeaderHex,
   BlockHex,
