@@ -100,7 +100,7 @@ export default function Brc20Pub() {
   }, [internalPair])
 
   return (
-    <InteractionCard title='taproot 地址'>
+    <InteractionCard title='计算 Commit 地址'>
       <RadioGroup
         className='flex mt-4'
         value={network}
