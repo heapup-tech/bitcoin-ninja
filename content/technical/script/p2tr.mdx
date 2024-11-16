@@ -28,7 +28,7 @@ OP_1 \<Taproot 输出公钥>
 
 <ScaleableImage
   src='/taproot-out.png'
-  alt='taprppt-out-explain'
+  alt='taproot-out-explain'
 />
 
 - 内部公钥是用户私钥经过 `secp256k1` 曲线生成, 实际上就是用户公钥。但在计算 `Taproot` 输出公钥时, 只会使用公钥的 `x` 坐标。
@@ -53,7 +53,7 @@ $$ \mathtt {t = TaggedHash('TapTweak', P + Root)} $$
 
 内部公钥加上 `t` 乘以椭圆曲线 `secp256k1` 的基点 `G` 即可得到 `Taproot` 输出公钥 `Q`。
 
-$$ \mathtt {Q = P + t \times G} $$
+<BlockMath formula='\mathtt {Q = P + t \times G}' />
 
 `Q` 是椭圆曲线的一个点, 但在实际中, 只会用到其 `x` 坐标, 因此 `Q` 实际指的是点 `Q` 的 `x` 坐标。
 

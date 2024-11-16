@@ -48,6 +48,7 @@ import OrdinalsUtxoFlow from './blockchain/ordinals-utxo-flow'
 import PrivateKeyGenerator from './blockchain/private-key-generator'
 import PSBTFieldsTable from './blockchain/psbt-fields-table'
 import PublicKeyGenerator from './blockchain/public-key-generator'
+import PublicKeyViewer from './blockchain/public-key-viewer'
 import ReplaceBlockPowerTable from './blockchain/replace-block-power-table'
 import RpcMethodTable from './blockchain/rpc-method-table'
 import ScriptStackSimulator from './blockchain/script-stack-simulator'
@@ -76,6 +77,7 @@ const components = {
   EccGraph,
   FiniteEccGraph,
   Brc20Pub,
+  PublicKeyViewer,
   BitcoinOverview,
   BlockHeaderHex,
   BlockHex,

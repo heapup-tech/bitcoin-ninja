@@ -1,38 +1,56 @@
 'use client'
+import ECPair from '@/lib/blockchain/ecpair'
+import { NETWORKS } from '@/lib/constants'
 import { networks, payments, script, Stack } from 'bitcoinjs-lib'
 import { OPS } from 'bitcoinjs-lib/src/ops'
-import { useMemo, useState } from 'react'
+import { ECPairInterface } from 'ecpair'
+import { useEffect, useMemo, useState } from 'react'
 import CodeBlock from '../code-block'
+import ContentCard from '../content-card'
 import InteractionCard from '../interaction-card'
-import { Input } from '../ui/input'
+import { Button } from '../ui/button'
+import { Label } from '../ui/label'
+import { RadioGroup, RadioGroupItem } from '../ui/radio-group'
+import PublicKeyViewer from './public-key-viewer'
 
 export default function Brc20Pub() {
-  const [internalPubKey, setInternalPubKey] = useState(
-    '386d02d92ce3ccae0beabe10ceaa8d6b2f70f33952c914bde17928c0c905a367'
-  )
-  const [address, setAddress] = useState('')
+  const [network, setNetwork] = useState<keyof typeof NETWORKS>('testnet')
 
-  const x = script.decompile(
-    Buffer.from(
-      '208277ff85042937da67943320113d937289bacee7bc94760e1fe54e8ee262e028ac0063036f7264010118746578742f706c61696e3b636861727365743d7574662d3800337b2270223a226272632d3230222c226f70223a226d696e74222c227469636b223a2273617473222c22616d74223a223130227d68',
-      'hex'
-    )
+  const [internalPair, setInternalPair] = useState<ECPairInterface | undefined>(
+    undefined
   )
-  console.log(x)
 
-  // pri: f939455d7c77d62aee3b9ed2883a6b2159b48d280c65284558422056e3b19358
-  // internalPub: 386d02d92ce3ccae0beabe10ceaa8d6b2f70f33952c914bde17928c0c905a367
-  // ordinals taproot address: tb1pk2nrlts47mervjvt0dhalqt0774laj0zhe99x8pfja443s7wth3s6dthwd
+  const [internalPubKey, setInternalPubKey] = useState<Buffer>(Buffer.alloc(0))
+  const [inscriptionScript, setInscriptionScript] = useState('')
+
+  const [taprootPubKey, setTaprootPubKey] = useState('')
+  const [commitToAddress, setCommitToAddress] = useState('')
+
+  useEffect(() => {
+    generateRandomPair()
+  }, [])
+
+  const generateRandomPair = () => {
+    const pair = ECPair.makeRandom({
+      network: NETWORKS[network].network,
+      compressed: false
+    })
+    setInternalPair(pair)
+
+    if (pair.publicKey) setInternalPubKey(pair.publicKey.subarray(1, 33))
+  }
 
   useMemo(() => {
+    if (!internalPair || !internalPair.publicKey) return
     const inscriptionData = {
       contentType: 'text/plain;charset=utf-8',
       body: `{"p":"brc-20","op":"mint","tick":"sats","amt":"10"}`
     }
 
+    const internalPubKey = internalPair.publicKey.subarray(1, 33)
     let inscriptionBuilder: Stack = []
 
-    inscriptionBuilder.push(Buffer.from(internalPubKey, 'hex'))
+    inscriptionBuilder.push(internalPubKey)
     inscriptionBuilder.push(OPS.OP_CHECKSIG)
     inscriptionBuilder.push(OPS.OP_0)
     inscriptionBuilder.push(OPS.OP_IF)
@@ -56,14 +74,11 @@ export default function Brc20Pub() {
 
     const inscriptionScript = script.compile(inscriptionBuilder)
 
-    console.log(`inscriptionScript: ${inscriptionScript.toString('hex')}`)
+    setInscriptionScript(inscriptionScript.toString('hex'))
 
     const scriptTree = {
       output: inscriptionScript
     }
-
-    console.log('internalPubKey: ', internalPubKey)
-    console.log('scriptTree:', scriptTree.output.toString('hex'))
 
     const redeem = {
       output: inscriptionScript,
@@ -71,7 +86,7 @@ export default function Brc20Pub() {
     }
 
     const { output, witness, hash, address } = payments.p2tr({
-      internalPubkey: Buffer.from(internalPubKey, 'hex'),
+      internalPubkey: internalPubKey,
       scriptTree,
       redeem,
       network: networks.testnet
@@ -79,24 +94,80 @@ export default function Brc20Pub() {
 
     console.log('output:', output!.toString('hex'))
 
-    console.log(address)
-    setAddress(address || '')
-  }, [internalPubKey])
+    setCommitToAddress(address!)
+
+    setTaprootPubKey(output?.subarray(2, 34).toString('hex') || '')
+  }, [internalPair])
 
   return (
     <InteractionCard title='taproot 地址'>
-      <Input
-        placeholder='请输入内部公钥'
-        value={internalPubKey}
-        onChange={(e) => setInternalPubKey(e.target.value)}
+      <RadioGroup
+        className='flex mt-4'
+        value={network}
+        onValueChange={(v: keyof typeof NETWORKS) => setNetwork(v)}
+      >
+        {Object.keys(NETWORKS).map((key) => (
+          <div
+            className='flex items-center space-x-2'
+            key={key}
+          >
+            <RadioGroupItem
+              value={key}
+              id={`unsignature_${key}`}
+            />
+            <Label htmlFor={`unsignature_${key}`}>
+              {NETWORKS[key as keyof typeof NETWORKS].label}
+            </Label>
+          </div>
+        ))}
+      </RadioGroup>
+
+      <ContentCard
+        title={
+          <div className='font-medium flex items-center gap-x-2'>
+            <Button
+              size={'sm'}
+              onClick={generateRandomPair}
+            >
+              生成随机内部密钥对
+            </Button>
+          </div>
+        }
+      >
+        <ContentCard
+          title='私钥'
+          content={internalPair?.privateKey?.toString('hex')}
+        />
+        <ContentCard title='公钥'>
+          <PublicKeyViewer
+            publicKey={
+              (internalPair && internalPair.publicKey.toString('hex')) || ''
+            }
+          />
+        </ContentCard>
+      </ContentCard>
+
+      <ContentCard title='花费脚本明文'>
+        <CodeBlock
+          code={`OP_PUSHBYTES_32 ${internalPubKey.toString('hex')} \nOP_CHECKSIG \nOP_0 \nOP_IF \n OP_PUSHBYTES_3 ord \n OP_PUSHBYTES_1 01 \n OP_PUSHBYTES_24 text/plain;charset=utf-8 \n OP_0 \n OP_PUSHBYTES_51 {"p":"brc-20","op":"mint","tick":"sats","amt":"10"} \nOP_ENDIF`}
+          language='shell'
+        />
+      </ContentCard>
+
+      <ContentCard
+        title='花费脚本16进制'
+        content={inscriptionScript}
       />
 
-      <div>地址：{address}</div>
+      <ContentCard
+        title='Taproot 公钥'
+        content={taprootPubKey}
+      />
 
-      <CodeBlock
-        code={`OP_PUSHBYTES_32 ${internalPubKey} \nOP_CHECKSIG \nOP_0 \nOP_IF \n OP_PUSHBYTES_3 ord \n OP_PUSHBYTES_1 01 \n OP_PUSHBYTES_24 text/plain;charset=utf-8 \n OP_0 \n OP_PUSHBYTES_51 {"p":"brc-20","op":"mint","tick":"sats","amt":"10"} \nOP_ENDIF`}
-        language='shell'
-      ></CodeBlock>
+      <ContentCard
+        title='Taproot 地址'
+        content={commitToAddress}
+      />
     </InteractionCard>
   )
 }

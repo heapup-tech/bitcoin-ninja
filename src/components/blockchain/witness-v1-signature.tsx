@@ -300,7 +300,7 @@ export default function WitnessV1Signature({
       <ContentCard
         title={
           <div className='font-medium flex items-center gap-x-2'>
-            <span>Step 2: 计算 Tweak</span>
+            <span>Step 3: 计算 Tweak</span>
             <Tooltip>
               <TooltipTrigger asChild>
                 <CircleHelp className='w-4' />
@@ -320,7 +320,7 @@ export default function WitnessV1Signature({
       <ContentCard
         title={
           <div className='font-medium flex items-center gap-x-2'>
-            <span>Step 2: 计算 Taproot 私钥</span>
+            <span>Step 4: 计算 Taproot 私钥</span>
             <Tooltip>
               <TooltipTrigger asChild>
                 <CircleHelp className='w-4' />
@@ -337,7 +337,7 @@ export default function WitnessV1Signature({
       <ContentCard
         title={
           <div className='font-medium flex items-center gap-x-2'>
-            <span>Step 3: Schnorr 签名</span>
+            <span>Step 5: Schnorr 签名</span>
             <Tooltip>
               <TooltipTrigger asChild>
                 <CircleHelp className='w-4' />
@@ -357,7 +357,7 @@ export default function WitnessV1Signature({
         <ContentCard
           title={
             <div className='font-medium flex items-center gap-x-2'>
-              <span>Step 4: 签名序列化</span>
+              <span>Step 6: 签名序列化</span>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <CircleHelp className='w-4' />
