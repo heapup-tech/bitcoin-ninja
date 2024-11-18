@@ -1,7 +1,13 @@
 'use client'
 
-import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogTrigger
+} from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden'
 import { useState } from 'react'
 
 export default function ScaleableImage({
@@ -28,6 +34,9 @@ export default function ScaleableImage({
         />
       </DialogTrigger>
       <DialogContent className='w-[80%] p-0 max-w-max'>
+        <VisuallyHidden>
+          <DialogTitle />
+        </VisuallyHidden>
         <img
           className='w-full h-full border rounded-lg dark:invert p-2 cursor-zoom-out'
           alt={alt}

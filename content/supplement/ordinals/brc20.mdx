@@ -9,11 +9,11 @@ title: Brc20
   alt='taproot-out-explain'
 />
 
-由随机生成密钥, 计算出公钥的 $X$ 坐标作为内部公钥。结合脚本树的 $t$ 值, 计算出 `Taproot` 输出公钥 $Q$ 。`bech32m` 编码后得到 `Taproot` 地址。
+由随机生成内部私钥, 计算出公钥的 $X$ 坐标作为内部公钥。结合脚本树的 $t$ 值, 计算出 `Taproot` 输出公钥 $Q$ 。`bech32m` 编码后得到 `Taproot` 地址。
 
-当向该地址转账时, 会得到一个 `UTXO`, 其锁定脚本为 `OP_1 <Taproot 输出公钥>`, 类型为 `P2TR`。但是, 该 `UTXO` 并没有包含任何 `Brc20` 的数据。而要使 `Brc20` 数据显式存储在链上, 必须要同时花费该 `UTXO`。并且花费路径只能选择脚本路径, 因为脚本路径花费时需要提供要花费脚本的完整数据, 如此便实现数据链上存储。
+`Brc20` 交易会向该地址转账, 并输出一个 `UTXO`, 其锁定脚本为 `OP_1 <Taproot 输出公钥>`, 类型为 `P2TR`。但是, 该转账交易中并没有包含任何 `Brc20` 的数据。而要使 `Brc20` 数据显式存储在链上, 必须要同时花费该 `UTXO`。并且花费路径只能选择脚本路径, 因为脚本路径花费时需要提供要花费脚本的完整数据, 如此便实现数据链上存储。
 
-故 `Brc20` 交易都需要包含两笔交易:
+故 `Brc20` 交易都需要同时包含两笔交易:
 
 - 第一笔交易称作 `commit` 交易, 用于向生成的 `Taproot` 地址转账
 - 第二笔交易称作 `reveal` 交易, 用于花费 `commit` 交易生成的 `UTXO`
@@ -24,27 +24,80 @@ title: Brc20
 
 :::
 
+## 数据格式
+
 ## 计算 Taproot 地址
 
 <Brc20Pub />
 
-随机生成的内部秘钥对用于生成临时的 `Taproot` 地址
+随机生成的内部秘钥对用于生成临时的 `Taproot` 地址。为了安全性, 每次 `Brc20` 交易通常需要生成一个新的 `Taproot` 地址。
 
 ## Commit 交易
 
-生成 `Taproot` 地址后, 需要向该地址转账。即花费自己可解锁的 `UTXO` 向 `Taproot` 地址转账。转账金额需要根据当前比特币网络的费率确定。
+生成 `Taproot` 地址后, 需要向该地址转账。即花费自己的 `UTXO` 向生成的`Taproot` 地址转账, 转账交易输出一个 `P2TR` 类型的 `UTXO`。
+
+一个 `P2TR` 类型的 `UTXO` 包含的字段有
+
+```json
+{
+  "amount": "0000000000000000", // 8字节
+  "scriptPubKeySize": "00", // 1字节
+  "script": "OP_1 OP_PUSHBYTES_32 <32 字节Taproot 输出公钥>" // 34字节
+}
+```
+
+唯一需要确定的是转账金额, 转账金额需要根据当前比特币网络的费率以及花费该 `UTXO` 所在交易(`Reveal` 交易)的字节大小确定。
+
+`Reveal` 交易花费该 `UTXO` 需要提供的解锁脚本在 `witness` 字段中, 以及输出一个包含546聪的新 `UTXO` 给 `Brc20` 数据的所有者。
+
+`Reveal` 交易的 `witness` 字段包含三个部分:
+
+```json
+witness: [
+  <signature>, // 64 字节签名数据
+  <花费脚本>,
+  <controlblock> // 33 字节控制块
+]
+```
+
+`witness` 字段数据的大小可以确定, 交易输出的大小也可以确定。整个 `Reveal` 交易的大小也可以确定。根据当前网络费率, 转账金额可以确定。
+
+例如有如下 `Reveal` 交易
+
+<TransactionSplitTab
+  hex='02000000000101d436e9128462ab6fe08e1b0c95d9ce45e29d84d2f64af518d6ef2f7bd13c81a40000000000fdffffff012202000000000000160014bac6feee762f19adbd72e2714774e738f7b8b8cb0340944b955d9042b4b4f737f050358e62cbacd734606ba23dc8f051833472b843fd7ae5226c387aa0794403d1b0833467a9627efa795008a30035bfdd3d0f73308e79208ac66a3c51520a65f500edf36516a51e0f6ee3929f795c4495cdaddb0bed4424ac0063036f7264010118746578742f706c61696e3b636861727365743d7574662d3800337b2270223a226272632d3230222c226f70223a226d696e74222c227469636b223a2273617473222c22616d74223a223130227d6821c0b48573b93f15ed2aa0ec40caa44fcbdffddfe072ecebdfa56fae8396e8db18eb00000000'
+  txid='b159d03058115115b209b4dbff51d75175225320349762011fdefda66a3cbe2d'
+  isTestnet
+/>
+
+通过预先计算 `Reveal` 交易的大小为 `138vB`, 假设当前网络的费率是 `612.3 sat/vB`。总手续费需要 $138 * 612.3 \approx 84500 sat$, 加上需要最低的转账金额 `546 sat`。所以 `Commit` 交易需要给生成的 `Taproot` 地址转 `84500 + 546 = 85046 sat`。
+
+`Commit` 交易中如果所有输入的 `UTXO` 金额扣除当前交易费和转账金额 `85046 sat` 后的结果大于或等于 `546 sat`, 还需要找零给原地址。
+
+:::note 546 sat
+
+`546 sat` 在比特币交易中被称为 `dust limit`, 是 `UTXO` 包含的的最小金额。 低于这个金额的交易, 会被比特币网络拒绝。
+
+:::
+
+## Reveal 交易
+
+## 索引器
 
 两笔交易
 
 Commit: https://mempool.space/tx/26877b8e3d64a8688ba01f7fa62c26e2b4f4034dfb44029246c92643b2f1a93b
+
 Reveal: https://mempool.space/tx/00274fdd890873da479a51896f328665a71d2f3c1dff00fbb20155e9fcda2c50
 
 testnet:
 
 tx1 commit: https://mempool.space/testnet/tx/50c2a1e54f305426d0fcc47caa8f07322ac149838aa27912343503080bc221b0
+
 tx2 reveal: https://mempool.space/testnet/tx/ea58f831e9d532bab8985e94def57a3e2c992e8018f80c11a81f5dfcd643a42c
 
 tx2 commit: https://mempool.space/testnet/tx/a4813cd17b2fefd618f54af6d2849de245ced9950c1b8ee06fab628412e936d4
+
 tx2 reveal: https://mempool.space/testnet/tx/b159d03058115115b209b4dbff51d75175225320349762011fdefda66a3cbe2d
 
 Commit Tx to P2tr address with scripttree
@@ -65,7 +118,3 @@ OP_IF                                                                # 开始条
     OP_PUSHBYTES_57 7b2270223a...                                   # BRC-20
 OP_ENDIF
 ```
-
-## Reveal 交易
-
-## 索引器
