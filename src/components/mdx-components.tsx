@@ -65,6 +65,7 @@ import TransactionSpliter from './blockchain/transaction-spliter'
 import TransactionTxidCalculator from './blockchain/transaction-txid-calculator'
 import TransactionWitnessFieldsTable from './blockchain/transaction-witness-fields-table'
 import UnSignTransactionBuilder from './blockchain/unsign-transaction-builder'
+import UtxoList from './blockchain/utxo-list'
 import WIFPrivateKeyGenerator from './blockchain/wif-private-key-generator'
 import EccGraph from './cryptology/ecc-graph'
 import FiniteEccGraph from './cryptology/finite-ecc-graph'
@@ -77,6 +78,7 @@ const components = {
   EccGraph,
   FiniteEccGraph,
   Brc20Pub,
+  UtxoList,
   PublicKeyViewer,
   BitcoinOverview,
   BlockHeaderHex,

@@ -23,4 +23,8 @@ export default class UnisatWallet {
   async autoConnect() {
     return this.getTarget().getAccounts()
   }
+
+  async getNetwork() {
+    return this.getTarget().getNetwork()
+  }
 }
