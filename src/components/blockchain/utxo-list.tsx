@@ -2,7 +2,13 @@
 
 import { truncateAddress } from '@/lib/address'
 import { cn } from '@/lib/utils'
-import { Loader } from 'lucide-react'
+import {
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  Loader
+} from 'lucide-react'
 import Link from 'next/link'
 import { useCallback, useEffect, useState } from 'react'
 import { toast } from 'sonner'
@@ -89,12 +95,31 @@ export default function UtxoList() {
     }
   }, [address])
 
+  const [pageSize, setPageSize] = useState(10)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+
   useEffect(() => {
     if (utxos.length > 0) {
       const total = utxos.reduce((acc, utxo) => acc + utxo.value, 0)
       setTotalSats(total)
+      setTotalPages(Math.ceil(utxos.length / pageSize))
     }
   }, [utxos])
+
+  // Get current page data
+  const getCurrentPageData = () => {
+    const start = (currentPage - 1) * pageSize
+    const end = start + pageSize
+    return utxos.slice(start, end)
+  }
+
+  // Pagination handlers
+  const goToFirstPage = () => setCurrentPage(1)
+  const goToPreviousPage = () => setCurrentPage((prev) => Math.max(prev - 1, 1))
+  const goToNextPage = () =>
+    setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+  const goToLastPage = () => setCurrentPage(totalPages)
 
   return (
     <div className='mt-4'>
@@ -107,9 +132,11 @@ export default function UtxoList() {
           {querying && <Loader className='ml-2 h-4 w-4 animate-spin' />}
         </Button>
 
-        <div>
-          余额: {totalSats} sat = {totalSats / 1e8} BTC
-        </div>
+        {utxos.length > 0 && (
+          <div>
+            余额: {totalSats} sat = {totalSats / 1e8} BTC
+          </div>
+        )}
       </div>
 
       {utxos.length > 0 && (
@@ -126,7 +153,7 @@ export default function UtxoList() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {utxos.map((utxo) => (
+                {getCurrentPageData().map((utxo) => (
                   <TableRow key={utxo.txid + utxo.vout}>
                     <TableCell>
                       <Link
@@ -159,6 +186,51 @@ export default function UtxoList() {
                 ))}
               </TableBody>
             </Table>
+          </div>
+
+          <div className='flex items-center justify-between mt-2'>
+            <div className='text-sm text-gray-500'>
+              显示 {(currentPage - 1) * pageSize + 1} 到{' '}
+              {Math.min(currentPage * pageSize, utxos.length)} 条，共{' '}
+              {utxos.length} 条
+            </div>
+            <div className='flex items-center space-x-2'>
+              <Button
+                variant='outline'
+                size='icon'
+                onClick={goToFirstPage}
+                disabled={currentPage === 1}
+              >
+                <ChevronsLeft className='h-4 w-4' />
+              </Button>
+              <Button
+                variant='outline'
+                size='icon'
+                onClick={goToPreviousPage}
+                disabled={currentPage === 1}
+              >
+                <ChevronLeft className='h-4 w-4' />
+              </Button>
+              <span className='text-sm'>
+                第 {currentPage} 页，共 {totalPages} 页
+              </span>
+              <Button
+                variant='outline'
+                size='icon'
+                onClick={goToNextPage}
+                disabled={currentPage === totalPages}
+              >
+                <ChevronRight className='h-4 w-4' />
+              </Button>
+              <Button
+                variant='outline'
+                size='icon'
+                onClick={goToLastPage}
+                disabled={currentPage === totalPages}
+              >
+                <ChevronsRight className='h-4 w-4' />
+              </Button>
+            </div>
           </div>
         </div>
       )}
