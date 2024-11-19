@@ -261,6 +261,7 @@ const ecdsaSignature = keypair.sign(hashedTransaction)
 
 ```ts
 import { networks, type Signer } from 'bitcoinjs-lib'
+const network = networks.testnet
 
 const keyPair = ECPair.fromWIF(process.env['SECRET_KEY']!, network)
 

@@ -95,9 +95,55 @@ $$ \mathtt {t = TaggedHash('TapTweak', P + Root)} $$
 ]
 ```
 
-包含的元素只有一个, 即 `Schnorr` 签名数据。
+见证数据中包含的元素只有一个, 即 `Schnorr` 签名结果。
 
-需要注意的是, 秘钥路径花费时, 不需要执行脚本。只需要验证签名和锁定脚本中的 `Taproot` 公钥是否匹配即可证明交易的有效性。
+需要注意的是, 签名私钥并非是内部私钥, 而是 `Taproot` 私钥。`Taproot` 公钥可以由 `Taproot` 私钥计算得到。
+
+已知 `Taproot` 公钥 <InlineMath formula='\mathtt {Q = P + t \times G}' />, 内部私钥为 $K$, 替换 $P$ 为 $K \times G$: <InlineMath formula='\mathtt {Q = K \times G + t \times G}' />, 可以得到 <InlineMath formula='\mathtt {Q = (K + t) \times G}' />, 令 `Taproot` 私钥为 `K_t`, 则 <InlineMath formula='\mathtt {K_t \times G = (K + t) \times G}' />
+
+得出 `Taproot` 私钥为 <InlineMath formula='\mathtt {K_t = K + t}' />, 即内部私钥加上 `tweak` 值。
+
+```ts
+import { networks, type Signer } from 'bitcoinjs-lib'
+const network = networks.testnet
+
+const keyPair = ECPair.fromWIF(process.env['SECRET_KEY']!, network)
+
+function tweakSigner(signer: Signer, opts: any = {}): Signer {
+  let privateKey: Uint8Array | undefined = signer.privateKey!
+  if (!privateKey) {
+    throw new Error('Private key is required for tweaking signer!')
+  }
+  if (signer.publicKey[0] === 3) {
+    privateKey = ecc.privateNegate(privateKey)
+  }
+
+  // 内部私钥加上 tweak 值
+  const tweakedPrivateKey = ecc.privateAdd(
+    privateKey,
+    // tweak = TaggedHash('TapTweak', P + Root), Root 为脚本树的根哈希
+    tapTweakHash(toXOnly(signer.publicKey), opts.tweakHash)
+  )
+  if (!tweakedPrivateKey) {
+    throw new Error('Invalid tweaked private key!')
+  }
+
+  return ECPair.fromPrivateKey(tweakedPrivateKey, {
+    network
+  })
+}
+
+function tapTweakHash(pubKey: Buffer, h: Buffer | undefined): Buffer {
+  return crypto.taggedHash(
+    'TapTweak',
+    Buffer.concat(h ? [pubKey, h] : [pubKey])
+  )
+}
+```
+
+签名则使用 `tweakedPrivateKey` 签名交易。
+
+秘钥路径花费时, 不需要执行脚本。只需要验证签名和锁定脚本中的 `Taproot` 公钥是否匹配即可证明交易的有效性。
 
 ```ts
 import { Transaction } from 'bitcoinjs-lib'
@@ -164,7 +210,7 @@ const ScriptA = script.compile([
 // Bob 可以在 30 天后花费
 const ScriptB = script.compile([
   script.number.encode(30),
-  OPS.OP_OP_CHECKLOCKTIMEVERIFY,
+  OPS.OP_CHECKLOCKTIMEVERIFY,
   OPS.OP_DROP,
   Buffer.from(BobPublicKey, 'hex'),
   OPS.OP_CHECKSIG
