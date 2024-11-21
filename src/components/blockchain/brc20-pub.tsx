@@ -135,10 +135,10 @@ export default function Brc20Pub() {
         }
       >
         <ContentCard
-          title='私钥'
+          title='内部私钥'
           content={internalPair?.privateKey?.toString('hex')}
         />
-        <ContentCard title='公钥'>
+        <ContentCard title='内部公钥'>
           <PublicKeyViewer
             publicKey={
               (internalPair && internalPair.publicKey.toString('hex')) || ''

@@ -24,13 +24,74 @@ title: Brc20
 
 :::
 
-## 数据格式
+## Taproot
 
-## 计算 Taproot 地址
+在向 `Taproot` 地址转账时先计算出要转账的地址。
 
 <Brc20Pub />
 
 随机生成的内部秘钥用于生成临时的 `Taproot` 地址。为了安全性, 每次 `Brc20` 交易通常需要生成一个新的 `Taproot` 地址。
+
+脚本树中定义的锁定脚本只有一个, 内容部分如下所示:
+
+```ts
+OP_FALSE  // 等同于 OP_0
+OP_IF
+  OP_PUSHBYTES_3 ord
+  OP_PUSHBYTES_1 01
+  OP_PUSHBYTES_24 text/plain;charset=utf-8
+  OP_0
+  OP_PUSHBYTES_51 {"p":"brc-20","op":"mint","tick":"sats","amt":"10"}
+OP_ENDIF
+```
+
+- `text/plain;charset=utf-8`: 表示数据的 [MIME](https://en.wikipedia.org/wiki/MIME)类型, 如果是图片数据, 则为 `image/png`
+
+- `{"p":"brc-20","op":"mint","tick":"sats","amt":"10"}`: 表示具体的数据内容, 对于 `Brc20` 代币数据, 各个字段分别表示:
+
+  - `p`: 表示协议, `brc-20` 表示 `Brc20` 协议
+  - `op`: 表示操作, `mint` 表示铸币, `deploy` 表示部署, `transfer` 表示转账
+  - `tick`: 表示代币名称
+  - `amt`: 表示数量
+
+<Tabs defaultValue='deploy'>
+  <TabsList>
+    <TabsTrigger value='deploy'>部署</TabsTrigger>
+    <TabsTrigger value='mint'>铸造</TabsTrigger>
+    <TabsTrigger value='transfer'>转账</TabsTrigger>
+  </TabsList>
+  <TabsContent value='deploy'>
+  ```json
+  {
+    "p": "brc-20",
+    "op": "deploy", // 部署
+    "tick": "sats", // 代币名称
+    "max": 21000000, // 最大发行量
+    "lim": 1000 // 每次铸币数量
+  }
+  ```
+  </TabsContent>
+  <TabsContent value='mint'>
+  ```json
+  {
+    "p": "brc-20",
+    "op": "mint", // 铸造
+    "tick": "sats", // 代币名称
+    "amt": 1000, // 铸币数量
+  }
+  ```
+  </TabsContent>
+  <TabsContent value='transfer'>
+  ```json
+  {
+    "p": "brc-20",
+    "op": "transfer", // 转账
+    "tick": "sats", // 代币名称
+    "amt": 1000, // 转账数量
+  }
+  ```
+  </TabsContent>
+</Tabs>
 
 ## Commit 交易
 
@@ -46,7 +107,7 @@ title: Brc20
 }
 ```
 
-三个字段中唯一需要确定的是转账金额, 转账金额需要根据当前比特币网络的费率以及花费该 `UTXO` 所在交易(`Reveal` 交易)的字节大小确定。
+三个字段中唯一没有确定的是转账金额, 转账金额需要根据当前比特币网络的费率以及花费该 `UTXO` 所在交易(`Reveal` 交易)的字节大小确定。
 
 `Reveal` 交易的输入只有该 `P2TR` 类型的 `UTXO`, 并且提供的解锁脚本在 `witness` 字段中, 以及输出一个包含546聪的新 `UTXO` 给 `Brc20` 数据的所有者。
 
@@ -55,7 +116,7 @@ title: Brc20
 ```json
 witness: [
   <signature>, // 64 字节签名数据
-  <花费脚本>,
+  <花费脚本>, // 可计算出字节大小
   <controlblock> // 33 字节控制块
 ]
 ```
