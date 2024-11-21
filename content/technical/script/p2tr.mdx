@@ -22,7 +22,7 @@ OP_1 \<Taproot 输出公钥>
   index='2'
 />
 
-`OP_1` 是隔离见证的版本字节, 表示该锁定脚本是 `P2TR`。
+`OP_1` 是隔离见证的版本字节, 表示该锁定脚本是 `P2TR`。紧接着是 32 字节的`Taproot` 输出公钥的 $X$ 坐标。
 
 **Taproot 输出公钥** 是一个 `32` 字节的公钥, 由内部公钥和脚本树的默克尔根计算得到。
 
@@ -31,15 +31,15 @@ OP_1 \<Taproot 输出公钥>
   alt='taproot-out-explain'
 />
 
-- 内部公钥是用户私钥经过 `secp256k1` 曲线生成, 实际上就是用户公钥。但在计算 `Taproot` 输出公钥时, 只会使用公钥的 `x` 坐标。
+- 内部公钥是用户私钥经过 `secp256k1` 曲线生成, 实际上就是用户公钥。但在计算 `Taproot` 输出公钥时, 只会使用公钥的 $X$ 坐标。
 
 - `Taproot` 允许多个锁定脚本, 任意一个锁定脚本的解锁即可花费 `UTXO`。 在有多种锁定脚本的情况下, 将多个锁定脚本通过 `MAST` 构造成一个**脚本树**, 脚本树的默克尔根参与计算 `Taproot` 输出公钥。在花费时, 可以选择其中一个锁定脚本并提供解锁脚本, 同时还需要提供默克尔证明。假设使用上图中 `Script_A` 来花费 `UTXO` , 除了解锁脚本外, 还需要其默克尔证明 `B` 和 `C`。
 
-多种锁定脚本可以是完全自定义的脚本, 也可以是标准脚本, 例如:
+多种锁定脚本可以是完全自定义的锁定脚本, 也可以是标准锁定脚本, 例如:
 
 ```ts
-// Alice 可花费
-script_A = 'OP_1 <Alice_pubkey> OP_CHECKSIG'
+// Alice 可花费 (P2PK)
+script_A = '<Alice_pubkey> OP_CHECKSIG'
 // Bob 可以在 30 天后花费
 script_B = '<30 days> OP_CHECKLOCKTIMEVERIFY OP_DROP <Bob_pubkey> OP_CHECKSIG'
 // Alice, Bob, Carol 任意 2 人可以花费 (P2MS)
@@ -49,7 +49,7 @@ script_C =
 
 锁定脚本经过 `taggedHash` 运算后, 成为脚本树的子节点。将所有子节点构造成一个默克尔树, 得到默克尔根。内部公钥和默克尔根拼接后经过 `taggedHash` 运算计算出 `tweak` 值, 简称 `t`。
 
-$$ \mathtt {t = TaggedHash('TapTweak', P + Root)} $$
+<BlockMath formula='\mathtt {t = TaggedHash("TapTweak", P + Root)}' />
 
 内部公钥加上 `t` 乘以椭圆曲线 `secp256k1` 的基点 `G` 即可得到 `Taproot` 输出公钥 `Q`。
 
@@ -58,6 +58,20 @@ $$ \mathtt {t = TaggedHash('TapTweak', P + Root)} $$
 `Q` 是椭圆曲线的一个点, 但在实际中, 只会用到其 `x` 坐标, 因此 `Q` 实际指的是点 `Q` 的 `x` 坐标。
 
 将 `Q` 进行 `bech32m` 编码即可得到 `Taproot` 地址。 当向 `Taproot` 地址转账时, 对其执行 `bech32m` 解码可得到地址的 `Taproot` 输出公钥, `Taproot` 输出公钥最终会被存入 `UTXO` 锁定脚本中。
+
+:::warning TaggedHash
+
+`TaggedHash` 是一个对数据进行 `sha256` 哈希运算的函数。
+
+```ts
+const taggedHash = (prefix: string, data: Buffer) => {
+  return sha256(
+    Buffer.concat([Buffer.concat([sha256(prefix), sha256(prefix)]), data])
+  )
+}
+```
+
+:::
 
 **脚本树可以为空**。 在比特币钱包中, 默认生成的 `Taproot` 地址都是在没有脚本树的情况下:
 
@@ -95,9 +109,9 @@ $$ \mathtt {t = TaggedHash('TapTweak', P + Root)} $$
 ]
 ```
 
-见证数据中包含的元素只有一个, 即 `Schnorr` 签名结果。
+见证数据中包含的元素只有一个, 即 `Schnorr` 签名数据。
 
-需要注意的是, 签名私钥并非是内部私钥, 而是 `Taproot` 私钥。`Taproot` 公钥可以由 `Taproot` 私钥计算得到。
+需要注意的是, **秘钥路径花费时的签名私钥并非是内部私钥**, 而是 `Taproot` 私钥。`Taproot` 公钥可以由 `Taproot` 私钥计算得到。
 
 已知 `Taproot` 公钥 <InlineMath formula='\mathtt {Q = P + t \times G}' />, 内部私钥为 $K$, 替换 $P$ 为 $K \times G$: <InlineMath formula='\mathtt {Q = K \times G + t \times G}' />, 可以得到 <InlineMath formula='\mathtt {Q = (K + t) \times G}' />, 令 `Taproot` 私钥为 `K_t`, 则 <InlineMath formula='\mathtt {K_t \times G = (K + t) \times G}' />
 
@@ -141,8 +155,6 @@ function tapTweakHash(pubKey: Buffer, h: Buffer | undefined): Buffer {
 }
 ```
 
-签名则使用 `tweakedPrivateKey` 签名交易。
-
 秘钥路径花费时, 不需要执行脚本。只需要验证签名和锁定脚本中的 `Taproot` 公钥是否匹配即可证明交易的有效性。
 
 ```ts
@@ -173,9 +185,9 @@ const verifyTaprootSignature = () => {
   // 计算签名哈希
   // 422a8fcae1eacd3a5bdaeaac83c15b8ec4ec5236f8adb32d6756b816730dd85e
   const sigHash = tx.hashForWitnessV1(
-    0,
-    [utxo.script],
-    [utxo.amount],
+    0, // 输入索引
+    [utxo.script], // 锁定脚本
+    [utxo.amount], // 金额
     Transaction.SIGHASH_DEFAULT
   )
 
@@ -200,23 +212,23 @@ verifyTaprootSignature()
 import { script } from 'bitcoinjs-lib'
 import { OPS } from 'bitcoinjs-lib/src/ops'
 
-// Alice 可以立即花费
+// Alice 可以花费
 const ScriptA = script.compile([
-  OPS.OP_1,
   Buffer.from(AlicePublicKey, 'hex'),
   OPS.OP_CHECKSIG
 ])
 
-// Bob 可以在 30 天后花费
+// 30 天后 Bob 可以花费
+const locktime = Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60
 const ScriptB = script.compile([
-  script.number.encode(30),
+  script.number.encode(locktime),
   OPS.OP_CHECKLOCKTIMEVERIFY,
   OPS.OP_DROP,
   Buffer.from(BobPublicKey, 'hex'),
   OPS.OP_CHECKSIG
 ])
 
-// Alice, Bob, Carol 任意 2 人可以花费
+// 2-of-3 多签
 const ScriptC = script.compile([
   OPS.OP_2,
   Buffer.from(AlicePublicKey, 'hex'),
@@ -232,7 +244,48 @@ const ScriptC = script.compile([
   alt='taprppt-out-explain'
 />
 
-可选择的花费方式有:
+构建 `P2TR` 地址:
+
+```ts
+import { Taptree } from 'bitcoinjs-lib/src/types'
+import { initEccLib, networks, type Signer } from 'bitcoinjs-lib'
+import ECPairFactory from 'ecpair'
+import * as ecc from 'tiny-secp256k1'
+
+initEccLib(ecc)
+const ECPair = ECPairFactory(ecc)
+
+const network = networks.testnet
+
+// 随机生成内部秘钥对
+const keypair = ECPair.makeRandom({ network })
+
+const toXOnly = (pubkey: Buffer) => pubkey.subarray(1, 33)
+
+// 脚本树需要以两个一组的形式构建
+const scriptTree: Taptree = [
+  [
+    {
+      output: ScriptA
+    },
+    {
+      output: ScriptB
+    }
+  ],
+  {
+    output: ScriptC
+  }
+]
+const { output, address } = payments.p2tr({
+  internalPubkey: toXOnly(keypair.publicKey),
+  scriptTree,
+  network
+})
+
+console.log(address) // tb1p...
+```
+
+当向该地址转账生成 `P2TR` 类型的 `UTXO` 后, 可选择的花费方式有:
 
 - 拥有内部私钥可直接选择秘钥路径花费
 - 没有内部私钥时, 只能选择脚本路径花费方式, 从脚本树中选择任意一个可满足条件的锁定脚本
@@ -240,24 +293,83 @@ const ScriptC = script.compile([
   - 选择 `ScriptB`, 需提供默克尔证明 `A` 和 `C`
   - 选择 `ScriptC`, 需提供默克尔证明 `AB`
 
-解锁 `P2TR` 的 `Witness` 字段格式为:
+解锁 `P2TR` 交易的 `Witness` 字段格式为:
 
 :::note
 
-\<解锁脚本> \<锁定脚本> \<控制块>
+\<解锁脚本> \<赎回脚本> \<控制块>
 
 :::
 
-:::warning 控制块
+- 解锁脚本: 脚本树中锁定脚本对应的解锁脚本, 假如选择 `ScriptA`, 只需要签名数据即可; 但对于 `ScriptC`, 则需要类似 `P2MS` 多签解锁脚本
+- 赎回脚本: 选择花费的锁定脚本, 即脚本树中的 `ScriptA`、`ScriptB` 或 `ScriptC`
+- 控制块: 内部公钥和默克尔证明的组合
 
-控制块是内部公钥和默克尔证明的组合。
+假设现在选择 `ScriptA` 花费 `P2TR` 类型的 `UTXO`:
 
-:::
+```ts
+// 赎回脚本
+const ScriptA_Redeem = {
+  output: ScriptA,
+  redeemVersion: 0xc0
+}
 
-假设现在选择 `ScriptA` 花费, 需要使用 `Alice` 的私钥签名交易得到签名数据, 以及 `ScriptA` 本身和控制块, 最后将这三个元素组合成 `Witness` 字段:
+// 计算控制块: 方式一
+// const controlBlock = Buffer.concat(
+//   [
+//     Buffer.from([redeemVersion | outputKey.parity]), // 赎回脚本的版本 | 公钥奇偶性
+//     internalPubkey // 内部公钥
+//   ].concat(path) // 默克尔证明路径, 对于 ScriptA 来说, path = [B, C]
+// )
 
-:::note
+// 计算控制块: 方式二
+const ScriptA_P2TR = payments.p2tr({
+  internalPubkey: toXOnly(keypair.publicKey), // 内部公钥
+  scriptTree, // 脚本树
+  network,
+  redeem: ScriptA_Redeem // 赎回脚本
+})
+const controlBlock = ScriptA_P2TR.witness![ScriptA_P2TR.witness!.length - 1]
+```
 
-\<Alice签名> \<ScriptA> \<控制块>
+最后是签名数据, 下列代码完整展示使用 `PSBT` 签名一笔交易:
 
-:::
+```ts
+const AliceKeyPair = ECPair.fromPrivateKey(Buffer.from(AlicePrivateKey, 'hex'))
+
+const psbt = new Psbt({ network })
+psbt.addInput({
+  hash: '79cc74ac08dd7c27efbc81cf7ac1cce471ecb220617c8784ef00385e7b240e5d', // txid
+  index: 0,
+  witnessUtxo: {
+    value: 3500,
+    script: Buffer.from(
+      '512048ee3388cfff76c93aa391ccc47ee78f1b6337392155d5212706f857e6a697bd',
+      'hex'
+    )
+  },
+  tapLeafScript: [
+    // 使用的花费脚本
+    {
+      leafVersion: 0xc0,
+      script: ScriptA,
+      controlBlock: ScriptA_P2TR.witness![ScriptA_P2TR.witness!.length - 1]
+    }
+  ]
+})
+
+psbt.addOutput({
+  address: '...',
+  value: 600
+})
+
+psbt.signInput(0, AliceKeyPair)
+
+const txHex = psbt.finalizeAllInputs().extractTransaction().toHex()
+```
+
+签名后得到的交易数据如下:
+
+<TransactionSplitTab hex='020000000001015d0e247b5e3800ef84877c6120b2ec71e4ccc17acf81bcef277cdd08ac74cc790000000000ffffffff015802000000000000225120b494169f485231b6f428d3ce782cdaccc6b6bfd5d1a45802b62848d1b74c04f10340495c5af07e89f22e1d5e1a3b126e8117afdd1106d8429bc3668d713368868086dfa92e1908682302c8beb42c3c450f38db7b9ff2a5b4d733ea2a287b6eaba855232102386d02d92ce3ccae0beabe10ceaa8d6b2f70f33952c914bde17928c0c905a367ac61c1f165189258973308cd1847171e69581d9c9518392e5ec49e3742c61c8d2bc1af61904494d5c5244c05c7a57a7913e75aa640f91bdd970107a7899084f2f249746defbb4fd5b2c4da6aa54e326c65d0a5b5eabc79a4b7a90bd4ef8f5bd54b433800000000' />
+
+通过 RPC 接口 `sendrawtransaction` 广播交易。
