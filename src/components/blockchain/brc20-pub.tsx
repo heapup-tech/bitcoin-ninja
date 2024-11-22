@@ -4,8 +4,8 @@ import { NETWORKS } from '@/lib/constants'
 import { payments, script, Stack } from 'bitcoinjs-lib'
 import { OPS } from 'bitcoinjs-lib/src/ops'
 import { ECPairInterface } from 'ecpair'
+import dynamic from 'next/dynamic'
 import { useEffect, useMemo, useState } from 'react'
-import CodeBlock from '../code-block'
 import ContentCard from '../content-card'
 import InteractionCard from '../interaction-card'
 import { Button } from '../ui/button'
@@ -13,6 +13,9 @@ import { Label } from '../ui/label'
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group'
 import PublicKeyViewer from './public-key-viewer'
 
+const CodeBlock = dynamic(() => import('@/components/code-block'), {
+  ssr: false
+})
 export default function Brc20Pub() {
   const [network, setNetwork] = useState<keyof typeof NETWORKS>('testnet')
 
@@ -41,7 +44,7 @@ export default function Brc20Pub() {
   }
 
   useMemo(() => {
-    if (!internalPair || !internalPair.publicKey) return
+    if (!internalPair || !internalPair.publicKey || !network) return
     const inscriptionData = {
       contentType: 'text/plain;charset=utf-8',
       body: `{"p":"brc-20","op":"mint","tick":"sats","amt":"10"}`
