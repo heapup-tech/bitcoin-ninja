@@ -2,7 +2,7 @@
 title: Brc20
 ---
 
-`Brc20` 数据存储基于 `Taproot`, 数据存储在脚本树的节点中。
+`Brc20` 数据存储基于 `Taproot`, 数据存储在脚本树的节点中。开始之前请确保已学习 [P2TR](/technical/script/p2tr) 部分的内容。
 
 <ScaleableImage
   src='/inscription-taptree.png'
@@ -11,7 +11,7 @@ title: Brc20
 
 由随机生成内部私钥, 计算出公钥的 $X$ 坐标作为内部公钥。结合脚本树的 $t$ 值, 计算出 `Taproot` 输出公钥 $Q$ 。`bech32m` 编码后得到 `Taproot` 地址。
 
-`Brc20` 交易首先会向该地址转账, 并输出一个 `UTXO`, 其锁定脚本为 `OP_1 <Taproot 输出公钥>`, 类型为 `P2TR`。但是, 该转账交易中并没有包含任何 `Brc20` 的数据。而要使 `Brc20` 数据显式存储在链上, 必须要同时花费该 `UTXO`。并且花费路径只能选择脚本路径, 因为脚本路径花费时需要提供要花费脚本的完整数据, 如此便实现数据链上存储。
+`Brc20` 交易首先会向该地址转账, 并输出一个 `UTXO`, 其锁定脚本为 `OP_1 <Taproot 输出公钥>`, 类型为 `P2TR`。但是, 该转账交易中并没有包含任何 `Brc20` 的数据。而要使 `Brc20` 数据显式包含在交易中, 必须要同时花费该 `UTXO`。并且花费路径只能选择脚本路径, 因为脚本路径花费时需要提供要花费脚本的完整数据, 如此便实现数据链上存储。
 
 故 `Brc20` 交易都需要同时包含两笔交易:
 
@@ -24,7 +24,7 @@ title: Brc20
 
 :::
 
-## Taproot
+## Taproot 地址计算
 
 在向 `Taproot` 地址转账时先计算出要转账的地址。
 
@@ -45,7 +45,11 @@ OP_IF
 OP_ENDIF
 ```
 
-- `text/plain;charset=utf-8`: 表示数据的 [MIME](https://en.wikipedia.org/wiki/MIME)类型, 如果是图片数据, 则为 `image/png`
+- `OP_FALSE`: 等同于 `OP_0`, 作用是将数字 0 推入栈中
+
+- `OP_IF`: 条件块开始, 从栈顶弹出一个元素, 如果为真(非0)则执行条件块内的脚本, 否则跳过。由于栈顶元素是0, 所以条件块内的脚本永远不会被执行。脱离 `Brc20` 背景, 条件块内的脚本实际是一段冗余数据, 这也是 `Brc20` 经常被诟病的原因。
+
+- `text/plain;charset=utf-8`: 表示数据的 [MIME](https://en.wikipedia.org/wiki/MIME) 类型, 如果是图片数据, 则可以是 `image/png`
 
 - `{"p":"brc-20","op":"mint","tick":"sats","amt":"10"}`: 表示具体的数据内容, 对于 `Brc20` 代币数据, 各个字段分别表示:
 
@@ -93,17 +97,28 @@ OP_ENDIF
   </TabsContent>
 </Tabs>
 
+在内容部分之上的部分实际是一个 [P2PK](/technical/script/p2pk) 锁定脚本
+
+```ts
+OP_PUSHBYTES_32 InternalPubKeyX // 32 字节公钥 X 坐标
+OP_CHECKSIG
+```
+
+不同的是公钥部分用的是 $X$ 坐标。一般来说, 椭圆曲线中相同的 $X$ 坐标会有两个 $Y$ 坐标, 但在 [BIP340](https://github.com/bitcoin/bips/blob/master/bip-0340.mediawiki) `Schnorr` 签名时总会选择 $Y$ 坐标为偶数的那个, 所以只需要提供 $X$ 坐标即可。签名交易时, 则使用存储的公钥配对的私钥进行签名。
+
+因此, 花费脚本中的 `InternalPubKeyX` 并不一定需要是生成 `Taproot` 地址时使用的内部公钥。但为了方便, 通常会使用相同的公钥。
+
 ## Commit 交易
 
-生成 `Taproot` 地址后, 需要向该地址转账。即花费自己的 `UTXO` 向生成的`Taproot` 地址转账, 转账交易输出一个 `P2TR` 类型的 `UTXO`。
+生成 `Taproot` 地址后, 需要向该地址转账。即花费自己的 `UTXO` 向生成的 `Taproot` 地址转账, 转账交易输出一个 `P2TR` 类型的 `UTXO` 到 `Taproot` 地址。
 
 一个 `P2TR` 类型的 `UTXO` 包含的字段有
 
 ```json
 {
   "amount": "0000000000000000", // 8字节
-  "scriptPubKeySize": "00", // 1字节
-  "script": "OP_1 OP_PUSHBYTES_32 <32 字节Taproot 输出公钥>" // 34字节
+  "scriptPubKeySize": "22", // scriptPubKey 字节长度, 1 字节
+  "scriptPubKey": "OP_1 OP_PUSHBYTES_32 <32 字节Taproot 输出公钥>" // 34字节
 }
 ```
 
@@ -111,7 +126,7 @@ OP_ENDIF
 
 `Reveal` 交易的输入只有该 `P2TR` 类型的 `UTXO`, 并且提供的解锁脚本在 `witness` 字段中, 以及输出一个包含546聪的新 `UTXO` 给 `Brc20` 数据的所有者。
 
-`Reveal` 交易的 `witness` 字段包含三个部分:
+`Reveal` 交易动态字段 `witness` 包含三个部分:
 
 ```json
 witness: [
@@ -143,41 +158,15 @@ witness: [
 
 ## Reveal 交易
 
-`Reveal` 交易用于花费 `Commit` 交易输出的 `UTXO`, 并且在花费时提供花费脚本。
+`Reveal` 交易用于花费 `Commit` 交易输出的 `UTXO`, 输出 546 聪给 `Brc20` 数据的所有者。
+
+示例交易:
+
+commit: https://mempool.space/testnet/tx/a4813cd17b2fefd618f54af6d2849de245ced9950c1b8ee06fab628412e936d4
+reveal: https://mempool.space/testnet/tx/b159d03058115115b209b4dbff51d75175225320349762011fdefda66a3cbe2d
 
 ## 索引器
 
-两笔交易
+索引器用于监听比特币网络, 并解析交易数据, 并将 `Brc20` 数据存储到数据库中。
 
-Commit: https://mempool.space/tx/26877b8e3d64a8688ba01f7fa62c26e2b4f4034dfb44029246c92643b2f1a93b
-
-Reveal: https://mempool.space/tx/00274fdd890873da479a51896f328665a71d2f3c1dff00fbb20155e9fcda2c50
-
-testnet:
-
-tx1 commit: https://mempool.space/testnet/tx/50c2a1e54f305426d0fcc47caa8f07322ac149838aa27912343503080bc221b0
-
-tx2 reveal: https://mempool.space/testnet/tx/ea58f831e9d532bab8985e94def57a3e2c992e8018f80c11a81f5dfcd643a42c
-
-tx2 commit: https://mempool.space/testnet/tx/a4813cd17b2fefd618f54af6d2849de245ced9950c1b8ee06fab628412e936d4
-
-tx2 reveal: https://mempool.space/testnet/tx/b159d03058115115b209b4dbff51d75175225320349762011fdefda66a3cbe2d
-
-Commit Tx to P2tr address with scripttree
-
-tapScript:
-
-```text
-OP_PUSHBYTES_32 521c70a059f55a3518489ce12f6b56902cd55e9f0a2f0b5dc0614f6a1dc49a79  # 推入公钥
-OP_CHECKSIG                                                                        # 检查签名
-
-# 铭文数据部分
-OP_0                                                                  # OP_FALSE
-OP_IF                                                                # 开始条件块
-    OP_PUSHBYTES_3 6f7264                                           # "ord"
-    OP_PUSHBYTES_1 01
-    OP_PUSHBYTES_24 746578742f706c61696e3b636861727365743d7574662d38  # "text/plain;charset=utf-8"
-    OP_0
-    OP_PUSHBYTES_57 7b2270223a...                                   # BRC-20
-OP_ENDIF
-```
+索引器是完全的链下服务, 可以存在不同的实现, 无法保证数据的一致性。目前使用较多的是 [libbrc20-indexer](https://github.com/unisat-wallet/libbrc20-indexer)

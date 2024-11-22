@@ -1,7 +1,7 @@
 'use client'
 import ECPair from '@/lib/blockchain/ecpair'
 import { NETWORKS } from '@/lib/constants'
-import { networks, payments, script, Stack } from 'bitcoinjs-lib'
+import { payments, script, Stack } from 'bitcoinjs-lib'
 import { OPS } from 'bitcoinjs-lib/src/ops'
 import { ECPairInterface } from 'ecpair'
 import { useEffect, useMemo, useState } from 'react'
@@ -89,7 +89,7 @@ export default function Brc20Pub() {
       internalPubkey: internalPubKey,
       scriptTree,
       redeem,
-      network: networks.testnet
+      network: NETWORKS[network].network
     })
 
     console.log('output:', output!.toString('hex'))
@@ -97,7 +97,7 @@ export default function Brc20Pub() {
     setCommitToAddress(address!)
 
     setTaprootPubKey(output?.subarray(2, 34).toString('hex') || '')
-  }, [internalPair])
+  }, [internalPair, network])
 
   return (
     <InteractionCard title='计算 Commit 地址'>
