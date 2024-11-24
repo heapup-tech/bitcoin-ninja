@@ -2,6 +2,8 @@
 title: Brc20
 ---
 
+`Brc20` 协议由 [domo](https://x.com/domodata) 基于 `Ordinals` 协议提出的, 用于在比特币网络上发行代币。其龙头代币 [ORDI](https://coinmarketcap.com/currencies/ordi) 市值一度接近20亿美金。本节将详细介绍 `Brc20` 协议的技术实现细节。
+
 `Brc20` 数据存储基于 `Taproot`, 数据存储在脚本树的节点中。开始之前请确保已学习 [P2TR](/technical/script/p2tr) 部分的内容。
 
 <ScaleableImage
@@ -152,7 +154,7 @@ witness: [
 
 :::warning 为什么是 546 sat ?
 
-`546 sat` 在比特币交易中被称为 `dust limit`, 是 `UTXO` 包含的的最小金额。 低于这个金额的交易, 会被比特币网络拒绝。
+`546 sat` 在比特币交易中被称为 `dust limit`, 是 `UTXO` 包含的的最小金额。 低于这个金额的交易, 可能会被比特币节点拒绝转发。
 
 :::
 
