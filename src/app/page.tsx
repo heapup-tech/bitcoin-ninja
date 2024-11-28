@@ -1,8 +1,5 @@
 import ShinyButton from '@/components/shiny-button'
-import dynamic from 'next/dynamic'
 import Link from 'next/link'
-
-const Features = dynamic(() => import('@/components/features'), { ssr: false })
 
 export default function Home() {
   return (

@@ -1,16 +1,20 @@
 'use client'
 
+import { docsConfig } from '@/config/docs'
 import { cn } from '@/lib/utils'
 import { SidebarNavItem } from '@/types/nav'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useMemo } from 'react'
 
-export interface DocsSidebarNavProps {
-  items: SidebarNavItem[]
-}
-
-export function DocsSidebarNav({ items }: DocsSidebarNavProps) {
+export function DocsSidebarNav() {
   const pathname = usePathname()
+
+  const items = useMemo(() => {
+    if (pathname.includes('/cryptology')) return docsConfig.cryptology
+    if (pathname.includes('/supplement')) return docsConfig.supplement
+    return docsConfig.technical
+  }, [pathname])
 
   return items.length ? (
     <div className='w-full'>
