@@ -3,7 +3,6 @@ import AppHeader from '@/components/app-header'
 import { siteConfig } from '@/config/site'
 import '@/styles/function-plot.css'
 import '@/styles/globals.css'
-import { Analytics } from '@vercel/analytics/react'
 import 'katex/dist/katex.min.css'
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
@@ -42,8 +41,6 @@ export default function RootLayout({
             richColors
           />
         </Providers>
-
-        <Analytics />
       </body>
     </html>
   )
