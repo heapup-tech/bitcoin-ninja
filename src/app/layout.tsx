@@ -7,6 +7,7 @@ import { Analytics } from '@vercel/analytics/react'
 import 'katex/dist/katex.min.css'
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
+import Script from 'next/script'
 import { Toaster } from 'sonner'
 import Providers from './providers'
 const inter = Inter({ subsets: ['latin'] })
@@ -23,6 +24,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang='en'>
+      <Script
+        defer
+        src='https://umami.heapup.tech/script.js'
+        data-website-id='be9eda04-dfa9-4d40-8e5b-dc5f98ea10db'
+      />
       <body className={inter.className}>
         <Providers>
           <div className='flex flex-col justify-between min-h-screen'>
