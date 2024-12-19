@@ -1,5 +1,6 @@
 ---
 title: Rune
+draft: true
 ---
 
 #### TODO
@@ -10,4 +11,279 @@ https://mempool.space/testnet/tx/1ce9669c2d8ce23cc38bf3ccfe9ec34523af61399db1e23
 
 https://mempool.space/testnet/tx/46ad977c2c75860f675fbdf5dc4985cc604de3a93f827e0d07a626f27258e374
 
-<TransactionSplitTab hex='02000000000102734b56605c57e3511a3dc52c5e5a50217104bb24d8e433dc78926628c56c8a4f0000000000ffffffff734b56605c57e3511a3dc52c5e5a50217104bb24d8e433dc78926628c56c8a4f0200000000ffffffff04220200000000000022512099b87db19a8b792411ae5bff483fe43ff68de5318d286aafd054e9a3da98190c22020000000000001600147d1c5da3f6b93ee9626b0c6713465d4bc8333e7e0000000000000000156a0952554e455f54455354090083ed9fceff016401567001000000000022512099b87db19a8b792411ae5bff483fe43ff68de5318d286aafd054e9a3da98190c0140cb133b6c63a58db3db55698be2d0dab92d9c2387d395d9125eafccb2f5acd766352e7f9cccd702705a779dfc924d88f40b96b945fcf92f7483eeb7b5435da51c0140336ba9a13b0b9804df48cc1e916ed1bb0653e549f16554cc993fb97880e0d112434ee492351ffaac47293d9664bfb9dd6d2d2b65332004c0b9d3ab2c9b7727f200000000' />
+```rust
+#[derive(Debug, PartialEq)]
+pub struct Runestone {
+    pub edicts: Vec<Edict>,         // 转账指令列表
+    pub etching: Option<Etching>,   // 铸造信息
+    pub pointer: Option<u32>,       // 默认输出指针
+}
+
+// 转账指令
+#[derive(Copy, Clone, Debug, PartialEq)]
+pub struct Edict {
+    pub id: RuneId,     // Rune ID
+    pub amount: u128,   // 转账金额
+    pub output: u32,    // 目标输出索引
+}
+
+// 铸造信息
+#[derive(Debug, PartialEq)]
+pub struct Etching {
+    pub rune: Rune,             // Rune 属性
+    pub premine: Option<u128>,  // 预挖数量
+}
+```
+
+`Runestone` 是一个用于解析和处理比特币交易中特殊数据的结构，主要用于处理 Runes 协议的数据编码。
+
+交易解码 `crates/ordinals/src/runestone.rs`
+
+```rust
+pub fn decipher(transaction: &Transaction) -> Option<Artifact> {
+    // 1. 解析 payload
+    // 2. 解析整数数组
+    // 3. 解析消息结构
+    // 4. 解析标志和字段
+    // 5. 构建结果
+}
+```
+
+```rust
+pub(super) fn index_runes(&mut self, tx_index: u32, tx: &Transaction, txid: Txid) -> Result<()> {
+    // 解析交易中 Runestone 数据
+    let artifact = Runestone::decipher(tx);
+
+    // 获取未分配的 rune 余额
+    let mut unallocated = self.unallocated(tx)?;
+
+    // // 为每个交易输出创建一个空的分配映射
+    let mut allocated: Vec<HashMap<RuneId, Lot>> = vec![HashMap::new(); tx.output.len()];
+
+    if let Some(artifact) = &artifact {
+      // 处理铸造操作
+      if let Some(id) = artifact.mint() {
+        if let Some(amount) = self.mint(id)? {
+          // 更新未分配余额
+          *unallocated.entry(id).or_default() += amount;
+
+          // 发送铸造事件
+          if let Some(sender) = self.event_sender {
+            sender.blocking_send(Event::RuneMinted {
+              block_height: self.height,
+              txid,
+              rune_id: id,
+              amount: amount.n(),
+            })?;
+          }
+        }
+      }
+
+      // 处理新创建的 Rune
+      let etched = self.etched(tx_index, tx, artifact)?;
+
+      if let Artifact::Runestone(runestone) = artifact {
+        if let Some((id, ..)) = etched {
+          // 添加预挖数量到未分配余额
+          *unallocated.entry(id).or_default() +=
+            runestone.etching.unwrap().premine.unwrap_or_default();
+        }
+
+        // 处理转账
+        for Edict { id, amount, output } in runestone.edicts.iter().copied() {
+          let amount = Lot(amount);
+
+          // edicts with output values greater than the number of outputs
+          // should never be produced by the edict parser
+          let output = usize::try_from(output).unwrap();
+          assert!(output <= tx.output.len());
+
+          // // 确定 Rune ID
+          let id = if id == RuneId::default() {
+            let Some((id, ..)) = etched else {
+              continue;
+            };
+
+            id
+          } else {
+            id
+          };
+
+          // 获取可用余额
+          let Some(balance) = unallocated.get_mut(&id) else {
+            continue;
+          };
+
+          // 分配函数
+          let mut allocate = |balance: &mut Lot, amount: Lot, output: usize| {
+            if amount > 0 {
+              *balance -= amount;
+              *allocated[output].entry(id).or_default() += amount;
+            }
+          };
+
+          // 处理特殊输出情况
+          if output == tx.output.len() {
+            // find non-OP_RETURN outputs
+            let destinations = tx
+              .output
+              .iter()
+              .enumerate()
+              .filter_map(|(output, tx_out)| {
+                (!tx_out.script_pubkey.is_op_return()).then_some(output)
+              })
+              .collect::<Vec<usize>>();
+
+            // 余额分配策略：
+            if !destinations.is_empty() {
+              if amount == 0 {
+                // if amount is zero, divide balance between eligible outputs
+                // 如果金额为 0，平均分配余额
+                let amount = *balance / destinations.len() as u128;
+                let remainder = usize::try_from(*balance % destinations.len() as u128).unwrap();
+
+                for (i, output) in destinations.iter().enumerate() {
+                  allocate(
+                    balance,
+                    if i < remainder { amount + 1 } else { amount },
+                    *output,
+                  );
+                }
+              } else {
+                // if amount is non-zero, distribute amount to eligible outputs
+                // // 如果金额不为 0，按指定金额分配
+                for output in destinations {
+                  allocate(balance, amount.min(*balance), output);
+                }
+              }
+            }
+          } else {
+            // Get the allocatable amount
+            let amount = if amount == 0 {
+              *balance
+            } else {
+              amount.min(*balance)
+            };
+
+            allocate(balance, amount, output);
+          }
+        }
+      }
+
+      if let Some((id, rune)) = etched {
+        self.create_rune_entry(txid, artifact, id, rune)?;
+      }
+    }
+
+    let mut burned: HashMap<RuneId, Lot> = HashMap::new();
+
+    if let Some(Artifact::Cenotaph(_)) = artifact {
+      // 所有未分配的都被燃烧
+      for (id, balance) in unallocated {
+        *burned.entry(id).or_default() += balance;
+      }
+    } else {
+      let pointer = artifact
+        .map(|artifact| match artifact {
+          Artifact::Runestone(runestone) => runestone.pointer,
+          Artifact::Cenotaph(_) => unreachable!(),
+        })
+        .unwrap_or_default();
+
+      // assign all un-allocated runes to the default output, or the first non
+      // OP_RETURN output if there is no default
+      if let Some(vout) = pointer
+        .map(|pointer| pointer.into_usize())
+        .inspect(|&pointer| assert!(pointer < allocated.len()))
+        .or_else(|| {
+          tx.output
+            .iter()
+            .enumerate()
+            .find(|(_vout, tx_out)| !tx_out.script_pubkey.is_op_return())
+            .map(|(vout, _tx_out)| vout)
+        })
+      {
+        for (id, balance) in unallocated {
+          if balance > 0 {
+            *allocated[vout].entry(id).or_default() += balance;
+          }
+        }
+      } else {
+        for (id, balance) in unallocated {
+          if balance > 0 {
+            *burned.entry(id).or_default() += balance;
+          }
+        }
+      }
+    }
+
+    // update outpoint balances
+    // 更新输出点余额：
+    let mut buffer: Vec<u8> = Vec::new();
+    for (vout, balances) in allocated.into_iter().enumerate() {
+      if balances.is_empty() {
+        continue;
+      }
+
+      // increment burned balances
+      // 处理 OP_RETURN 输出（燃烧）
+      if tx.output[vout].script_pubkey.is_op_return() {
+        for (id, balance) in &balances {
+          *burned.entry(*id).or_default() += *balance;
+        }
+        continue;
+      }
+
+      // 编码和存储余额
+      buffer.clear();
+
+      let mut balances = balances.into_iter().collect::<Vec<(RuneId, Lot)>>();
+
+      // Sort balances by id so tests can assert balances in a fixed order
+      balances.sort();
+
+      let outpoint = OutPoint {
+        txid,
+        vout: vout.try_into().unwrap(),
+      };
+
+      for (id, balance) in balances {
+        Index::encode_rune_balance(id, balance.n(), &mut buffer);
+
+        // 发送转账事件
+        if let Some(sender) = self.event_sender {
+          sender.blocking_send(Event::RuneTransferred {
+            outpoint,
+            block_height: self.height,
+            txid,
+            rune_id: id,
+            amount: balance.0,
+          })?;
+        }
+      }
+
+      // // 更新数据库
+      self
+        .outpoint_to_balances
+        .insert(&outpoint.store(), buffer.as_slice())?;
+    }
+
+    // increment entries with burned runes
+    // // 更新燃烧记录
+    for (id, amount) in burned {
+      *self.burned.entry(id).or_default() += amount;
+
+      // 发送燃烧事件
+      if let Some(sender) = self.event_sender {
+        sender.blocking_send(Event::RuneBurned {
+          block_height: self.height,
+          txid,
+          rune_id: id,
+          amount: amount.n(),
+        })?;
+      }
+    }
+
+    Ok(())
+  }
+```
