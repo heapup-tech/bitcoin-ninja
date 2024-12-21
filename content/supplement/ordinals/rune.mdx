@@ -11,6 +11,66 @@ https://mempool.space/testnet/tx/1ce9669c2d8ce23cc38bf3ccfe9ec34523af61399db1e23
 
 https://mempool.space/testnet/tx/46ad977c2c75860f675fbdf5dc4985cc604de3a93f827e0d07a626f27258e374
 
+https://mempool.space/tx/5de61c4bceed97bf2a472341faffbd9addb7e6e2577262c9c44cd0dc4584152c
+
+```rust
+let hex_string = "01000000000101b278668ba22304e8fa9f60137eb22734a307648a2eb50686d8984617bb4e95130300000000ffffffff04220200000000000022512099933aaf8f604bcca931f5d785db96dfb760ab23fbdcc634a159c7a16533504c0000000000000000096a5d0614c0a23314370008000000000000160014e5cb2de82fd4c136218c67a310fde879344c1bef1e2402000000000022512099933aaf8f604bcca931f5d785db96dfb760ab23fbdcc634a159c7a16533504c014016fbd97a208e985559eacb89b1ca13984db91efb4b1d5884f09c5adcb25e465b354690b7364f3f74c50fbd0956a2c5bdae42da51fc9680e46ae5ffebd49dd00c00000000";
+
+Transaction { version: Version(1), lock_time: 0 blocks, input: [TxIn { previous_output: OutPoint { txid: 13954ebb174698d88606b52e8a6407a33427b27e13609ffae80423a28b6678b2, vout: 3 }, script_sig: Script(), sequence: Sequence(0xffffffff), witness: Witness: { indices: 1, indices_start: 65, witnesses: [[0x16, 0xfb, 0xd9, 0x7a, 0x20, 0x8e, 0x98, 0x55, 0x59, 0xea, 0xcb, 0x89, 0xb1, 0xca, 0x13, 0x98, 0x4d, 0xb9, 0x1e, 0xfb, 0x4b, 0x1d, 0x58, 0x84, 0xf0, 0x9c, 0x5a, 0xdc, 0xb2, 0x5e, 0x46, 0x5b, 0x35, 0x46, 0x90, 0xb7, 0x36, 0x4f, 0x3f, 0x74, 0xc5, 0x0f, 0xbd, 0x09, 0x56, 0xa2, 0xc5, 0xbd, 0xae, 0x42, 0xda, 0x51, 0xfc, 0x96, 0x80, 0xe4, 0x6a, 0xe5, 0xff, 0xeb, 0xd4, 0x9d, 0xd0, 0x0c]] } }], output: [TxOut { value: 546 SAT, script_pubkey: Script(OP_PUSHNUM_1 OP_PUSHBYTES_32 99933aaf8f604bcca931f5d785db96dfb760ab23fbdcc634a159c7a16533504c) }, TxOut { value: 0 SAT, script_pubkey: Script(OP_RETURN OP_PUSHNUM_13 OP_PUSHBYTES_6 14c0a2331437) }, TxOut { value: 2048 SAT, script_pubkey: Script(OP_0 OP_PUSHBYTES_20 e5cb2de82fd4c136218c67a310fde879344c1bef) }, TxOut { value: 140318 SAT, script_pubkey: Script(OP_PUSHNUM_1 OP_PUSHBYTES_32 99933aaf8f604bcca931f5d785db96dfb760ab23fbdcc634a159c7a16533504c) }] }
+========================================
+[]
+========================================
+Some(Runestone(Runestone { edicts: [], etching: None, mint: Some(RuneId { block: 840000, tx: 55 }), pointer: None }))
+========================================
+{
+  "inscriptions": [],
+  "runestone": {
+    "Runestone": {
+      "edicts": [],
+      "etching": null,
+      "mint": "840000:55",
+      "pointer": null
+    }
+  }
+}
+```
+
+Runestone - Rune 协议的消息格式， 存储在交易中
+
+```rust
+pub struct Runestone {
+  pub edicts: Vec<Edict>,
+  pub etching: Option<Etching>,
+  pub mint: Option<RuneId>,
+  pub pointer: Option<u32>,
+}
+```
+
+部署符文
+
+```rust
+pub struct Etching {
+  pub divisibility: Option<u8>,
+  pub premine: Option<u128>,  // 预挖
+  pub rune: Option<Rune>, // 符文名称
+  pub spacers: Option<u32>, // 名称分隔符
+  pub symbol: Option<char>, // 缩写
+  pub terms: Option<Terms>, // 铸造规则
+  pub turbo: bool,
+}
+```
+
+```rust
+pub struct Terms {
+  pub amount: Option<u128>,
+  pub cap: Option<u128>,
+  pub height: (Option<u64>, Option<u64>),
+  pub offset: (Option<u64>, Option<u64>),
+}
+```
+
+转账指令
+
 ```rust
 #[derive(Debug, PartialEq)]
 pub struct Runestone {
