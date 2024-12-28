@@ -2,6 +2,7 @@ import { script, Transaction } from 'bitcoinjs-lib'
 import Edict from './edict'
 import Etching from './etching'
 import RuneId from './rune_id'
+import varint from './varint'
 
 class RuneStone {
   readonly MAGIC_NUMBER = 0x5d // OP_13
@@ -15,6 +16,13 @@ class RuneStone {
   decipher(transaction: Transaction) {
     // decipher the transaction
     const payload = this.payload(transaction)
+    if (!payload) return
+
+    console.log(payload)
+
+    const integers = this.integers(payload)
+
+    console.log(integers)
   }
 
   encipher() {}
@@ -25,17 +33,26 @@ class RuneStone {
 
       if (!instructions) continue
 
-      // 不是以 OP_RETURN + OP_13 开头的输出
+      // 忽略不是以 OP_RETURN + OP_13 开头的输出
       if (instructions[0] !== 0x6a) continue
       if (instructions[1] !== this.MAGIC_NUMBER) continue
 
-      console.log('instructions', instructions)
-
-      instructions.forEach((instruction, index) => {})
+      return instructions[2]
     }
   }
 
-  integers(payload: Uint8Array) {}
+  integers(payload: Buffer) {
+    const integers = []
+
+    let i = 0
+    while (i < payload.length) {
+      const { n: integer, i: length } = varint.decode(payload.subarray(i))
+      integers.push(integer)
+      i += length
+    }
+
+    return integers.map(Number)
+  }
 }
 
 // https://mempool.space/tx/5de61c4bceed97bf2a472341faffbd9addb7e6e2577262c9c44cd0dc4584152c
