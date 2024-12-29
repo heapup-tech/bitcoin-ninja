@@ -1,3 +1,6 @@
 export default class Rune {
-  constructor(public value: bigint) {}
+  private _value: bigint
+  constructor(value: bigint) {
+    this._value = value
+  }
 }
