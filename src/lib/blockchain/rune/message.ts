@@ -14,7 +14,7 @@ function slicedChunk<T>(array: T[], size: number): T[][] {
 export default class Message {
   flaw?: Flaw
   edicts: Edict[] = []
-  fields: Map<bigint, bigint> = new Map()
+  fields: Map<bigint, bigint[]> = new Map()
   static from_integers(tx: Transaction, payload: bigint[]) {
     const message = new Message()
 
@@ -29,7 +29,11 @@ export default class Message {
         message.flaw = Flaw.TruncatedField
         break
       } else {
-        message.fields.set(tag, payload[i + 1])
+        if (message.fields.has(tag)) {
+          message.fields.get(tag)?.push(payload[i + 1])
+        } else {
+          message.fields.set(tag, [payload[i + 1]])
+        }
       }
     }
 

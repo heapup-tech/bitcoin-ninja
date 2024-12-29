@@ -5,6 +5,7 @@ import Message from './message'
 import Rune from './rune'
 import RuneId from './rune_id'
 import Tag from './tag'
+import Terms from './terms'
 import varint from './varint'
 
 class RuneStone {
@@ -17,6 +18,8 @@ class RuneStone {
   pointer?: number
 
   decipher(transaction: Transaction) {
+    const runestone = new RuneStone()
+
     // decipher the transaction
     const payload = this.payload(transaction)
     if (!payload) return
@@ -34,20 +37,37 @@ class RuneStone {
 
     const flags = fields.get(BigInt(Tag.Flags))
 
+    if (flags) console.log(`flags: ${flags}`)
+
     const etching = new Etching()
-    etching.divisibility = Number(fields.get(BigInt(Tag.Divisibility)))
+    etching.divisibility =
+      Number(fields.get(BigInt(Tag.Divisibility))) || undefined
 
-    etching.premine = fields.get(BigInt(Tag.Premine))
+    etching.premine = fields.get(BigInt(Tag.Premine))?.[0] || 0n
 
-    etching.rune = new Rune(fields.get(BigInt(Tag.Rune)) ?? 0n)
+    const rune = new Rune(fields.get(BigInt(Tag.Rune))?.[0] || 0n)
+    etching.rune = rune
 
     etching.spacers = Number(fields.get(BigInt(Tag.Spacers)))
     etching.symbol = String.fromCharCode(Number(fields.get(BigInt(Tag.Symbol))))
 
-    // etching.terms = new Terms()
+    const terms: Terms = {
+      cap: fields.get(BigInt(Tag.Cap))?.[0],
+      amount: fields.get(BigInt(Tag.Amount))?.[0],
+      height: [undefined, undefined],
+      offset: [undefined, undefined]
+    }
+    etching.terms = terms
     etching.turbo = false
+    runestone.etching = etching
 
-    console.log(etching)
+    const [block, tx] = fields.get(BigInt(Tag.Mint)) ?? []
+
+    if (block && tx) {
+      runestone.mint = new RuneId(Number(block), Number(tx))
+    }
+
+    console.log(runestone)
   }
 
   encipher() {}
@@ -62,7 +82,7 @@ class RuneStone {
       if (instructions[0] !== 0x6a) continue
       if (instructions[1] !== this.MAGIC_NUMBER) continue
 
-      return instructions[2]
+      return instructions[2] as Buffer
     }
   }
 
