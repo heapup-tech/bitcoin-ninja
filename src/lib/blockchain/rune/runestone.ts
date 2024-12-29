@@ -1,6 +1,7 @@
 import { script, Transaction } from 'bitcoinjs-lib'
 import Edict from './edict'
 import Etching from './etching'
+import { Flag, FlagUtil } from './flag'
 import Message from './message'
 import Rune from './rune'
 import RuneId from './rune_id'
@@ -8,7 +9,7 @@ import Tag from './tag'
 import Terms from './terms'
 import varint from './varint'
 
-class RuneStone {
+export default class RuneStone {
   readonly MAGIC_NUMBER = 0x5d // OP_13
   readonly COMMIT_CONFIRMATIONS = 6
 
@@ -37,29 +38,31 @@ class RuneStone {
 
     const flags = fields.get(BigInt(Tag.Flags))
 
-    if (flags) console.log(`flags: ${flags}`)
+    if (FlagUtil.take(Flag.Etching, flags?.[0] || 0n)) {
+      const etching = new Etching()
+      etching.divisibility =
+        Number(fields.get(BigInt(Tag.Divisibility))) || undefined
 
-    const etching = new Etching()
-    etching.divisibility =
-      Number(fields.get(BigInt(Tag.Divisibility))) || undefined
+      etching.premine = fields.get(BigInt(Tag.Premine))?.[0] || 0n
 
-    etching.premine = fields.get(BigInt(Tag.Premine))?.[0] || 0n
+      const rune = new Rune(fields.get(BigInt(Tag.Rune))?.[0] || 0n)
+      etching.rune = rune
 
-    const rune = new Rune(fields.get(BigInt(Tag.Rune))?.[0] || 0n)
-    etching.rune = rune
+      etching.spacers = Number(fields.get(BigInt(Tag.Spacers)))
+      etching.symbol = String.fromCharCode(
+        Number(fields.get(BigInt(Tag.Symbol)))
+      )
 
-    etching.spacers = Number(fields.get(BigInt(Tag.Spacers)))
-    etching.symbol = String.fromCharCode(Number(fields.get(BigInt(Tag.Symbol))))
-
-    const terms: Terms = {
-      cap: fields.get(BigInt(Tag.Cap))?.[0],
-      amount: fields.get(BigInt(Tag.Amount))?.[0],
-      height: [undefined, undefined],
-      offset: [undefined, undefined]
+      const terms: Terms = {
+        cap: fields.get(BigInt(Tag.Cap))?.[0],
+        amount: fields.get(BigInt(Tag.Amount))?.[0],
+        height: [undefined, undefined],
+        offset: [undefined, undefined]
+      }
+      etching.terms = terms
+      etching.turbo = false
+      runestone.etching = etching
     }
-    etching.terms = terms
-    etching.turbo = false
-    runestone.etching = etching
 
     const [block, tx] = fields.get(BigInt(Tag.Mint)) ?? []
 
@@ -91,7 +94,12 @@ class RuneStone {
 
     let i = 0
     while (i < payload.length) {
+      console.log(`remain:`, payload.subarray(i))
+
       const { n: integer, i: length } = varint.decode(payload.subarray(i))
+
+      console.log(`integer: ${integer}-----length: ${length}`)
+
       integers.push(integer)
       i += length
     }

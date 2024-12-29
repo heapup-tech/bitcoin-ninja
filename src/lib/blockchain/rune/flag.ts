@@ -1,13 +1,25 @@
-export default class Flag {
-  readonly Etching = 0
-  readonly Terms = 1
-  readonly Turbo = 2
-  readonly Cenotaph = 127
+export enum Flag {
+  Etching = 0,
+  Terms = 1,
+  Turbo = 2,
+  Cenotaph = 127
+}
 
-  mask() {
-    return 1 << 2
-  }
-  take(flags: bigint) {
-    let mask
+export const FlagUtil = {
+  mask(flag: number) {
+    return BigInt(1 << flag)
+  },
+  take(type: Flag, flags: bigint) {
+    let mask = this.mask(type)
+
+    console.log(`mask: ${mask}`)
+
+    let set = (flags & mask) !== 0n
+
+    console.log(`set: ${set}`)
+
+    // flags &= !mask
+
+    return set
   }
 }
