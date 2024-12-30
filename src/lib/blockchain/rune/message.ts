@@ -37,8 +37,6 @@ export default class Message {
       }
     }
 
-    console.log(message.fields)
-
     return message
   }
 }
