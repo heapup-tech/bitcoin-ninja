@@ -70,7 +70,12 @@ export default class RuneStone {
       runestone.mint = new RuneId(Number(block), Number(tx))
     }
 
+    const pointer = fields.get(BigInt(Tag.Pointer))?.[0]
+    if (pointer) {
+      runestone.pointer = Number(pointer)
+    }
     console.log(runestone)
+    return runestone
   }
 
   encipher() {}

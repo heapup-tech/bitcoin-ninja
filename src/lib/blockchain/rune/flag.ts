@@ -12,11 +12,7 @@ export const FlagUtil = {
   take(type: Flag, flags: bigint) {
     let mask = this.mask(type)
 
-    console.log(`mask: ${mask}`)
-
     let set = (flags & mask) !== 0n
-
-    console.log(`set: ${set}`)
 
     // flags &= !mask
 
