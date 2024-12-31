@@ -22,16 +22,20 @@ export default class RuneStone {
   decipher(transaction: Transaction) {
     // decipher the transaction
     const payload = this.payload(transaction)
+
+    console.log(`payload: ${payload!.toString('hex')}`)
+
     if (!payload) return
 
     const integers = this.integers(payload)
+    console.log(`integers: ${integers}`)
 
     const { flaw, edicts, fields } = Message.from_integers(
       transaction,
       integers
     )
 
-    console.log(fields)
+    // console.log(fields)
 
     const flags = fields.get(BigInt(Tag.Flags))
 

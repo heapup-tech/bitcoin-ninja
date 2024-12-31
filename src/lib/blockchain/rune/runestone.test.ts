@@ -22,8 +22,6 @@ describe('RuneStone Decipher', () => {
   test('decipher etching', () => {
     const etching = runestone.etching
 
-    console.log(etching)
-
     expect(etching?.premine).toBe(0n)
     expect(etching?.rune?.display()).toBe('THEBESTCHAIN')
   })
