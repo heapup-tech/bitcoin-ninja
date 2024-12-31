@@ -18,4 +18,8 @@ export default class Rune {
 
     return symbol.split('').reverse().join('')
   }
+
+  get value() {
+    return this._value
+  }
 }

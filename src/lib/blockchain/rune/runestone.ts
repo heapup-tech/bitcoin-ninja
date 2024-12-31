@@ -6,7 +6,7 @@ import { Flag, FlagManger } from './flag'
 import Message from './message'
 import Rune from './rune'
 import RuneId from './rune_id'
-import Tag, { tagEncode } from './tag'
+import Tag, { tagEncode, tagEncodeOption } from './tag'
 import Terms from './terms'
 import varint from './varint'
 
@@ -92,7 +92,38 @@ export default class RuneStone {
 
       tagEncode(Tag.Flags, [flagManger.flags], payload)
 
-      script.compile([OPS.OP_RETURN, RuneStone.MAGIC_NUMBER])
+      if (this.etching?.rune) {
+        tagEncodeOption(Tag.Rune, payload, this.etching.rune.value)
+      }
+      tagEncodeOption(Tag.Divisibility, payload, this.etching.divisibility)
+      tagEncodeOption(Tag.Spacers, payload, this.etching.spacers)
+      tagEncodeOption(Tag.Symbol, payload, this.etching.symbol)
+      tagEncodeOption(Tag.Premine, payload, this.etching.premine)
+
+      if (this.etching.terms) {
+        tagEncodeOption(Tag.Amount, payload, this.etching.terms.amount)
+        tagEncodeOption(Tag.Cap, payload, this.etching.terms.cap)
+        tagEncodeOption(Tag.HeightStart, payload, this.etching.terms.height[0])
+        tagEncodeOption(Tag.HeightEnd, payload, this.etching.terms.height[1])
+        tagEncodeOption(Tag.OffsetStart, payload, this.etching.terms.offset[0])
+        tagEncodeOption(Tag.OffsetEnd, payload, this.etching.terms.offset[1])
+      }
+
+      if (this.mint) {
+        tagEncode(
+          Tag.Mint,
+          [BigInt(this.mint.block), BigInt(this.mint.tx)],
+          payload
+        )
+      }
+      const builder = [OPS.OP_RETURN, RuneStone.MAGIC_NUMBER]
+
+      for (let i = 0; i < payload.length; i++) {
+        builder.push(payload[i])
+      }
+      const res = script.compile(builder)
+
+      console.log(res.toString('hex'))
     }
   }
 

@@ -42,7 +42,12 @@ const decode = (buffer: Buffer) => {
   throw new Error('Unterminated VarInt')
 }
 
-const encode = (n: bigint) => {}
+const encode = (n: bigint) => {
+  let v: number[] = []
+  encode_to_vec(n, v)
+
+  return v
+}
 
 const encode_to_vec = (n: bigint, v: number[]) => {
   // 判断 n 是否大于 127(依据右移7位是否大于0), 大于说明需要留出一位表示还有剩余值

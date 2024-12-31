@@ -29,4 +29,7 @@ export const tagEncode = (tag: Tag, values: bigint[], payload: number[]) => {
   })
 }
 
-export const tagEncodeOption = <T>(tag: Tag, value: T, payload: Buffer) => {}
+export const tagEncodeOption = (tag: Tag, payload: number[], value?: any) => {
+  if (!value) return
+  tagEncode(tag, [BigInt(value)], payload)
+}
