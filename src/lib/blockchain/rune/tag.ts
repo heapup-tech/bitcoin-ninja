@@ -1,3 +1,5 @@
+import varint from './varint'
+
 enum Tag {
   Body = 0,
   Flags = 2,
@@ -19,3 +21,12 @@ enum Tag {
 }
 
 export default Tag
+
+export const tagEncode = (tag: Tag, values: bigint[], payload: number[]) => {
+  values.forEach((value) => {
+    varint.encode_to_vec(value, payload)
+    varint.encode_to_vec(BigInt(tag), payload)
+  })
+}
+
+export const tagEncodeOption = <T>(tag: Tag, value: T, payload: Buffer) => {}

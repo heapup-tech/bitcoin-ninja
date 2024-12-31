@@ -11,15 +11,6 @@ const mintTxhex =
 const etchTxhex =
   '020000000001010f0aaad2dc98d8d78e590241dbbeba32b42f7f1f53d36019375dcf44a7caa92e0000000000fdffffff0200000000000000001a6a5d17020304cbd7ba8ea6edb98401034406000a6408e80716012202000000000000225120b494169f485231b6f428d3ce782cdaccc6b6bfd5d1a45802b62848d1b74c04f10340dd938a4f68cd0179df02f37ad5a350572468ee63f9f6ebdc8fefee83b84efa1cebaff3a29906b74e1d14d3b9355cca2d3936c96edb77da91545632f6166f5dfe2e209f418961888118de863b65cf783c284605e9be32bfc8dbe175e215ded6884e3eac006308cbabce616ae708016821c0c9b936943078e50c2804d1c9dd4999a1f0f68adba8e0b04542530ad071f6d42e00000000'
 
-test('decipher', () => {
-  const runestone = new RuneStone()
-  const tx = Transaction.fromHex(etchTxhex)
-
-  runestone.decipher(tx)
-  const etching = runestone.etching
-  expect(runestone).toBeDefined()
-})
-
 describe('RuneStone Decipher', () => {
   let runestone: RuneStone
   beforeEach(async () => {
@@ -36,25 +27,30 @@ describe('RuneStone Decipher', () => {
     expect(etching?.premine).toBe(0n)
     expect(etching?.rune?.display()).toBe('THEBESTCHAIN')
   })
+
+  test('decipher mint', () => {})
 })
 
-test('encipher', () => {
-  const runestone = new RuneStone()
+describe('RuneStone Encipher', () => {
+  test('encipher', () => {
+    const runestone = new RuneStone()
 
-  const etching = new Etching()
-  etching.divisibility = undefined
-  etching.premine = 0n
-  etching.rune = new Rune(74563837945097163n)
-  etching.spacers = 68
-  etching.symbol = ''
-  etching.turbo = false
-  etching.terms = {
-    cap: 1000n,
-    amount: 100n,
-    height: [undefined, undefined],
-    offset: [undefined, undefined]
-  }
-  const payload = runestone.encipher()
+    const etching = new Etching()
+    etching.divisibility = undefined
+    etching.premine = 0n
+    etching.rune = new Rune(74563837945097163n)
+    etching.spacers = 68
+    etching.symbol = ''
+    etching.turbo = false
+    etching.terms = {
+      cap: 1000n,
+      amount: 100n,
+      height: [undefined, undefined],
+      offset: [undefined, undefined]
+    }
+    runestone.etching = etching
+    const payload = runestone.encipher()
 
-  // expect(payload).toBeDefined()
+    // expect(payload).toBeDefined()
+  })
 })

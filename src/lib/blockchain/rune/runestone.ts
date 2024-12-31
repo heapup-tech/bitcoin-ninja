@@ -1,17 +1,18 @@
 import { script, Transaction } from 'bitcoinjs-lib'
+import { OPS } from 'bitcoinjs-lib/src/ops'
 import Edict from './edict'
 import Etching from './etching'
-import { Flag, FlagUtil } from './flag'
+import { Flag, FlagManger } from './flag'
 import Message from './message'
 import Rune from './rune'
 import RuneId from './rune_id'
-import Tag from './tag'
+import Tag, { tagEncode } from './tag'
 import Terms from './terms'
 import varint from './varint'
 
 export default class RuneStone {
-  readonly MAGIC_NUMBER = 0x5d // OP_13
-  readonly COMMIT_CONFIRMATIONS = 6
+  static readonly MAGIC_NUMBER = 0x5d // OP_13
+  static readonly COMMIT_CONFIRMATIONS = 6
 
   edicts: Edict[] = []
   etching?: Etching
@@ -34,7 +35,8 @@ export default class RuneStone {
 
     const flags = fields.get(BigInt(Tag.Flags))
 
-    if (FlagUtil.take(Flag.Etching, flags?.[0] || 0n)) {
+    const flagManger = new FlagManger(flags?.[0] || 0n)
+    if (flagManger.take(Flag.Etching)) {
       const etching = new Etching()
       etching.divisibility =
         Number(fields.get(BigInt(Tag.Divisibility))) || undefined
@@ -74,15 +76,23 @@ export default class RuneStone {
 
   encipher() {
     // encipher the runestone
+    let payload: number[] = []
+
+    const flagManger = new FlagManger(0n)
     if (this.etching) {
-      let flags = 0
+      flagManger.set(Flag.Etching)
 
       if (this.etching.terms) {
+        flagManger.set(Flag.Terms)
       }
       if (this.etching.turbo) {
+        flagManger.set(Flag.Turbo)
       }
+      console.log(`flagManger.flags: ${flagManger.flags}`)
 
-      Tag.Flags
+      tagEncode(Tag.Flags, [flagManger.flags], payload)
+
+      script.compile([OPS.OP_RETURN, RuneStone.MAGIC_NUMBER])
     }
   }
 
@@ -94,7 +104,7 @@ export default class RuneStone {
 
       // 忽略不是以 OP_RETURN + OP_13 开头的输出
       if (instructions[0] !== 0x6a) continue
-      if (instructions[1] !== this.MAGIC_NUMBER) continue
+      if (instructions[1] !== RuneStone.MAGIC_NUMBER) continue
 
       return instructions[2] as Buffer
     }
