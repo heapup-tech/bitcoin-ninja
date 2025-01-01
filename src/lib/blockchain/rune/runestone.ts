@@ -23,13 +23,10 @@ export default class RuneStone {
     // decipher the transaction
     const payload = this.payload(transaction)
 
-    console.log(`payload: ${payload!.toString('hex')}`)
-
     if (!payload) return
 
+    // varint 解码
     const integers = this.integers(payload)
-    console.log(`integers: ${integers}`)
-
     const { flaw, edicts, fields } = Message.from_integers(
       transaction,
       integers

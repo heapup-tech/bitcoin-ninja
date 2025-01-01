@@ -4,6 +4,8 @@ import Etching from './etching'
 import Rune from './rune'
 import RuneStone from './runestone'
 
+export const uint128Max = (BigInt(1) << BigInt(128)) - BigInt(1)
+
 // https://mempool.space/tx/5de61c4bceed97bf2a472341faffbd9addb7e6e2577262c9c44cd0dc4584152c
 const mintTxhex =
   '01000000000101b278668ba22304e8fa9f60137eb22734a307648a2eb50686d8984617bb4e95130300000000ffffffff04220200000000000022512099933aaf8f604bcca931f5d785db96dfb760ab23fbdcc634a159c7a16533504c0000000000000000096a5d0614c0a23314370008000000000000160014e5cb2de82fd4c136218c67a310fde879344c1bef1e2402000000000022512099933aaf8f604bcca931f5d785db96dfb760ab23fbdcc634a159c7a16533504c014016fbd97a208e985559eacb89b1ca13984db91efb4b1d5884f09c5adcb25e465b354690b7364f3f74c50fbd0956a2c5bdae42da51fc9680e46ae5ffebd49dd00c00000000'
@@ -17,6 +19,8 @@ describe('RuneStone Decipher', () => {
     runestone = new RuneStone()
     const tx = Transaction.fromHex(etchTxhex)
     runestone.decipher(tx)
+
+    console.log(runestone)
   })
 
   test('decipher etching', () => {
@@ -24,6 +28,9 @@ describe('RuneStone Decipher', () => {
 
     expect(etching?.premine).toBe(0n)
     expect(etching?.rune?.display()).toBe('THEBESTCHAIN')
+
+    const symbol = Rune.fromSymbol('THEBESTCHAIN')
+    expect(symbol.value).toBe(74563837945097163n)
   })
 
   test('decipher mint', () => {})
@@ -34,7 +41,7 @@ describe('RuneStone Encipher', () => {
     const runestone = new RuneStone()
 
     const etching = new Etching()
-    etching.divisibility = undefined
+    etching.divisibility = 1
     etching.premine = 0n
     etching.rune = new Rune(74563837945097163n)
     etching.spacers = 68

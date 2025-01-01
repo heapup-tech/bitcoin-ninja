@@ -19,6 +19,17 @@ export default class Rune {
     return symbol.split('').reverse().join('')
   }
 
+  static fromSymbol(symbol: string) {
+    let n = 0n
+    for (let i = 0; i < symbol.length; i++) {
+      n =
+        n * 26n +
+        BigInt('ABCDEFGHIJKLMNOPQRSTUVWXYZ'.indexOf(symbol.charAt(i)) + 1)
+    }
+
+    return new Rune(n - 1n)
+  }
+
   get value() {
     return this._value
   }
