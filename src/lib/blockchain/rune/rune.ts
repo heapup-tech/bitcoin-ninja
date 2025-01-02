@@ -19,6 +19,7 @@ export default class Rune {
     return symbol.split('').reverse().join('')
   }
 
+  // Base26 encoding
   static fromSymbol(symbol: string) {
     let n = 0n
     for (let i = 0; i < symbol.length; i++) {

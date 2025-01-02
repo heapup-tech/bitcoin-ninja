@@ -98,7 +98,15 @@ export default class RuneStone {
       }
       tagEncodeOption(Tag.Divisibility, payload, this.etching.divisibility)
       tagEncodeOption(Tag.Spacers, payload, this.etching.spacers)
-      tagEncodeOption(Tag.Symbol, payload, this.etching.symbol)
+
+      if (this.etching.symbol) {
+        tagEncodeOption(
+          Tag.Symbol,
+          payload,
+          BigInt(this.etching.symbol.charCodeAt(0))
+        )
+      }
+
       tagEncodeOption(Tag.Premine, payload, this.etching.premine)
 
       if (this.etching.terms) {
