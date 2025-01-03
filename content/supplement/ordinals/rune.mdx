@@ -3,7 +3,7 @@ title: Runes
 draft: true
 ---
 
-Runes 协议由 [Casey Rodarmor](https://x.com/rodarmor) 于比特币第四次减半区块高度 840000 正式发布。并发文表示, 如果 Runes 生态上线一个月达不到10亿美元市值将切腹自尽。
+Runes 协议, 中文翻译为符文, 由 [Casey Rodarmor](https://x.com/rodarmor) 于比特币第四次减半区块高度 840000 正式发布。并发文表示, 如果 Runes 生态上线一个月达不到10亿美元市值将切腹自尽。
 
 不同于 Ordinals 协议, Runes 协议数据存储在 [OP_RETURN](technical/script/op-return) 中。但 `OP_RETURN` 最多只能承载 80 字节的数据，因此 Runes 协议对数据进行压缩编码。
 
@@ -25,11 +25,102 @@ pub struct Runestone {
 - `mint` - 铸造 Runes 的数据结构
 - `pointer` - Runes 分配的到的输出索引
 
+解析交易时提取 `OP_RETURN` 数据, 根据交易的操作, 构建 `Runestone` 结构。
+
+- 转移 Runes 的交易, 解析后的数据赋值给 `edicts` 字段;
+- 铸造 Runes 的交易, 解析后的数据赋值给 `mint` 字段;
+- 部署 Runes 的交易, 解析后的数据赋值给 `etching` 字段。
+
+## 数据格式
+
+`OP_RETURN` 中的数据会被解析成以键值对的形式存储, 键的值如下:
+
+```rust
+pub(super) enum Tag {
+  Body = 0,
+  Flags = 2,
+  Rune = 4,
+  Premine = 6,
+  Cap = 8,
+  Amount = 10,
+  HeightStart = 12,
+  HeightEnd = 14,
+  OffsetStart = 16,
+  OffsetEnd = 18,
+  Mint = 20,
+  Pointer = 22,
+  #[allow(unused)]
+  Cenotaph = 126,
+
+  Divisibility = 1,
+  Spacers = 3,
+  Symbol = 5,
+  #[allow(unused)]
+  Nop = 127,
+}
+```
+
 ## 编解码
+
+## 部署Runes
+
+部署 Runes 的过程也称作蚀刻 Etching, 用于定义 Runes 的属性和铸造规则。
+
+```rust
+pub struct Etching {
+  pub divisibility: Option<u8>,
+  pub premine: Option<u128>,
+  pub rune: Option<Rune>,
+  pub spacers: Option<u32>,
+  pub symbol: Option<char>,
+  pub terms: Option<Terms>,
+  pub turbo: bool,
+}
+pub struct Terms {
+  pub amount: Option<u128>,
+  pub cap: Option<u128>,
+  pub height: (Option<u64>, Option<u64>),
+  pub offset: (Option<u64>, Option<u64>),
+}
+```
+
+- `divisibility` - 可分割性
+- `premine` - 预挖数量
+- `rune` - 符文名称
+- `spacers` - 名称分隔符
+- `symbol` - 缩写
+- `terms` - 铸造规则
+  - `amount` - 每次铸造的数量
+  - `cap` - 可铸造的总次数
+  - `height` - 元组结构, 表示在指定区块高度范围内可铸造
+  - `offset` - 元组结构, 表示相对于部署 Runes 的区块高度的偏移量范围内可铸造
+- `turbo` - ?
+
+## 铸造Runes
+
+```rust
+pub struct RuneId {
+  pub block: u64,
+  pub tx: u32,
+}
+```
+
+- `block` - 铸造 Runes 的区块高度
+- `tx` - 铸造 Runes 的交易索引
+
+## 转移Runes
+
+```rust
+pub struct Edict {
+  pub id: RuneId,
+  pub amount: u128,
+  pub output: u32,
+}
+```
 
 ## Runes 名称
 
-Runes 名称遵循 Base26 编码规则, 故名称只能由大写字母 A-Z 组成。
+Runes 名称遵循 `Base26` 编码规则, 故名称由大写字母 A-Z 组成。
 
 每个字母从 0 开始, A=0, B=1, ···, Z=25, 再往后 AA = 1 \* 26 + 0 = 26, AB = 1 \* 26 + 1 = 27, 以此类推, 可以覆盖所有的符文名称。
 
@@ -75,6 +166,8 @@ export default class Rune {
 ```
 
 <RunesName />
+
+分隔符
 
 :::note
 
