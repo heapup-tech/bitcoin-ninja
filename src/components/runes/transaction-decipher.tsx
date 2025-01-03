@@ -1,0 +1,104 @@
+'use client'
+
+import RuneStone from '@/lib/blockchain/rune/runestone'
+import { getRawTransaction } from '@/server-actions/raw-transaction'
+import { useQuery } from '@tanstack/react-query'
+import { Transaction } from 'bitcoinjs-lib/src/transaction'
+import { Loader } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import CodeBlock from '../code-block'
+import InteractionCard from '../interaction-card'
+import { Button } from '../ui/button'
+import { Input } from '../ui/input'
+import { Textarea } from '../ui/textarea'
+
+export default function TransactionDecipher() {
+  const [txid, setTxid] = useState(
+    '21caab4317e610b019da25b8b20441292d97bb5bddfdd8a7dca3e3cab7920245'
+  )
+  const [tx, setTx] = useState(
+    '020000000001017e5c1f25d8d4345032cd8effdb07403deb142e43611402dcea2fc6d0ebd0d1670000000000fdffffff030000000000000000246a5d21020304b6abd7b2c9a14c034005b6e807068088aca3cf020aa08d0608a08d061602220200000000000022512039a3e161f389b12616038cde53f1cecd8c8fbcaa40adeceb8e102b0b4d1e9ce8220200000000000022512039a3e161f389b12616038cde53f1cecd8c8fbcaa40adeceb8e102b0b4d1e9ce80340d7ada9ae32d69f5794e9d9bb1965e584faf60c31b154bd7c4b3afcd81f7f595fbcc67244d77ec28426600d640b2330efc176027f87d1800a958a716b403a3638fd6b0c208fd981f51b05eba6d0eec4f764abed758fccbd0ee6216b558640f27a8dc79170ac0063036f726401010a696d6167652f77656270010d07b6d555960c3101004d080252494646100c00005745425056503820040c0000d032009d012a640064003e19088241210706980400612c4019917e48faf77f35eabff68fbf5f933ca046e7b07fdb7f60fc95f845ea93f407b01fe9a7fa9fed1f8f5dcd7cc1fed17ec8fbb37fbefd80f797fdcbf103e01bfb2ff84eb6bf410f2dbfdcbf859fdc7fdc0f67affff7a75f60fc99ec0cf4bfb41bb17a8d7c6bec97e33fb0feda7e5e7c99fe1fc63e005f88ff23ff29fd4ff65ff2cb9284007e6bfd57fc5fe5af343e201faadfed7d64ef7da037e92f562fe7ffed7fa0fc97f6cbf47ffd0ff21f013fca7faeffb6fcdbf8c0f647fb55ec83fb01fffced201b87772586dbd091dd87b78fd486a84ab335757834a46d00d032ca26dccd4540f749739e2f7c758349b5ee38904f11d97fa9b97b8764ec6057a3e0bb98ff7d0ae71a18abcc553c172b3d886f73550c77fd63e3bf4ae93f7c1e1301284be5adceb1ce09f61677d9971a0eb343f63d3e3ae07136f0f08384a6834ea3a361b44f53457a5e75ae5bffe760bde94dc48d488a74a468079875b61620c4cfa881489cac983fef13ed16a2d34161d71b67fd34d39404dde87fd75625f37d10abc72768df0b3df5e000feffff034588477f73c1557b0a6ba37d745f20925b894fea25368c9783e21b949d4e28cb2d2c4fbdd83b05ab1869589b5d547f761143210c9dfafc6919ca0ca3a9c1d7678bcc34775d49d6c6bfcd904a9642a96a4d0802bd052b41b90093fa81497d073abe1a9c8d995150c0210ba67fd12756768963b4cf92dda2b638bfc68914f13a4cfe816b462c143c51af62d432814e610affff8929136386c99bb91f5110bfdd7f4c85d3fe4dac4a744f0923a3186ec27cb8e7fa7d845430293c5ead21ed569f92c577749d069b5e763542ca43798f855a30bef4cafdc5742083945bd016e4285c8cf78acd8111afedcb2adf872d9625a2584121b19a65d8d9cf337d396e89a17b8fe0785993bafbcae34c5aa333a4133e0c5dfea20296ed7ab4bb7e0f40e74c66a29bf2c0ed8e7b48e2ee5f6c5d3b747b118ff8a1f8dc24a2aff897bec73b72fd9aa4420fb79acacbd87b68f59145bb2ab98928f0f344f1aa9215f738165cd9af979eff7d3393122e42ba3f0e186599d22176f37004149813173edb12ae807065f89f29826aa0c16640448541d2cd5621d15521bedc799f1f15a6174bccc4cd8b15e9f46864c74cb7ad7d1ca6343b39558a2949def9771783870a90dd72afc4513301d75fa492b1a9bd4c8641388b034fdecb7aba5de0cdefa2f8e9ae9f7436622a0b2b514942592abd6f1b1177a6ca9409a895e31c8a70f4cdcc1999622c8eee862f5f3af3162f9f7fab815446a2b82182b24e8312e80350cbb218dad366e4209e4a118c363e3055f81f2643cdcdfa2305494ddd1dd18da25c857fc32cab7554969bd3959b4b550a4d65734953f4b42906fcb85c27ec2e7bb1bd394d0802862c0669fa07873403158f0ee5ee7b1b82b658957529e7e6845546ed488aff9b5412c9179bade1cf08edfc3a14a5350cc3026418ef298f6d3b8dfcb048860e377d01bd14b88e4470a3a7f4f101f02f96bfc253509cd4063535ad3640bfed14c553b3af970ca949d35f8b029566ffe9723f8be09beaaf62ba203f2da358e2e8622ff261ddac4aea7052f6f2826c68f414f5aceb223134f86d2d1c7232a190eb5f275d37dc98c280ee581f47a2f04285a6a78602fe0cecbec2c6e6c10198a0dffd33af23394acebd61df11fd5810ac0fb09e8f753742b6f69384607ce8fce10002fefc4e3da42930bb787b09ceb1c4ef151522faa91b13cf19bf2786128bb1f61d6e805ccd8c3be8fce4d55e8b40bb51f2a34843fd026fff5ffb3b6c8f46a50ef35aa70392cdf8bf27120d688b7c9fd766e747231056056fac538b5927fbe1155a340086ef4050f2abf84391ea357241e600ec7b1824e50336bff45261d9c1b20f3ed643b6b1fdceee09dc4ff8928f377e381c7e5ab5e030a32529c82e6fbfef58ccbea2ffa81dd6d91f90586b9bb235029288516bfa2cf11367e5bed82d2388f6057f10830832c67af1659f7c07c8bbcb4580e9f0605ffb1baa2c598d575d3b17dc7bbe1da6fd5a8acbae190b6467b6622d83010f5ec9639aea24fdf8817ceb2a4af5bf284a8d0e00021ce13b457776fb5f78196d1f2369068b1ba9a1526f1227884a5ac75410332c4d0802e322ab4b06b2fc3208f4c78bbf10ca583a74aef3f7588f86b0ffee7b5aa905155196b4c22ea35268e1f171f3bab367355b1e029b60e4d97e8334fe92b829d53a72c892a5b56ea402ea8855ffe29d1a59ef51e60a54db7de8608b37f12def1a9039b7b504e71aeb39066f2d883d5b0083def278b6404502cb5f877acc3f9ba0e0ff74ccfbb3922af7b516850e154cddc64c3f0cf8e67841373ed0cb0453727633c4083644a8bdf7518a1ed4d5fc6b5ebd9a2747031631a21b20b1066f063f94ab71557ad6ad083a9c7765038777db99de13b68b56d317f5d6b7982db3bd6a301ee519b8549c32c009793cf68633c5a50bc646371b9c2d388ef6b8e42f70f4eaf46f4b5ab703b31ccc0538754dd128652132f759e110913704aa3fb7c37d1aef7fa8cc3062db0f55121a66aa44fad8920784cd6a00b633e266224804611cd12b7a40fbd610027d05a7bef0ccda9890ddefd8cb6cf7e1045e726411a3cfcf6910c8ee3271dab8d570bff712462389d25a6ae5dab23b5e3f455c6b1c1a0ebbbc97485198862dd6d21178d2cfa0a762a96d024500a5ef809fc4fa38310782bfd0483cbc4fd9da71d59e8a9500cb382665e96812fdba0d77b0c2c98e031573c06d278d7324d03c2fbd625f17fd2e50640079d71aa689e505a2e941de3d5d7525656d349d3b61c6e80df88733a2175ac30912085162b778fe47e392cbb1728fff21451c79cc6f4e3e75591b4d08025554e36f11dc97cca9a33bdbf18ddcddd95dfb1cd290d396e23b9013754607d3c32a9df67b53e4cd6fb52d9050b3f8da22536b3501fe05e30487d568d309ae0a4891d3d621f95c6be24e0f7e8af75f0bbf37ba085e079000f00aa0def317d0f4a653169b4a59851db138fc65895954004da47923fb99a4b0f8b9ce3857e9557234dc4d7e523547688cc9775a24852b4ca30fdc93767bc65a9ae434fccae8893af131fb6895aaefbc70dc8725bb15c982e3e257e6c8adf06ecc7b7f3c4e50edbfc2de406eec6cf434ab9a9c2f7a116bc0bdb24b60fce708121ea655d650b64918c2f4c8fe96ea8b8befb42e68d6e63277ee61d9c607bff5e3e38a919f94d17604f20e11381869ce6d8e639ba4b249af6f5014b36790d76a11a67f4c52e36c19fef5b843a5775bac61ebb084692d03bd6f17bb4c548455f0a1ad70440ccecfae340bf03a448f76ce42e3f4e9c1a96fb36b4d676ff46e7d4266e9f6914faa33e7804eb4733e2321a04ec1be103875b1fcfb32d77e0fdfe107da4c069ff1250281ba178fd35891088d014dbf1559da8fc3de30e5eb41b6d8d608083ed4971abd48ff25b51e743789117ddcf0fd89fecad09aad08e748a0b6d1c9a5e925c683238ae8bb60aa84cc8084d6b527ff58b87d2248b1b7705ea8c36c8e75dcad7c35486f25058a3bcdbd52974b789bfec6c3c283ddb5a2ecce2afa694025c7a1c3dbf6c7bc364e6dc6f96ee3984df001da5d318e4a4024e2384bc260a73b649bbcacfac0ddb0f98938e22aed22c70471d2a8d146a58aabd721a97d709cd3f25809c16da2d07b31e6c446379e501d7deb6e05de5d51363db5d40334785eb629e9f262a49cd6bc4136b7c8a22d5cf6a262eb71478b67e027b60f8b503b9de2a2f51c9f1271fde3165096a3282cb0c08cc95d190dbd631093beb012b90b11a4bb7e854411c36e1ebac6345694d12f3f76a5896ab7207c9a6aed41981371ee4098143e4676f406b0c0091275789e1448eb88aa7a636538a1f65fb931a42495c4c113b89baee38476671abae3bf77ecffa2662d9310e4c745984dbe2fc0ed04b1133372ffc7a1cc0ddc91972e9b30b509f5cf85995f5418433b703e1404d9d8894b360777e2312f93a60213449df1cd7d29bffea04f96753300d00037ebc1394f99d08ed4708a3dbfbb9600e0b9f2785703388620028a0929d3ba519b2931067df04eaf9304198d91d27a773c4ac69ac4cc27f0dc79ea0587078914f9fa6d37130ad0891a83d7114ca5fc6841b55ed1ed7bb78ef1ae2e40d43e563135c5448ad216ac82a09a27fc5f131ab761aff9de8f808f4bcf8963b2db0d2e49ed9078155d7a87ed81c7f5f31e3d332ee64e5848368a23bce65caec240c481779faf50862eb73a5a036897212c5a2ddd3b8f4f8b7462d2bf59a67fd8c756080ad74004f00000006821c15dcf30765b74c6fb9696fb20944165bb3f8bca30de855d2733a876b2c61c0b9200000000'
+  )
+  const [runestone, setRunestone] = useState<RuneStone>()
+
+  const {
+    isFetching: queryTxLoading,
+    data: rawTx,
+    refetch: queryTransaction
+  } = useQuery({
+    queryKey: ['raw-transaction', { txid }],
+    queryFn: async () => {
+      if (!txid) return ''
+      const rawTx = await getRawTransaction({ txid })
+      return rawTx
+    },
+    // enabled: isHexadecimal(txid || '', 64),
+    enabled: false,
+    staleTime: Infinity
+  })
+
+  // useEffect(() => {
+  //   setTx(rawTx)
+  // }, [rawTx])
+
+  useEffect(() => {
+    if (!tx) return
+    try {
+      let runestone = new RuneStone()
+      const t = Transaction.fromHex(tx)
+      runestone.decipher(t)
+
+      setRunestone(runestone)
+
+      console.log(runestone)
+    } catch (error) {}
+  }, [tx])
+
+  const replacer = (key: any, value: any) => {
+    // 处理 BigInt 类型
+    if (typeof value === 'bigint') {
+      return value.toString()
+    }
+    return value
+  }
+  return (
+    <InteractionCard title='交易解密'>
+      <div className='flex items-center space-x-2 mt-4'>
+        <Input
+          placeholder='请输入交易 ID'
+          value={txid}
+          disabled={queryTxLoading}
+          onChange={(e) => setTxid(e.target.value)}
+          className='bg-background text-base'
+        />
+        <Button
+          size='sm'
+          onClick={() => queryTransaction()}
+          disabled={queryTxLoading}
+        >
+          查询交易
+          {queryTxLoading && <Loader className='ml-2 h-4 w-4 animate-spin' />}
+        </Button>
+      </div>
+
+      <div className='text-sm font-medium mt-4 mb-0.5'>原始交易数据</div>
+      <Textarea
+        placeholder='查询交易ID 或 手动输入交易数据'
+        rows={8}
+        defaultValue={tx}
+        className='bg-background text-base'
+        disabled={queryTxLoading}
+        onChange={(e) => setTx(e.target.value)}
+      />
+
+      <div className='text-sm font-medium mt-4 mb-0.5'>Runestone</div>
+
+      <div>{}</div>
+
+      <CodeBlock
+        code={(runestone && JSON.stringify(runestone, replacer, 2)) || ''}
+        language='json'
+      />
+    </InteractionCard>
+  )
+}

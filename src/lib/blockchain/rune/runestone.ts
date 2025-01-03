@@ -48,9 +48,10 @@ export default class RuneStone {
       etching.rune = rune
 
       etching.spacers = Number(fields.get(BigInt(Tag.Spacers)))
-      etching.symbol = String.fromCharCode(
-        Number(fields.get(BigInt(Tag.Symbol)))
-      )
+
+      // Unicode 解码
+      let symbol = Number(fields.get(BigInt(Tag.Symbol)))
+      etching.symbol = String.fromCodePoint(symbol)
 
       const terms: Terms = {
         cap: fields.get(BigInt(Tag.Cap))?.[0],
@@ -67,6 +68,8 @@ export default class RuneStone {
 
     if (block && tx) {
       this.mint = new RuneId(Number(block), Number(tx))
+    } else {
+      this.mint = undefined
     }
 
     const pointer = fields.get(BigInt(Tag.Pointer))?.[0]
