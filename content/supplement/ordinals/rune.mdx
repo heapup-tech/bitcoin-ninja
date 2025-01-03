@@ -5,6 +5,77 @@ draft: true
 
 Runes 协议由 [Casey Rodarmor](https://x.com/rodarmor) 于比特币第四次减半区块高度 840000 正式发布。并发文表示, 如果 Runes 生态上线一个月达不到10亿美元市值将切腹自尽。
 
+不同于 Ordinals 协议, Runes 协议数据存储在 [OP_RETURN](technical/script/op-return) 中。但 `OP_RETURN` 最多只能承载 80 字节的数据，因此 Runes 协议对数据进行压缩编码。
+
+## Runestone
+
+`Runestone` 是一种用于构建和解析比特币交易中 `OP_RETURN` 数据的中间数据结构。
+
+```rust
+pub struct Runestone {
+  pub edicts: Vec<Edict>,
+  pub etching: Option<Etching>,
+  pub mint: Option<RuneId>,
+  pub pointer: Option<u32>,
+}
+```
+
+- `edicts` - 转账 Runes 数据结构
+- `etching` - 部署 Runes 的数据结构
+- `mint` - 铸造 Runes 的数据结构
+- `pointer` - Runes 分配的到的输出索引
+
+## 编解码
+
+## Runes 名称
+
+Runes 名称遵循 Base26 编码规则, 故名称只能由大写字母 A-Z 组成。
+
+每个字母从 0 开始, A=0, B=1, ···, Z=25, 再往后 AA = 1 \* 26 + 0 = 26, AB = 1 \* 26 + 1 = 27, 以此类推, 可以覆盖所有的符文名称。
+
+```ts
+export default class Rune {
+  private _value: bigint
+  constructor(value: bigint) {
+    this._value = value
+  }
+
+  // Base26 decoding
+  display() {
+    let n = this._value
+
+    n += 1n
+
+    let symbol = ''
+    while (n > 0n) {
+      const char = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.charAt(Number((n - 1n) % 26n))
+      symbol += char
+      n = (n - 1n) / 26n
+    }
+
+    return symbol.split('').reverse().join('')
+  }
+
+  // Base26 encoding
+  static fromSymbol(symbol: string) {
+    let n = 0n
+    for (let i = 0; i < symbol.length; i++) {
+      n =
+        n * 26n +
+        BigInt('ABCDEFGHIJKLMNOPQRSTUVWXYZ'.indexOf(symbol.charAt(i)) + 1)
+    }
+
+    return new Rune(n - 1n)
+  }
+
+  get value() {
+    return this._value
+  }
+}
+```
+
+<RunesName />
+
 :::note
 
 Etch:
@@ -360,4 +431,8 @@ pub(super) fn index_runes(&mut self, tx_index: u32, tx: &Transaction, txid: Txid
 
     Ok(())
   }
+```
+
+```
+
 ```

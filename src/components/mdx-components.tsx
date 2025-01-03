@@ -70,9 +70,11 @@ import WIFPrivateKeyGenerator from './blockchain/wif-private-key-generator'
 import EccGraph from './cryptology/ecc-graph'
 import FiniteEccGraph from './cryptology/finite-ecc-graph'
 import { BlockMath, InlineMath } from './math'
+import RunesName from './runes/runes-name'
 import ScaleableImage from './scaleable-image'
 
 const components = {
+  RunesName,
   InlineMath,
   BlockMath,
   EccGraph,
