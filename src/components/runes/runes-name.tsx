@@ -6,8 +6,9 @@ import InteractionCard from '../interaction-card'
 import { Input } from '../ui/input'
 
 export default function RunesName() {
-  const [runesStr, setRunesStr] = useState('A')
-  const [runesInteger, setRunesInteger] = useState(0n)
+  const [runesStr, setRunesStr] = useState('AWESOME•BITCOIN•RUNES')
+  const [spacer, setSpacer] = useState(8256n)
+  const [runesInteger, setRunesInteger] = useState(55808450486346175951254004n)
   const [inputSource, setInputSource] = useState('')
   const [error, setError] = useState('')
 
@@ -16,11 +17,13 @@ export default function RunesName() {
     setInputSource('string')
 
     // 只允许输入大写字母A-Z
-    if (/^[A-Z]*$/.test(newValue)) {
+    if (/^[A-Z•]*$/.test(newValue)) {
       setRunesStr(newValue)
       if (newValue) {
         try {
-          setRunesInteger(Rune.fromSymbol(newValue).value)
+          let rune = Rune.fromSymbol(newValue)
+          setRunesInteger(rune.value)
+          setSpacer(rune.spacer)
         } catch (err) {
           setError('转换失败')
         }
@@ -43,6 +46,18 @@ export default function RunesName() {
       setError('无效的数字输入')
     }
   }
+
+  const handleSpacerChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value
+    setSpacer(BigInt(newValue))
+
+    const rune = new Rune(runesInteger)
+
+    const s = rune.displayWithSpacers(Number(e.target.value))
+    console.log(s)
+
+    setRunesStr(s)
+  }
   return (
     <InteractionCard title='Runes 名称编解码'>
       <ContentCard title='Runes 名称'>
@@ -58,6 +73,15 @@ export default function RunesName() {
           onChange={handleIntegerChange}
           type='number'
           value={runesInteger.toString()}
+          className='bg-white'
+        />
+      </ContentCard>
+
+      <ContentCard title='分割符Spacer'>
+        <Input
+          onChange={handleSpacerChange}
+          type='number'
+          value={spacer.toString()}
           className='bg-white'
         />
       </ContentCard>
