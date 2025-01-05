@@ -12,7 +12,7 @@ import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import { Textarea } from '../ui/textarea'
 
-export default function TransactionDecipher() {
+export default function RunestoneDecipher() {
   const [txid, setTxid] = useState(
     '21caab4317e610b019da25b8b20441292d97bb5bddfdd8a7dca3e3cab7920245'
   )
@@ -49,8 +49,6 @@ export default function TransactionDecipher() {
       runestone.decipher(t)
 
       setRunestone(runestone)
-
-      console.log(runestone)
     } catch (error) {}
   }, [tx])
 

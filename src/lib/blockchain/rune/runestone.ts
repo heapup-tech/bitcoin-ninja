@@ -1,12 +1,11 @@
 import { script, Transaction } from 'bitcoinjs-lib'
-import { OPS } from 'bitcoinjs-lib/src/ops'
 import Edict from './edict'
 import Etching from './etching'
 import { Flag, FlagManger } from './flag'
 import Message from './message'
 import Rune from './rune'
 import RuneId from './rune_id'
-import Tag, { tagEncode, tagEncodeOption } from './tag'
+import Tag from './tag'
 import Terms from './terms'
 import varint from './varint'
 
@@ -80,7 +79,7 @@ export default class RuneStone {
 
   encipher() {
     // encipher the runestone
-    let payload: number[] = []
+    let fields: Map<Tag, bigint[]> = new Map()
 
     const flagManger = new FlagManger(0n)
     if (this.etching) {
@@ -92,51 +91,100 @@ export default class RuneStone {
       if (this.etching.turbo) {
         flagManger.set(Flag.Turbo)
       }
-      console.log(`flagManger.flags: ${flagManger.flags}`)
+      fields.set(Tag.Flags, [flagManger.flags])
 
-      tagEncode(Tag.Flags, [flagManger.flags], payload)
-
-      if (this.etching?.rune) {
-        tagEncodeOption(Tag.Rune, payload, this.etching.rune.value)
+      if (this.etching.rune) {
+        fields.set(Tag.Rune, [this.etching.rune.value])
       }
-      tagEncodeOption(Tag.Divisibility, payload, this.etching.divisibility)
-      tagEncodeOption(Tag.Spacers, payload, this.etching.spacers)
+
+      if (this.etching.divisibility) {
+        fields.set(Tag.Divisibility, [BigInt(this.etching.divisibility)])
+      }
+
+      if (this.etching.spacers) {
+        fields.set(Tag.Spacers, [BigInt(this.etching.spacers)])
+      } else {
+        let spacers = this.etching.rune?.spacer || 0n
+        spacers !== 0n && fields.set(Tag.Spacers, [spacers])
+      }
 
       if (this.etching.symbol) {
-        tagEncodeOption(
-          Tag.Symbol,
-          payload,
-          BigInt(this.etching.symbol.charCodeAt(0))
-        )
+        fields.set(Tag.Symbol, [BigInt(this.etching.symbol.charCodeAt(0))])
       }
 
-      tagEncodeOption(Tag.Premine, payload, this.etching.premine)
+      if (this.etching.premine) {
+        fields.set(Tag.Premine, [this.etching.premine])
+      }
 
       if (this.etching.terms) {
-        tagEncodeOption(Tag.Amount, payload, this.etching.terms.amount)
-        tagEncodeOption(Tag.Cap, payload, this.etching.terms.cap)
-        tagEncodeOption(Tag.HeightStart, payload, this.etching.terms.height[0])
-        tagEncodeOption(Tag.HeightEnd, payload, this.etching.terms.height[1])
-        tagEncodeOption(Tag.OffsetStart, payload, this.etching.terms.offset[0])
-        tagEncodeOption(Tag.OffsetEnd, payload, this.etching.terms.offset[1])
-      }
+        if (this.etching.terms.amount) {
+          fields.set(Tag.Amount, [this.etching.terms.amount])
+        }
+        if (this.etching.terms.cap) {
+          fields.set(Tag.Cap, [this.etching.terms.cap])
+        }
+        if (this.etching.terms.height) {
+          if (this.etching.terms.height[0] !== undefined) {
+            fields.set(Tag.HeightStart, [BigInt(this.etching.terms.height[0])])
+          }
 
-      if (this.mint) {
-        tagEncode(
-          Tag.Mint,
-          [BigInt(this.mint.block), BigInt(this.mint.tx)],
-          payload
-        )
-      }
-      const builder = [OPS.OP_RETURN, RuneStone.MAGIC_NUMBER]
+          if (this.etching.terms.height[1] !== undefined) {
+            fields.set(Tag.HeightEnd, [BigInt(this.etching.terms.height[1])])
+          }
+        }
 
-      for (let i = 0; i < payload.length; i++) {
-        builder.push(payload[i])
-      }
-      const res = script.compile(builder)
+        if (this.etching.terms.offset) {
+          if (this.etching.terms.offset[0] !== undefined) {
+            fields.set(Tag.OffsetStart, [BigInt(this.etching.terms.offset[0])])
+          }
 
-      console.log(res.toString('hex'))
+          if (this.etching.terms.offset[1] !== undefined) {
+            fields.set(Tag.OffsetEnd, [BigInt(this.etching.terms.offset[1])])
+          }
+        }
+      }
     }
+
+    console.log(fields)
+
+    let buffArr: Buffer[] = []
+    // Serialize fields.
+    for (const [tag, vals] of fields) {
+      for (const val of vals) {
+        const tagBuff = Buffer.alloc(1)
+        tagBuff.writeUInt8(tag)
+        buffArr.push(tagBuff)
+        buffArr.push(Buffer.from(varint.encode(val)))
+      }
+    }
+    let msgBuff = Buffer.concat(buffArr)
+
+    console.log(msgBuff.toString('hex'))
+
+    const prefix = Buffer.from('6a5d', 'hex') // OP_RETURN OP_13
+    let pushNum
+    if (msgBuff.length < 0x4c) {
+      pushNum = Buffer.alloc(1)
+      pushNum.writeUInt8(msgBuff.length)
+    } else if (msgBuff.length < 0x100) {
+      pushNum = Buffer.alloc(2)
+      pushNum.writeUInt8(0x4c)
+      pushNum.writeUInt8(msgBuff.length, 1)
+    } else if (msgBuff.length < 0x10000) {
+      pushNum = Buffer.alloc(3)
+      pushNum.writeUInt8(0x4d)
+      pushNum.writeUInt16LE(msgBuff.length, 1)
+    } else if (msgBuff.length < 0x100000000) {
+      pushNum = Buffer.alloc(5)
+      pushNum.writeUInt8(0x4e)
+      pushNum.writeUInt32LE(msgBuff.length, 1)
+    } else {
+      throw new Error('runestone too big!')
+    }
+
+    console.log(msgBuff.toString('hex'))
+
+    return script.compile(Buffer.concat([prefix, pushNum, msgBuff]))
   }
 
   payload(transaction: Transaction) {

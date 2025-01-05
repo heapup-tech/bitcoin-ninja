@@ -31,9 +31,9 @@ pub struct Runestone {
 - 铸造 Runes 的交易, 解析后的数据赋值给 `mint` 字段;
 - 部署 Runes 的交易, 解析后的数据赋值给 `etching` 字段。
 
-## 数据格式
+## 数据编解码
 
-`OP_RETURN` 中的数据会被解析成以键值对的形式存储, 键的值如下:
+`OP_RETURN` 中的数据会被解析成以**键值对**的形式存储, 键的值如下:
 
 ```rust
 pub(super) enum Tag {
@@ -60,9 +60,13 @@ pub(super) enum Tag {
 }
 ```
 
-## 编解码
+### 编码
 
-<TransactionDecipher />
+<RunestoneEncipher />
+
+### 解码
+
+{/* <RunestoneDecipher /> */}
 
 ## 部署Runes
 

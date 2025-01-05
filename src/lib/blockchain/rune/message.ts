@@ -2,6 +2,7 @@ import { Transaction } from 'bitcoinjs-lib'
 import Edict from './edict'
 import Flaw from './flaw'
 import Tag from './tag'
+import varint from './varint'
 
 function slicedChunk<T>(array: T[], size: number): T[][] {
   const result: T[][] = []
@@ -38,5 +39,19 @@ export default class Message {
     }
 
     return message
+  }
+
+  static toBuffer(msg: Map<number, bigint[]>) {
+    let buffArr: Buffer[] = []
+    // Serialize fields.
+    for (const [tag, vals] of msg) {
+      for (const val of vals) {
+        const tagBuff = Buffer.alloc(1)
+        tagBuff.writeUInt8(tag)
+        buffArr.push(tagBuff)
+        buffArr.push(Buffer.from(varint.encode(val)))
+      }
+    }
+    return Buffer.concat(buffArr)
   }
 }
