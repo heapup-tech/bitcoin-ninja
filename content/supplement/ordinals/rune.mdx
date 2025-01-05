@@ -3,9 +3,7 @@ title: Runes
 draft: true
 ---
 
-Runes 协议, 中文翻译为符文, 由 [Casey Rodarmor](https://x.com/rodarmor) 于比特币第四次减半区块高度 840000 正式发布。并发文表示, 如果 Runes 生态上线一个月达不到10亿美元市值将切腹自尽。
-
-不同于 Ordinals 协议, Runes 协议数据存储在 [OP_RETURN](technical/script/op-return) 中。但 `OP_RETURN` 最多只能承载 80 字节的数据，因此 Runes 协议对数据进行压缩编码。
+`Runes` 协议, 中文翻译为符文, 由 [Casey Rodarmor](https://x.com/rodarmor) 于比特币第四次减半区块高度 840000 正式发布。不同于 Brc20, `Runes` 协议数据存储在 [OP_RETURN](technical/script/op-return) 中。但 `OP_RETURN` 最多只能承载 80 字节的数据，因此 `Runes` 协议对数据进行压缩编码。
 
 ## Runestone
 
@@ -33,7 +31,7 @@ pub struct Runestone {
 
 ## 数据编解码
 
-`OP_RETURN` 中的数据会被解析成以**键值对**的形式存储, 键的值如下:
+`OP_RETURN` 中的数据以 **Key-Value** 的形式存储, `Key` 的值如下:
 
 ```rust
 pub(super) enum Tag {
@@ -59,6 +57,40 @@ pub(super) enum Tag {
   Nop = 127,
 }
 ```
+
+具体每个 `Key` 解释见下文。`Value` 值则是整数数组。
+
+例如: 有如下 `Key-Value` 数据:
+
+```ts
+1: [ 38n ],
+2: [ 3n ],
+3: [ 8256n ]
+```
+
+- `1: [ 38n ]` 表示 `Divisibility` 的值为 [38n],
+- `2: [ 3n ]` 表示 `Flags` 的值为 [3n]
+- `3: [ 8256n ]` 表示 `Spacers` 的值为 [8256n]。
+
+在转换成 `OP_RETURN` 数据时, 会依次拼接 `Key` 和 `LEB128` 编码后的 `Value`。
+
+```ts
+1: [ 38n ], // 01 26
+2: [ 3n ], // 02 03
+3: [ 8256n ] // 03 c040
+```
+
+:::note 为什么要 LEB128 编码
+
+如果不进行 `LEB128` 编码, 直接拼接 `Key` 和 `Value`。为了正确读取, 必然还需要存储 `Value` 数组的长度以及每个元素之间的分隔符。这样会增加数据的存储空间, 而 `OP_RETURN` 的存储空间是有限的。
+
+:::
+
+:::warning LEB128
+
+LEB128 编码, 即 `Little Endian Base 128` 编码, 是一种变长编码方式。在 LEB128 编码中, 每个字节的最高位用于标识是否为最后一个字节, 如果最高位为 1, 则表示后面还有字节, 否则表示当前字节为最后一个字节。每个字节的其余 7 位用于存储数据。
+
+:::
 
 ### 编码
 
@@ -129,47 +161,6 @@ pub struct Edict {
 Runes 名称遵循 `Base26` 编码规则, 故名称由大写字母 A-Z 组成。
 
 每个字母从 0 开始, A=0, B=1, ···, Z=25, 再往后 AA = 1 \* 26 + 0 = 26, AB = 1 \* 26 + 1 = 27, 以此类推, 可以覆盖所有的符文名称。
-
-```ts
-export default class Rune {
-  private _value: bigint
-  constructor(value: bigint) {
-    this._value = value
-  }
-
-  // Base26 decoding
-  display() {
-    let n = this._value
-
-    n += 1n
-
-    let symbol = ''
-    while (n > 0n) {
-      const char = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.charAt(Number((n - 1n) % 26n))
-      symbol += char
-      n = (n - 1n) / 26n
-    }
-
-    return symbol.split('').reverse().join('')
-  }
-
-  // Base26 encoding
-  static fromSymbol(symbol: string) {
-    let n = 0n
-    for (let i = 0; i < symbol.length; i++) {
-      n =
-        n * 26n +
-        BigInt('ABCDEFGHIJKLMNOPQRSTUVWXYZ'.indexOf(symbol.charAt(i)) + 1)
-    }
-
-    return new Rune(n - 1n)
-  }
-
-  get value() {
-    return this._value
-  }
-}
-```
 
 <RunesName />
 

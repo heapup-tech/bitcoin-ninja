@@ -68,7 +68,7 @@ export default function RunesName() {
         />
       </ContentCard>
 
-      <ContentCard title='Runes 名称整数表示'>
+      <ContentCard title='整数表示'>
         <Input
           onChange={handleIntegerChange}
           type='number'
