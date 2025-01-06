@@ -31,7 +31,7 @@ pub struct Runestone {
 
 ## 数据编解码
 
-`OP_RETURN` 中的数据以 **Key-Value** 的形式依次拼接存储, `Key` 的值如下:
+`OP_RETURN` 中的数据以 **Key-Value** 的形式依次拼接存储, `Key` 的值定义在 `Tag` 枚举中:
 
 ```rust
 pub(super) enum Tag {
@@ -94,7 +94,7 @@ LEB128 编解码实现见 [varint.ts]()
 
 <LEB128Encoder />
 
-## 部署Runes
+## 部署
 
 部署 `Runes` 也称作蚀刻 `Etching`, 结构定义在 `Etching` 结构体中
 
@@ -116,19 +116,48 @@ pub struct Terms {
 }
 ```
 
-- `divisibility` - 可分割性
+- `divisibility` - 精度
 - `premine` - 预挖数量
-- `rune` - 符文名称
-- `spacers` - 名称分隔符
-- `symbol` - 缩写
+- `rune` - 符文名称, 整数表示, 见下文 [符文名称](#符文名称)
+- `spacers` - 符文名称之间的 `•` 分隔符位置的整数表示
+- `symbol` - 缩写, 单个 Unicode 字符, 包括 Emoji 表情
 - `terms` - 铸造规则
   - `amount` - 每次铸造的数量
   - `cap` - 可铸造的总次数
   - `height` - 元组结构, 表示在指定区块高度范围内可铸造
   - `offset` - 元组结构, 表示相对于部署 Runes 的区块高度的偏移量范围内可铸造
-- `turbo` - ?
+- `turbo` - 设置为 `true` 时, 表示此次部署支持未来的协议变更
 
-## 铸造Runes
+除了 `turbo` 字段外, 其他结构体字段和 `Tag` 枚举成员都有对应。因此可以根据 `Etching` 实例构建符合要求的 `Key-Value` 数据。
+
+另外 `Tag` 枚举中存在 `Flags` 成员, 用于标识 `OP_RETURN` 数据中存储的是什么内容, 值则根据 `Flag` 枚举成员定义。
+
+```rust
+pub(super) enum Flag {
+  Etching = 0,
+  Terms = 1,
+  Turbo = 2,
+  #[allow(unused)]
+  Cenotaph = 127,
+}
+```
+
+`Flags` 值根据掩码的方式确定, 例如:
+
+- `Terms` 为 `true`, 则 `Flags` 值为 $0000 \ 0010$, 倒数第一位设置为 1;
+- `Turbo` 为 `true`, 则 `Flags` 值为 $0000 \ 0100$, 倒数第二位设置为 1;
+
+最终 `Flags` 值为 $0000 0100 \ \& \ 0000 0010 = 0000 \ 0110$, 表示 `OP_RETURN` 数据中存在 `Turbo` 和 `Terms` 数据。
+
+:::note
+
+`Flag` 最大值为 127, 最多可以支持 128 种不同的标识。
+
+:::
+
+## 铸造
+
+铸造符文, 则需要设置 `Tag` 枚举中的 `Mint` 成员, 值:
 
 ```rust
 pub struct RuneId {
@@ -137,10 +166,18 @@ pub struct RuneId {
 }
 ```
 
-- `block` - 铸造 Runes 的区块高度
-- `tx` - 铸造 Runes 的交易索引
+- `block` - 部署符文所在的区块高度
+- `tx` - 部署符文所在的区块高度的交易索引
 
-## 转移Runes
+例如在 860000 区块高度部署了符文, 区块内的交易序号在 100, 则铸造符文时, 需要构建的 `Key-Value` 数据为:
+
+```ts
+20: [860000, 100]
+```
+
+20 是 Mint 字段在 Tag 枚举中的成员值。
+
+## 转账
 
 ```rust
 pub struct Edict {
@@ -150,9 +187,9 @@ pub struct Edict {
 }
 ```
 
-## Runes 名称
+## 符文名称
 
-Runes 名称遵循 `Base26` 编码规则, 故名称由大写字母 A-Z 组成。
+符文名称遵循 `Base26` 编码规则, 故名称由大写字母 A-Z 组成。
 
 每个字母从 0 开始, A=0, B=1, ···, Z=25, 再往后 AA = 1 \* 26 + 0 = 26, AB = 1 \* 26 + 1 = 27, 以此类推, 可以覆盖所有的符文名称。
 
