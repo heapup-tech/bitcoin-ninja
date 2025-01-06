@@ -11,8 +11,8 @@ describe('VarInt', () => {
 
   test('encode', () => {
     const payload: number[] = []
-    varint.encode_to_vec(355n, payload)
+    varint.encode_to_vec(8256n, payload)
 
-    expect(payload).toEqual([227, 2])
+    expect(payload).toEqual([192, 64])
   })
 })

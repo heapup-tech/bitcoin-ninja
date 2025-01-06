@@ -3,7 +3,7 @@ title: Runes
 draft: true
 ---
 
-`Runes` 协议, 中文翻译为符文, 由 [Casey Rodarmor](https://x.com/rodarmor) 于比特币第四次减半区块高度 840000 正式发布。不同于 Brc20, `Runes` 协议数据存储在 [OP_RETURN](technical/script/op-return) 中。但 `OP_RETURN` 最多只能承载 80 字节的数据，因此 `Runes` 协议对数据进行压缩编码。
+`Runes` 协议, 中文翻译为符文, 由 [Casey Rodarmor](https://x.com/rodarmor) 于比特币第四次减半区块高度 840000 正式发布。不同于 Brc20, `Runes` 协议数据存储在 [OP_RETURN](technical/script/op-return) 中。但 `OP_RETURN` 最多只能承载 80 字节的数据，因此 `Runes` 协议需要对数据进行压缩编码。
 
 ## Runestone
 
@@ -31,7 +31,7 @@ pub struct Runestone {
 
 ## 数据编解码
 
-`OP_RETURN` 中的数据以 **Key-Value** 的形式存储, `Key` 的值如下:
+`OP_RETURN` 中的数据以 **Key-Value** 的形式依次拼接存储, `Key` 的值如下:
 
 ```rust
 pub(super) enum Tag {
@@ -58,51 +58,45 @@ pub(super) enum Tag {
 }
 ```
 
-具体每个 `Key` 解释见下文。`Value` 值则是整数数组。
+具体每个 `Key` 解释见下文实际操作中的数据结构。`Value` 值则是整数数组。
 
 例如: 有如下 `Key-Value` 数据:
 
 ```ts
-1: [ 38n ],
-2: [ 3n ],
-3: [ 8256n ]
+1: [ 38 ], // `Divisibility` 的值为 [38]
+2: [ 3 ], // `Flags` 的值为 [3]
+3: [ 8256 ] // Spacers` 的值为 [8256]
 ```
 
-- `1: [ 38n ]` 表示 `Divisibility` 的值为 [38n],
-- `2: [ 3n ]` 表示 `Flags` 的值为 [3n]
-- `3: [ 8256n ]` 表示 `Spacers` 的值为 [8256n]。
-
-在转换成 `OP_RETURN` 数据时, 会依次拼接 `Key` 和 `LEB128` 编码后的 `Value`。
+在转换成 `OP_RETURN` 数据时, 会依次拼接 `Key` 和 **`LEB128` 编码**后的 `Value`。
 
 ```ts
-1: [ 38n ], // 01 26
-2: [ 3n ], // 02 03
-3: [ 8256n ] // 03 c040
+1: [ 38 ], // 0x01: 0x26
+2: [ 3 ], // 0x02: 0x03
+3: [ 8256 ] // 0x03: 0xc040
 ```
+
+最终拼接结果是 `0126 0203 03c040`。
 
 :::note 为什么要 LEB128 编码
 
-如果不进行 `LEB128` 编码, 直接拼接 `Key` 和 `Value`。为了正确读取, 必然还需要存储 `Value` 数组的长度以及每个元素之间的分隔符。这样会增加数据的存储空间, 而 `OP_RETURN` 的存储空间是有限的。
+如果不进行 `LEB128` 编码, 直接拼接 `Key` 和 `Value`。为了正确读取并解析数据, 必然还需要存储每个 `Key` 对应 `Value` 数组的长度以及每个元素之间的分隔符。这样会增加数据的存储空间, 而 `OP_RETURN` 的存储空间是有限的。使用 `LEB128` 编码后, 可以有效减少数据的存储空间。
 
 :::
 
-:::warning LEB128
+:::tip LEB128
 
 LEB128 编码, 即 `Little Endian Base 128` 编码, 是一种变长编码方式。在 LEB128 编码中, 每个字节的最高位用于标识是否为最后一个字节, 如果最高位为 1, 则表示后面还有字节, 否则表示当前字节为最后一个字节。每个字节的其余 7 位用于存储数据。
 
 :::
 
-### 编码
+LEB128 编解码实现见 [varint.ts]()
 
-<RunestoneEncipher />
-
-### 解码
-
-{/* <RunestoneDecipher /> */}
+<LEB128Encoder />
 
 ## 部署Runes
 
-部署 Runes 的过程也称作蚀刻 Etching, 用于定义 Runes 的属性和铸造规则。
+部署 `Runes` 也称作蚀刻 `Etching`, 结构定义在 `Etching` 结构体中
 
 ```rust
 pub struct Etching {

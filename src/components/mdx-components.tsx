@@ -70,6 +70,7 @@ import WIFPrivateKeyGenerator from './blockchain/wif-private-key-generator'
 import EccGraph from './cryptology/ecc-graph'
 import FiniteEccGraph from './cryptology/finite-ecc-graph'
 import { BlockMath, InlineMath } from './math'
+import LEB128Encoder from './runes/leb128-encoder'
 import RunesName from './runes/runes-name'
 import RunestoneDecipher from './runes/runestone-decipher'
 import RunestoneEncipher from './runes/runestone-encipher'
@@ -79,6 +80,7 @@ const components = {
   RunesName,
   RunestoneEncipher,
   RunestoneDecipher,
+  LEB128Encoder,
   InlineMath,
   BlockMath,
   EccGraph,
