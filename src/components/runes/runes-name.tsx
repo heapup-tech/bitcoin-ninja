@@ -59,8 +59,8 @@ export default function RunesName() {
     setRunesStr(s)
   }
   return (
-    <InteractionCard title='Runes 名称编解码'>
-      <ContentCard title='Runes 名称'>
+    <InteractionCard title='符文名称编解码'>
+      <ContentCard title='符文名称'>
         <Input
           onChange={handleStrChange}
           value={runesStr}

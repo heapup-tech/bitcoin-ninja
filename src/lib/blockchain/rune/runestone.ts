@@ -159,8 +159,6 @@ export default class RuneStone {
     }
     let msgBuff = Buffer.concat(buffArr)
 
-    console.log(msgBuff.toString('hex'))
-
     const prefix = Buffer.from('6a5d', 'hex') // OP_RETURN OP_13
     let pushNum
     if (msgBuff.length < 0x4c) {

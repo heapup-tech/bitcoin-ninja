@@ -5,31 +5,7 @@ draft: true
 
 `Runes` 协议, 中文翻译为符文, 由 [Casey Rodarmor](https://x.com/rodarmor) 于比特币第四次减半区块高度 840000 正式发布。不同于 Brc20, `Runes` 协议数据存储在 [OP_RETURN](technical/script/op-return) 中。但 `OP_RETURN` 最多只能承载 80 字节的数据，因此 `Runes` 协议需要对数据进行压缩编码。
 
-## Runestone
-
-`Runestone` 是一种用于构建和解析比特币交易中 `OP_RETURN` 数据的中间数据结构。
-
-```rust
-pub struct Runestone {
-  pub edicts: Vec<Edict>,
-  pub etching: Option<Etching>,
-  pub mint: Option<RuneId>,
-  pub pointer: Option<u32>,
-}
-```
-
-- `edicts` - 转账 Runes 数据结构
-- `etching` - 部署 Runes 的数据结构
-- `mint` - 铸造 Runes 的数据结构
-- `pointer` - Runes 分配的到的输出索引
-
-解析交易时提取 `OP_RETURN` 数据, 根据交易的操作, 构建 `Runestone` 结构。
-
-- 转移 Runes 的交易, 解析后的数据赋值给 `edicts` 字段;
-- 铸造 Runes 的交易, 解析后的数据赋值给 `mint` 字段;
-- 部署 Runes 的交易, 解析后的数据赋值给 `etching` 字段。
-
-## 数据编解码
+## 数据编码
 
 `OP_RETURN` 中的数据以 **Key-Value** 的形式依次拼接存储, `Key` 的值定义在 `Tag` 枚举中:
 
@@ -82,6 +58,8 @@ pub(super) enum Tag {
 
 如果不进行 `LEB128` 编码, 直接拼接 `Key` 和 `Value`。为了正确读取并解析数据, 必然还需要存储每个 `Key` 对应 `Value` 数组的长度以及每个元素之间的分隔符。这样会增加数据的存储空间, 而 `OP_RETURN` 的存储空间是有限的。使用 `LEB128` 编码后, 可以有效减少数据的存储空间。
 
+缺点是数组中有多个元素时, 需要数组每个元素都需要有 `Key` 拼接, 需要占用额外的存储空间。
+
 :::
 
 :::tip LEB128
@@ -96,7 +74,7 @@ LEB128 编解码实现见 [varint.ts]()
 
 ## 部署
 
-部署 `Runes` 也称作蚀刻 `Etching`, 结构定义在 `Etching` 结构体中
+部署 `Runes` 也称作蚀刻, 结构定义在 `Etching` 结构体中
 
 ```rust
 pub struct Etching {
@@ -130,7 +108,7 @@ pub struct Terms {
 
 除了 `turbo` 字段外, 其他结构体字段和 `Tag` 枚举成员都有对应。因此可以根据 `Etching` 实例构建符合要求的 `Key-Value` 数据。
 
-另外 `Tag` 枚举中存在 `Flags` 成员, 用于标识 `OP_RETURN` 数据中存储的是什么内容, 值则根据 `Flag` 枚举成员定义。
+另外 `Tag` 枚举中存在 `Flags` 成员, 用于标识 `OP_RETURN` 数据中存储的是什么内容, 其值则根据 `Flag` 枚举确定。
 
 ```rust
 pub(super) enum Flag {
@@ -142,7 +120,9 @@ pub(super) enum Flag {
 }
 ```
 
-`Flags` 值根据掩码的方式确定, 例如:
+`Flags` 值根据掩码的方式确定。
+
+例如: `OP_RETURN` 中存在 `Terms` 和 `Turbo` 数据, 则:
 
 - `Terms` 为 `true`, 则 `Flags` 值为 $0000 \ 0010$, 倒数第一位设置为 1;
 - `Turbo` 为 `true`, 则 `Flags` 值为 $0000 \ 0100$, 倒数第二位设置为 1;
@@ -151,13 +131,13 @@ pub(super) enum Flag {
 
 :::note
 
-`Flag` 最大值为 127, 最多可以支持 128 种不同的标识。
+`Flag` 最大值为 127, 最多可以支持 128 种不同的标识。尽管目前只定义了 4 种。
 
 :::
 
 ## 铸造
 
-铸造符文, 则需要设置 `Tag` 枚举中的 `Mint` 成员, 值:
+铸造符文, 则只需要设置 `Tag` 枚举中的 `Mint` 成员, 值结构为:
 
 ```rust
 pub struct RuneId {
@@ -167,7 +147,7 @@ pub struct RuneId {
 ```
 
 - `block` - 部署符文所在的区块高度
-- `tx` - 部署符文所在的区块高度的交易索引
+- `tx` - 部署符文所在的区块的交易序号
 
 例如在 860000 区块高度部署了符文, 区块内的交易序号在 100, 则铸造符文时, 需要构建的 `Key-Value` 数据为:
 
@@ -175,9 +155,18 @@ pub struct RuneId {
 20: [860000, 100]
 ```
 
-20 是 Mint 字段在 Tag 枚举中的成员值。
+20 是 `Tag` 枚举中 `Mint` 字段的成员值。
+
+实际存储时, 20 依次拼接上 `[860000, 100]` 数组中每个元素经过 `LEB128` 编码结果。
+
+- 860000 经过 `LEB128` 编码后结果为 `[224, 190, 52]` 转换成16进制为 `[e0, be, 34]`
+- 100 经过 `LEB128` 编码后结果为 `[100]` 转换成16进制为 `[64]`
+
+最终拼接结果为 `14e0be341464`
 
 ## 转账
+
+转移符文数据对应的 `Key` 是 `Tag` 枚举中的 `Body` 成员, 值为数组结构, 数组中的每个元素都是 `Edict` 结构体
 
 ```rust
 pub struct Edict {
@@ -187,17 +176,96 @@ pub struct Edict {
 }
 ```
 
+- `id` - 符文 ID
+- `amount` - 转账金额
+- `output` - 接收符文的输出索引
+
+由于是数组结构, 所以可以在一笔交易中可以包含多种符文的转账。并且 `Body` 数据一定是 `OP_RETURN` 最后一段数据。
+
+`Tag` 枚举中的 `Body` 成员值为 0, 因此以 `00` 开头。并且由于是最后一段数据, 所以 `00` 不需要依次与数组中的每个元素拼接。只需要依次拼接数组中每个元素的 `LEB128` 编码后的数据即可。
+
+:::warning
+
+多符文转账时, 数组元素首先根据符文 ID 从小到大排序, 并进行 `delta` 编码。
+
+例如有如下两个符文 id
+
+```ts
+{block: 870000, tx: 99}
+{block: 860000, tx: 100}
+```
+
+排序结果为
+
+```ts
+{block: 860000, tx: 100}
+{block: 870000, tx: 99}
+```
+
+:::
+
+:::note Delta 编码
+
+Delta 编码是一种数据压缩技术, 首先存储第一个原始值作为参考点, 后续的值只存储与前一个的差值。这样可以有效减少数据存储空间。
+
+:::
+
 ## 符文名称
 
-符文名称遵循 `Base26` 编码规则, 故名称由大写字母 A-Z 组成。
+符文名称遵循 `Base26` 编码规则, 名称由大写字母 A-Z 组成, 经过 `Base26` 编码后, 可以得到一个整数值。
 
-每个字母从 0 开始, A=0, B=1, ···, Z=25, 再往后 AA = 1 \* 26 + 0 = 26, AB = 1 \* 26 + 1 = 27, 以此类推, 可以覆盖所有的符文名称。
+`Base26` 编码中, 每个字母从 0 开始, A=0, B=1, ···, Z=25, 再往后 AA = 1 \* 26 + 0 = 26, AB = 1 \* 26 + 1 = 27, 以此类推...
+
+实际计算中, 只需要遍历符文名称的每个字符, 计算每个字符的值, 然后累加即可。
 
 <RunesName />
 
-分隔符
+符文名称中可以添加 `•` 分隔符, 用于提高可读性。分隔符的位置可以计算出一个整数值。
 
-:::note
+```ts title="计算Spacer"
+static getSpacerFromFullSymbol(str: string) {
+  let res = 0
+
+  // 遍历到的分隔符位置
+  let spacersCnt = 0
+  // 遍历符文名称每个字符
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charAt(i)
+    // 当期字符为分隔符时, 计算整数值
+    if (char === '•') {
+      res += 1 << (i - 1 - spacersCnt)
+      spacersCnt++
+    }
+  }
+  return res
+}
+```
+
+分隔符的位置整数值由 `Tag` 枚举中的 `Spacers` 成员指定。
+
+## Runestone
+
+`Runestone` 是一种用于构建和解析比特币交易中 `OP_RETURN` 数据的中间数据结构。再解析交易时, 如果交易满足符文协议, 则会构建 `Runestone` 结构。并依据 `Runestone` 结构中的数据存储数据到数据库中。
+
+```rust
+pub struct Runestone {
+  pub edicts: Vec<Edict>,
+  pub etching: Option<Etching>,
+  pub mint: Option<RuneId>,
+  pub pointer: Option<u32>,
+}
+```
+
+- `edicts` - 交易中的转账数据
+- `etching` - 交易中的部署符文数据
+- `mint` - 交易中的铸造符文数据
+- `pointer` - 符文分配的到的输出索引
+
+<RunestoneDecipher />
+
+## 交易
+
+## 实例
 
 Etch:
 
@@ -216,340 +284,3 @@ https://mempool.space/testnet/tx/1ce9669c2d8ce23cc38bf3ccfe9ec34523af61399db1e23
 https://mempool.space/testnet/tx/46ad977c2c75860f675fbdf5dc4985cc604de3a93f827e0d07a626f27258e374
 
 :::
-
-数据存储在 `OP_RETURN` 中
-
-```rust
-let hex_string = "01000000000101b278668ba22304e8fa9f60137eb22734a307648a2eb50686d8984617bb4e95130300000000ffffffff04220200000000000022512099933aaf8f604bcca931f5d785db96dfb760ab23fbdcc634a159c7a16533504c0000000000000000096a5d0614c0a23314370008000000000000160014e5cb2de82fd4c136218c67a310fde879344c1bef1e2402000000000022512099933aaf8f604bcca931f5d785db96dfb760ab23fbdcc634a159c7a16533504c014016fbd97a208e985559eacb89b1ca13984db91efb4b1d5884f09c5adcb25e465b354690b7364f3f74c50fbd0956a2c5bdae42da51fc9680e46ae5ffebd49dd00c00000000";
-
-Transaction { version: Version(1), lock_time: 0 blocks, input: [TxIn { previous_output: OutPoint { txid: 13954ebb174698d88606b52e8a6407a33427b27e13609ffae80423a28b6678b2, vout: 3 }, script_sig: Script(), sequence: Sequence(0xffffffff), witness: Witness: { indices: 1, indices_start: 65, witnesses: [[0x16, 0xfb, 0xd9, 0x7a, 0x20, 0x8e, 0x98, 0x55, 0x59, 0xea, 0xcb, 0x89, 0xb1, 0xca, 0x13, 0x98, 0x4d, 0xb9, 0x1e, 0xfb, 0x4b, 0x1d, 0x58, 0x84, 0xf0, 0x9c, 0x5a, 0xdc, 0xb2, 0x5e, 0x46, 0x5b, 0x35, 0x46, 0x90, 0xb7, 0x36, 0x4f, 0x3f, 0x74, 0xc5, 0x0f, 0xbd, 0x09, 0x56, 0xa2, 0xc5, 0xbd, 0xae, 0x42, 0xda, 0x51, 0xfc, 0x96, 0x80, 0xe4, 0x6a, 0xe5, 0xff, 0xeb, 0xd4, 0x9d, 0xd0, 0x0c]] } }], output: [TxOut { value: 546 SAT, script_pubkey: Script(OP_PUSHNUM_1 OP_PUSHBYTES_32 99933aaf8f604bcca931f5d785db96dfb760ab23fbdcc634a159c7a16533504c) }, TxOut { value: 0 SAT, script_pubkey: Script(OP_RETURN OP_PUSHNUM_13 OP_PUSHBYTES_6 14c0a2331437) }, TxOut { value: 2048 SAT, script_pubkey: Script(OP_0 OP_PUSHBYTES_20 e5cb2de82fd4c136218c67a310fde879344c1bef) }, TxOut { value: 140318 SAT, script_pubkey: Script(OP_PUSHNUM_1 OP_PUSHBYTES_32 99933aaf8f604bcca931f5d785db96dfb760ab23fbdcc634a159c7a16533504c) }] }
-========================================
-[]
-========================================
-Some(Runestone(Runestone { edicts: [], etching: None, mint: Some(RuneId { block: 840000, tx: 55 }), pointer: None }))
-========================================
-{
-  "inscriptions": [],
-  "runestone": {
-    "Runestone": {
-      "edicts": [],
-      "etching": null,
-      "mint": "840000:55",
-      "pointer": null
-    }
-  }
-}
-```
-
-Runestone - Rune 协议的消息格式， 存储在交易中
-
-```rust
-pub struct Runestone {
-  pub edicts: Vec<Edict>,
-  pub etching: Option<Etching>,
-  pub mint: Option<RuneId>,
-  pub pointer: Option<u32>,
-}
-```
-
-部署符文
-
-```rust
-pub struct Etching {
-  pub divisibility: Option<u8>,
-  pub premine: Option<u128>,  // 预挖
-  pub rune: Option<Rune>, // 符文名称
-  pub spacers: Option<u32>, // 名称分隔符
-  pub symbol: Option<char>, // 缩写
-  pub terms: Option<Terms>, // 铸造规则
-  pub turbo: bool,
-}
-```
-
-```rust
-pub struct Terms {
-  pub amount: Option<u128>,
-  pub cap: Option<u128>,
-  pub height: (Option<u64>, Option<u64>),
-  pub offset: (Option<u64>, Option<u64>),
-}
-```
-
-转账指令
-
-```rust
-#[derive(Debug, PartialEq)]
-pub struct Runestone {
-    pub edicts: Vec<Edict>,         // 转账指令列表
-    pub etching: Option<Etching>,   // 铸造信息
-    pub pointer: Option<u32>,       // 默认输出指针
-}
-
-// 转账指令
-#[derive(Copy, Clone, Debug, PartialEq)]
-pub struct Edict {
-    pub id: RuneId,     // Rune ID
-    pub amount: u128,   // 转账金额
-    pub output: u32,    // 目标输出索引
-}
-
-// 铸造信息
-#[derive(Debug, PartialEq)]
-pub struct Etching {
-    pub rune: Rune,             // Rune 属性
-    pub premine: Option<u128>,  // 预挖数量
-}
-```
-
-`Runestone` 是一个用于解析和处理比特币交易中特殊数据的结构，主要用于处理 Runes 协议的数据编码。
-
-交易解码 `crates/ordinals/src/runestone.rs`
-
-```rust
-pub fn decipher(transaction: &Transaction) -> Option<Artifact> {
-    // 1. 解析 payload
-    // 2. 解析整数数组
-    // 3. 解析消息结构
-    // 4. 解析标志和字段
-    // 5. 构建结果
-}
-```
-
-```rust
-pub(super) fn index_runes(&mut self, tx_index: u32, tx: &Transaction, txid: Txid) -> Result<()> {
-    // 解析交易中 Runestone 数据
-    let artifact = Runestone::decipher(tx);
-
-    // 获取未分配的 rune 余额
-    let mut unallocated = self.unallocated(tx)?;
-
-    // // 为每个交易输出创建一个空的分配映射
-    let mut allocated: Vec<HashMap<RuneId, Lot>> = vec![HashMap::new(); tx.output.len()];
-
-    if let Some(artifact) = &artifact {
-      // 处理铸造操作
-      if let Some(id) = artifact.mint() {
-        if let Some(amount) = self.mint(id)? {
-          // 更新未分配余额
-          *unallocated.entry(id).or_default() += amount;
-
-          // 发送铸造事件
-          if let Some(sender) = self.event_sender {
-            sender.blocking_send(Event::RuneMinted {
-              block_height: self.height,
-              txid,
-              rune_id: id,
-              amount: amount.n(),
-            })?;
-          }
-        }
-      }
-
-      // 处理新创建的 Rune
-      let etched = self.etched(tx_index, tx, artifact)?;
-
-      if let Artifact::Runestone(runestone) = artifact {
-        if let Some((id, ..)) = etched {
-          // 添加预挖数量到未分配余额
-          *unallocated.entry(id).or_default() +=
-            runestone.etching.unwrap().premine.unwrap_or_default();
-        }
-
-        // 处理转账
-        for Edict { id, amount, output } in runestone.edicts.iter().copied() {
-          let amount = Lot(amount);
-
-          // edicts with output values greater than the number of outputs
-          // should never be produced by the edict parser
-          let output = usize::try_from(output).unwrap();
-          assert!(output <= tx.output.len());
-
-          // // 确定 Rune ID
-          let id = if id == RuneId::default() {
-            let Some((id, ..)) = etched else {
-              continue;
-            };
-
-            id
-          } else {
-            id
-          };
-
-          // 获取可用余额
-          let Some(balance) = unallocated.get_mut(&id) else {
-            continue;
-          };
-
-          // 分配函数
-          let mut allocate = |balance: &mut Lot, amount: Lot, output: usize| {
-            if amount > 0 {
-              *balance -= amount;
-              *allocated[output].entry(id).or_default() += amount;
-            }
-          };
-
-          // 处理特殊输出情况
-          if output == tx.output.len() {
-            // find non-OP_RETURN outputs
-            let destinations = tx
-              .output
-              .iter()
-              .enumerate()
-              .filter_map(|(output, tx_out)| {
-                (!tx_out.script_pubkey.is_op_return()).then_some(output)
-              })
-              .collect::<Vec<usize>>();
-
-            // 余额分配策略：
-            if !destinations.is_empty() {
-              if amount == 0 {
-                // if amount is zero, divide balance between eligible outputs
-                // 如果金额为 0，平均分配余额
-                let amount = *balance / destinations.len() as u128;
-                let remainder = usize::try_from(*balance % destinations.len() as u128).unwrap();
-
-                for (i, output) in destinations.iter().enumerate() {
-                  allocate(
-                    balance,
-                    if i < remainder { amount + 1 } else { amount },
-                    *output,
-                  );
-                }
-              } else {
-                // if amount is non-zero, distribute amount to eligible outputs
-                // // 如果金额不为 0，按指定金额分配
-                for output in destinations {
-                  allocate(balance, amount.min(*balance), output);
-                }
-              }
-            }
-          } else {
-            // Get the allocatable amount
-            let amount = if amount == 0 {
-              *balance
-            } else {
-              amount.min(*balance)
-            };
-
-            allocate(balance, amount, output);
-          }
-        }
-      }
-
-      if let Some((id, rune)) = etched {
-        self.create_rune_entry(txid, artifact, id, rune)?;
-      }
-    }
-
-    let mut burned: HashMap<RuneId, Lot> = HashMap::new();
-
-    if let Some(Artifact::Cenotaph(_)) = artifact {
-      // 所有未分配的都被燃烧
-      for (id, balance) in unallocated {
-        *burned.entry(id).or_default() += balance;
-      }
-    } else {
-      let pointer = artifact
-        .map(|artifact| match artifact {
-          Artifact::Runestone(runestone) => runestone.pointer,
-          Artifact::Cenotaph(_) => unreachable!(),
-        })
-        .unwrap_or_default();
-
-      // assign all un-allocated runes to the default output, or the first non
-      // OP_RETURN output if there is no default
-      if let Some(vout) = pointer
-        .map(|pointer| pointer.into_usize())
-        .inspect(|&pointer| assert!(pointer < allocated.len()))
-        .or_else(|| {
-          tx.output
-            .iter()
-            .enumerate()
-            .find(|(_vout, tx_out)| !tx_out.script_pubkey.is_op_return())
-            .map(|(vout, _tx_out)| vout)
-        })
-      {
-        for (id, balance) in unallocated {
-          if balance > 0 {
-            *allocated[vout].entry(id).or_default() += balance;
-          }
-        }
-      } else {
-        for (id, balance) in unallocated {
-          if balance > 0 {
-            *burned.entry(id).or_default() += balance;
-          }
-        }
-      }
-    }
-
-    // update outpoint balances
-    // 更新输出点余额：
-    let mut buffer: Vec<u8> = Vec::new();
-    for (vout, balances) in allocated.into_iter().enumerate() {
-      if balances.is_empty() {
-        continue;
-      }
-
-      // increment burned balances
-      // 处理 OP_RETURN 输出（燃烧）
-      if tx.output[vout].script_pubkey.is_op_return() {
-        for (id, balance) in &balances {
-          *burned.entry(*id).or_default() += *balance;
-        }
-        continue;
-      }
-
-      // 编码和存储余额
-      buffer.clear();
-
-      let mut balances = balances.into_iter().collect::<Vec<(RuneId, Lot)>>();
-
-      // Sort balances by id so tests can assert balances in a fixed order
-      balances.sort();
-
-      let outpoint = OutPoint {
-        txid,
-        vout: vout.try_into().unwrap(),
-      };
-
-      for (id, balance) in balances {
-        Index::encode_rune_balance(id, balance.n(), &mut buffer);
-
-        // 发送转账事件
-        if let Some(sender) = self.event_sender {
-          sender.blocking_send(Event::RuneTransferred {
-            outpoint,
-            block_height: self.height,
-            txid,
-            rune_id: id,
-            amount: balance.0,
-          })?;
-        }
-      }
-
-      // // 更新数据库
-      self
-        .outpoint_to_balances
-        .insert(&outpoint.store(), buffer.as_slice())?;
-    }
-
-    // increment entries with burned runes
-    // // 更新燃烧记录
-    for (id, amount) in burned {
-      *self.burned.entry(id).or_default() += amount;
-
-      // 发送燃烧事件
-      if let Some(sender) = self.event_sender {
-        sender.blocking_send(Event::RuneBurned {
-          block_height: self.height,
-          txid,
-          rune_id: id,
-          amount: amount.n(),
-        })?;
-      }
-    }
-
-    Ok(())
-  }
-```
