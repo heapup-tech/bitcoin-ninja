@@ -265,6 +265,24 @@ pub struct Runestone {
 
 ## 交易
 
+符文的交易同样需要分为两笔交易:
+
+- `commit` 交易
+- `reveal` 交易
+
+### 部署
+
+使用特定的脚本, 构建 Taproot 地址。
+
+```ts
+OP_PUSHBYTES_32 internalPubKey
+OP_CHECKSIG
+OP_0
+OP_IF
+  Base26(RuneName)
+OP_ENDIF
+```
+
 ## 实例
 
 Etch:

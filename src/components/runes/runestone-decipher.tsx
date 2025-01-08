@@ -101,7 +101,7 @@ export default function RunestoneDecipher() {
         <div className='text-destructive'>解析失败</div>
       ) : (
         <CodeBlock
-          code={(runestone && JSON.stringify(runestone, replacer, 2)) || ''}
+          code={(runestone && JSON.stringify(runestone, replacer, 2)) || '...'}
           language='json'
         />
       )}
