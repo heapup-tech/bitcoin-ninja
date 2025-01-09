@@ -5,8 +5,8 @@ import ContentCard from '../content-card'
 import InteractionCard from '../interaction-card'
 import { Input } from '../ui/input'
 
-export default function LEB128Encoder() {
-  const [value, setValue] = useState<bigint>(8256n)
+export default function LEB128Encoder({ initValue }: { initValue: bigint }) {
+  const [value, setValue] = useState<bigint>(initValue || 8256n)
   const [encodedValue, setEncodedValue] = useState<number[]>([])
 
   useEffect(() => {

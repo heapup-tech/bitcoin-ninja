@@ -338,3 +338,35 @@ OP_ENDIF
 ```
 
 ### 铸造
+
+铸造符文时由于不需要在 `Witness` 中存放数据, 所以不再需要 `Taproot` 地址。而改用相对较省 Gas 的 `P2WPKH` 地址
+
+随机生成临时的 `P2WPKH` 地址, 用于接收 `Commit` 交易的 `UTXO`。之后花费此 `UTXO` 并输出包含铸造符文信息的 `OP_RETURN` 类型的 `UTXO`。
+
+`OP_RETURN` 数据中只需要包含以 `Mint` 为 `Key`, 部署符文所在的区块和交易序号为 `Value` 的数据即可。
+
+例如: 铸造符文 [CHATGPT•CATS](https://unisat.io/runes/detail/CHATGPT%E2%80%A2CATS), 其 RuneId 为
+
+```ts
+{
+  "block": 877767,
+  "tx": 2718
+}
+```
+
+用户地址 `bc1pt0ld200lnevf97mmscfkp0l96pkj3hurxcxr93q8lc80tz0m2pdqxz4htr` 首先发送一笔 [Commit](https://mempool.space/tx/c875d469db70e1d5db5620f37c38c4f31208fca672ccaa01fc1e65efe4541524) 交易到临时生成的 `P2WPKH` 地址
+
+之后花费发送给 `P2WPKH` 地址的 `UTXO` 并输出包含铸造符文信息的 `OP_RETURN` 类型的 `UTXO`。`OP_RETURN` 数据为
+
+```text
+6a5d 07 14c7c935 149e15
+```
+
+- 6a5d - 表示 `OP_RETURN OP_13`
+- 07 - 表示后续数据的字节长度
+- 14 - 十进制值为20, 表示Tag 枚举中 `Mint` 的值
+- c7c935 - 877767 的 `LEB128` 编码结果
+- 14 - 十进制值为20, 表示Tag 枚举中 `Mint` 的值
+- 9e15 - 2718 的 `LEB128` 编码结果
+
+<LEB128Encoder initValue={877767n} />
