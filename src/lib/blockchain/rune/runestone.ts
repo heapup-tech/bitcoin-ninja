@@ -30,8 +30,7 @@ export default class RuneStone {
       transaction,
       integers
     )
-
-    // console.log(fields)
+    console.log(JSON.stringify(Object.fromEntries(fields)))
 
     const flags = fields.get(BigInt(Tag.Flags))
 

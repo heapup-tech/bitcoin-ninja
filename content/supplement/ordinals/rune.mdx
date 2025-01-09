@@ -149,13 +149,13 @@ pub struct RuneId {
 - `block` - 部署符文所在的区块高度
 - `tx` - 部署符文所在的区块的交易序号
 
-例如在 860000 区块高度部署了符文, 区块内的交易序号在 100, 则铸造符文时, 需要构建的 `Key-Value` 数据为:
+例如在 860000 区块高度部署了符文, 区块内的交易列表序号在 100, 则铸造符文时, 需要构建的 `Key-Value` 数据为:
 
 ```ts
 20: [860000, 100]
 ```
 
-20 是 `Tag` 枚举中 `Mint` 字段的成员值。
+20 是 `Tag` 枚举中 `Mint` 字段的成员值。`[860000, 100]` 表示 `RuneId`
 
 实际存储时, 20 依次拼接上 `[860000, 100]` 数组中每个元素经过 `LEB128` 编码结果。
 
@@ -241,7 +241,7 @@ static getSpacerFromFullSymbol(str: string) {
 }
 ```
 
-分隔符的位置整数值由 `Tag` 枚举中的 `Spacers` 成员指定。
+分隔符的位置由 `Tag` 枚举中的 `Spacers` 成员指定。
 
 ## Runestone
 
@@ -265,40 +265,76 @@ pub struct Runestone {
 
 ## 交易
 
-符文的交易同样需要分为两笔交易:
+为了防止抢跑, 符文的交易同样需要分为两笔交易:
 
 - `commit` 交易
 - `reveal` 交易
 
 ### 部署
 
-使用特定的脚本, 构建 Taproot 地址。
+部署符文时, 首先需要用特定的脚本生成 `Taproot` 地址, 作为 `Commit` 交易的接收地址, 其次花费发送给 `Taproot` 地址的 `UTXO` 并输出包含部署符文数据的 `OP_RETURN` 类型的 `UTXO`。
+
+生成 `Taproot` 地址使用的脚本树中只有一个花费脚本, 其内容根据是否包括符文 LOGO 分为两种情况:
+
+**不包含符文LOGO**
 
 ```ts
-OP_PUSHBYTES_32 internalPubKey
+OP_PUSHBYTES_32 InternalPubKey
 OP_CHECKSIG
 OP_0
 OP_IF
-  Base26(RuneName)
+  <LE(Base26(RuneName))> // 不含分隔符的符文名称 Base26 编码16进制格式小端序
 OP_ENDIF
 ```
 
-## 实例
+**包含符文LOGO**
 
-Etch:
+包含符文的 LOGO 图片时, 图片数据以铭文的形式存储在见证数据中。
 
-https://mempool.space/testnet/tx/2ea9caa744cf5d371960d3531f7f2fb432babedb4102598ed7d898dcd2aa0a0f
+```ts
+OP_PUSHBYTES_32 InternalPubKey
+OP_CHECKSIG
+OP_0
+OP_IF
+  OP_PUSHBYTES_3 ord
+  OP_PUSHBYTES_1 01
+  OP_PUSHBYTES_9 image/png
+  OP_PUSHBYTES_1 0d
+  OP_PUSHBYTES_9 <LE(Base26(RuneName))>
+  OP_0
+  <IMAGE DATA>
+OP_ENDIF
+```
 
-https://mempool.space/testnet/tx/009462cd78e9500d69f4d22322d1d68857864b150eac954c27d69d2efebbbe16
+通过脚本树生成 `Taproot` 地址后, 发送 `Commit` 交易, 用来向 `Taproot` 地址转账并生成 `UTXO`。
 
-:::
+`Reveal` 交易则采用**脚本路径花费**发送给 `Taproot` 地址的 `UTXO`, 并构建符合要求的 `witness` 数据, 同时输出包含部署符文信息 `OP_RETURN` 类型的 `UTXO`。
 
-:::note
+例如: 符文 [CHATGPT•CATS](https://unisat.io/runes/detail/CHATGPT%E2%80%A2CATS), 其 `Reveal` 交易中的 `OP_RETURN` 数据为
 
-Mint:
+```text
+6a5d22020304b6a9fc9abea06a034005b1e8070680c684ce82020ac0de810a08ac9e041602
+```
 
-https://mempool.space/testnet/tx/1ce9669c2d8ce23cc38bf3ccfe9ec34523af61399db1e2313e9baf88d4266938
+去除开头的 `6a5d` 表示 `OP_RETURN OP_13`, 剩余数据可以根据 `Tag` 枚举中的成员值进行分组
 
-https://mempool.space/testnet/tx/46ad977c2c75860f675fbdf5dc4985cc604de3a93f827e0d07a626f27258e374
+```text
+22  0203  04b6a9fc9abea06a  0340  05b1e807  0680c684ce8202  0ac0de810a  08ac9e04  1602
+```
 
-:::
+22 转成10进制为 34, 表示后续数据的字节长度, 剩余每一组都可以组成以 `Tag` 枚举中成员为 `Key` 结构。
+
+```json
+{
+  "22": [2], // Pointer
+  "3": [64], // Spacers
+  "5": [128049], // Symbol
+  "10": [21000000], // Amount
+  "6": [69420000000], // Premine
+  "8": [69420], // Cap
+  "4": [467309141365942], // Rune
+  "2": [3] // Flags
+}
+```
+
+### 铸造
