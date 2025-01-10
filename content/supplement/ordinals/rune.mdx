@@ -1,6 +1,5 @@
 ---
 title: Runes
-draft: true
 ---
 
 `Runes` 协议, 中文翻译为符文, 由 [Casey Rodarmor](https://x.com/rodarmor) 于比特币第四次减半区块高度 840000 正式发布。不同于 Brc20, `Runes` 协议数据存储在 [OP_RETURN](technical/script/op-return) 中。但 `OP_RETURN` 最多只能承载 80 字节的数据，因此 `Runes` 协议需要对数据进行压缩编码。
@@ -269,8 +268,6 @@ pub struct Runestone {
 - `etching` - 交易中的部署符文数据
 - `mint` - 交易中的铸造符文数据
 - `pointer` - 符文分配的到的输出索引
-
-<RunestoneDecipher />
 
 ## 交易
 

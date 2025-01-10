@@ -1,11 +1,12 @@
 'use client'
+
 import varint from '@/lib/blockchain/rune/varint'
 import { useEffect, useState } from 'react'
 import ContentCard from '../content-card'
 import InteractionCard from '../interaction-card'
 import { Input } from '../ui/input'
 
-export default function LEB128Encoder({ initValue }: { initValue: bigint }) {
+export default function LEB128Encoder({ initValue }: { initValue?: bigint }) {
   const [value, setValue] = useState<bigint>(initValue || 8256n)
   const [encodedValue, setEncodedValue] = useState<number[]>([])
 
