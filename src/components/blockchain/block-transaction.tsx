@@ -8,8 +8,6 @@ export const revalidate = 'force-cache'
 export default async function BlockTransaction({ height }: { height: number }) {
   const blockhash = await rpcClient.call('getblockhash', [height])
 
-  console.log('blockhash', blockhash)
-
   // const block = await rpcClient.call('getblock', [blockhash, 1])
 
   const block = {
