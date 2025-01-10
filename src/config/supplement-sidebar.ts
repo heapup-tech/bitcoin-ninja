@@ -19,12 +19,7 @@ export const supplementSidebar: SidebarNavItem[] = [
     ]
   },
   {
-    title: 'Atomicals'
-  },
-  {
-    title: '闪电网络'
-  },
-  {
-    title: '染色协议'
+    title: '闪电网络',
+    href: '/supplement/lightning'
   }
 ]

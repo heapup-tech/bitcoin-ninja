@@ -17,7 +17,8 @@
     "dev": "next dev",
     "format": "prettier -w --ignore-unknown .",
     "lint": "next lint",
-    "start": "next start"
+    "start": "next start",
+    "test": "vitest"
   },
   "dependencies": {
     "@bitcoinerlab/secp256k1": "^1.1.1",
@@ -81,6 +82,7 @@
     "@types/node": "^20.16.10",
     "@types/react": "^18.3.10",
     "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.4",
     "eslint": "^8.57.1",
     "eslint-config-next": "14.2.5",
     "mdast": "^3.0.0",
@@ -102,7 +104,8 @@
     "unist-builder": "^4.0.0",
     "unist-util-find-after": "^5.0.0",
     "unist-util-find-between-all": "^1.0.5",
-    "unist-util-visit": "^5.0.0"
+    "unist-util-visit": "^5.0.0",
+    "vitest": "^2.1.8"
   },
   "packageManager": "pnpm@9.12.2"
 }

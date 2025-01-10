@@ -1,13 +1,428 @@
 ---
-title: Rune
+title: Runes
+draft: true
 ---
 
-#### TODO
+`Runes` 协议, 中文翻译为符文, 由 [Casey Rodarmor](https://x.com/rodarmor) 于比特币第四次减半区块高度 840000 正式发布。不同于 Brc20, `Runes` 协议数据存储在 [OP_RETURN](technical/script/op-return) 中。但 `OP_RETURN` 最多只能承载 80 字节的数据，因此 `Runes` 协议需要对数据进行压缩编码。
 
-数据存储在 `OP_RETURN` 中
+## 数据编码
 
-https://mempool.space/testnet/tx/1ce9669c2d8ce23cc38bf3ccfe9ec34523af61399db1e2313e9baf88d4266938
+`OP_RETURN` 中的数据以 **Key-Value** 的形式拼接存储, `Key` 的值定义在 `Tag` 枚举中:
 
-https://mempool.space/testnet/tx/46ad977c2c75860f675fbdf5dc4985cc604de3a93f827e0d07a626f27258e374
+```rust
+pub(super) enum Tag {
+  Body = 0,
+  Flags = 2,
+  Rune = 4,
+  Premine = 6,
+  Cap = 8,
+  Amount = 10,
+  HeightStart = 12,
+  HeightEnd = 14,
+  OffsetStart = 16,
+  OffsetEnd = 18,
+  Mint = 20,
+  Pointer = 22,
+  #[allow(unused)]
+  Cenotaph = 126,
 
-<TransactionSplitTab hex='02000000000102734b56605c57e3511a3dc52c5e5a50217104bb24d8e433dc78926628c56c8a4f0000000000ffffffff734b56605c57e3511a3dc52c5e5a50217104bb24d8e433dc78926628c56c8a4f0200000000ffffffff04220200000000000022512099b87db19a8b792411ae5bff483fe43ff68de5318d286aafd054e9a3da98190c22020000000000001600147d1c5da3f6b93ee9626b0c6713465d4bc8333e7e0000000000000000156a0952554e455f54455354090083ed9fceff016401567001000000000022512099b87db19a8b792411ae5bff483fe43ff68de5318d286aafd054e9a3da98190c0140cb133b6c63a58db3db55698be2d0dab92d9c2387d395d9125eafccb2f5acd766352e7f9cccd702705a779dfc924d88f40b96b945fcf92f7483eeb7b5435da51c0140336ba9a13b0b9804df48cc1e916ed1bb0653e549f16554cc993fb97880e0d112434ee492351ffaac47293d9664bfb9dd6d2d2b65332004c0b9d3ab2c9b7727f200000000' />
+  Divisibility = 1,
+  Spacers = 3,
+  Symbol = 5,
+  #[allow(unused)]
+  Nop = 127,
+}
+```
+
+具体每个 `Key` 解释见下文实际操作中的数据结构。`Value` 值则是整数数组。
+
+例如: 有如下 `Key-Value` 数据:
+
+```ts
+1: [ 38 ], // `Divisibility` 的值为 [38]
+2: [ 3 ], // `Flags` 的值为 [3]
+3: [ 8256 ] // Spacers` 的值为 [8256]
+```
+
+在转换成 `OP_RETURN` 数据时, 会依次拼接 `Key` 和 **`LEB128` 编码**后的 `Value`。
+
+```ts
+1: [ 38 ], // 0x01: 0x26
+2: [ 3 ], // 0x02: 0x03
+3: [ 8256 ] // 0x03: 0xc040
+```
+
+最终拼接结果是 `0126 0203 03c040`。
+
+:::tip LEB128
+
+LEB128 编码, 即 `Little Endian Base 128` 编码, 是一种变长编码方式。在 LEB128 编码中, 每个字节的最高位用于标识是否为最后一个字节, 如果最高位为 1, 则表示后面还有字节, 否则表示当前字节为最后一个字节。每个字节的其余 7 位用于存储数据。
+
+:::
+
+:::warning 为什么要 LEB128 编码
+
+如果不进行 `LEB128` 编码, 直接拼接 `Key` 和 `Value`。为了正确读取并解析数据, 必然还需要存储每个 `Key` 对应 `Value` 数组的长度以及每个元素之间的分隔符。这样会增加数据的存储空间, 而 `OP_RETURN` 的存储空间是有限的。使用 `LEB128` 编码后, 可以有效减少数据的存储空间。
+
+缺点是数组中有多个元素时, 数组中的每个元素都需要有 `Key` 拼接, 需要占用额外的存储空间。
+
+:::
+
+LEB128 编解码实现见 [varint.ts]()
+
+<LEB128Encoder />
+
+## 部署
+
+部署 `Runes` 也称作蚀刻, 结构定义在 `Etching` 结构体中
+
+```rust
+pub struct Etching {
+  pub divisibility: Option<u8>,
+  pub premine: Option<u128>,
+  pub rune: Option<Rune>,
+  pub spacers: Option<u32>,
+  pub symbol: Option<char>,
+  pub terms: Option<Terms>,
+  pub turbo: bool,
+}
+pub struct Terms {
+  pub amount: Option<u128>,
+  pub cap: Option<u128>,
+  pub height: (Option<u64>, Option<u64>),
+  pub offset: (Option<u64>, Option<u64>),
+}
+```
+
+- `divisibility` - 精度
+- `premine` - 预挖数量
+- `rune` - 符文名称, 整数表示, 见下文 [符文名称](#符文名称)
+- `spacers` - 符文名称之间的 `•` 分隔符位置的整数表示
+- `symbol` - 缩写, 单个 Unicode 字符, 包括 Emoji 表情
+- `terms` - 铸造规则
+  - `amount` - 每次铸造的数量
+  - `cap` - 可铸造的总次数
+  - `height` - 元组结构, 表示在指定区块高度范围内可铸造
+  - `offset` - 元组结构, 表示相对于部署 Runes 的区块高度的偏移量范围内可铸造
+- `turbo` - 设置为 `true` 时, 表示此次部署支持未来的协议变更
+
+除了 `turbo` 字段外, 其他结构体字段和 `Tag` 枚举成员都有对应。因此可以根据 `Etching` 实例构建符合要求的 `Key-Value` 数据。
+
+另外 `Tag` 枚举中存在 `Flags` 成员, 用于标识 `OP_RETURN` 数据中存储的是什么内容, 其值则根据 `Flag` 枚举确定。
+
+```rust
+pub(super) enum Flag {
+  Etching = 0,
+  Terms = 1,
+  Turbo = 2,
+  #[allow(unused)]
+  Cenotaph = 127,
+}
+```
+
+`Flags` 值根据掩码的方式确定。
+
+例如: `OP_RETURN` 中存在 `Terms` 和 `Turbo` 数据, 则:
+
+- `Terms` 为 `true`, 则 `Flags` 值为 $0000 \ 0010$, 倒数第一位设置为 1;
+- `Turbo` 为 `true`, 则 `Flags` 值为 $0000 \ 0100$, 倒数第二位设置为 1;
+
+最终 `Flags` 值为 $0000 0100 \ \& \ 0000 0010 = 0000 \ 0110$, 表示 `OP_RETURN` 数据中存在 `Turbo` 和 `Terms` 数据。
+
+:::note
+
+`Flag` 最大值为 127, 最多可以支持 128 种不同的标识。尽管目前只定义了 4 种。
+
+:::
+
+## 铸造
+
+铸造符文, 则只需要设置 `Tag` 枚举中的 `Mint` 成员, 值为符文ID, 其结构为:
+
+```rust
+pub struct RuneId {
+  pub block: u64,
+  pub tx: u32,
+}
+```
+
+- `block` - 部署符文所在的区块高度
+- `tx` - 部署符文所在的区块的交易序号
+
+例如: 符文交易在 860000 区块高度被打包在区块中, 且在区块内的交易序号是 100, 则符文ID为
+
+```json
+{
+  "block": 860000,
+  "tx": 100
+}
+```
+
+铸造符文时, 需要构建的 `Key-Value` 数据为:
+
+```ts
+20: [860000, 100]
+```
+
+20 是 `Tag` 枚举中 `Mint` 字段的成员值。`[860000, 100]` 表示 `RuneId`
+
+实际存储时, 20 依次拼接上 `[860000, 100]` 数组中每个元素经过 `LEB128` 编码结果。
+
+- 860000 经过 `LEB128` 编码后结果为 `[224, 190, 52]` 转换成16进制为 `[e0, be, 34]`
+- 100 经过 `LEB128` 编码后结果为 `[100]` 转换成16进制为 `[64]`
+
+最终拼接结果为 `14e0be341464`
+
+## 转账
+
+转移符文数据对应的 `Key` 是 `Tag` 枚举中的 `Body` 成员, 值为数组结构, 数组中的每个元素都是 `Edict` 结构体
+
+```rust
+pub struct Edict {
+  pub id: RuneId,
+  pub amount: u128,
+  pub output: u32,
+}
+```
+
+- `id` - 符文 ID
+- `amount` - 转账金额
+- `output` - 接收符文的输出索引
+
+由于是数组结构, 所以可以在一笔交易中可以包含多种符文的转账。并且 `Body` 数据是 `OP_RETURN` 最后一段数据。
+
+`Tag` 枚举中的 `Body` 成员值为 0, 因此以 `00` 开头。并且由于是最后一段数据, 所以 `00` 不需要依次与数组中的每个元素拼接。只需要依次拼接数组中每个元素的 `LEB128` 编码后的数据即可。
+
+:::warning
+
+多符文转账时, 数组元素首先根据符文 ID 从小到大排序, 并进行 `delta` 编码。
+
+例如有如下两个符文 id
+
+```ts
+{block: 870000, tx: 99}
+{block: 860000, tx: 100}
+```
+
+排序结果为
+
+```ts
+{block: 860000, tx: 100}
+{block: 870000, tx: 99}
+```
+
+:::
+
+:::note Delta 编码
+
+Delta 编码是一种数据压缩技术, 首先存储第一个原始值作为参考点, 后续的值只存储与前一个的差值。这样可以有效减少数据存储空间。
+
+:::
+
+## 符文名称
+
+符文名称遵循 `Base26` 编码规则, 名称由大写字母 A-Z 组成, 经过 `Base26` 编码后, 可以得到一个整数值。
+
+`Base26` 编码中, 每个字母从 0 开始, A=0, B=1, ···, Z=25, 再往后 AA = 1 \* 26 + 0 = 26, AB = 1 \* 26 + 1 = 27, 以此类推...
+
+实际计算中, 只需要遍历符文名称的每个字符, 计算每个字符的值, 然后累加即可。
+
+<RunesName />
+
+符文名称中可以添加 `•` 分隔符, 用于提高可读性。分隔符的位置可以计算出一个整数值。
+
+```ts title="计算Spacer"
+static getSpacerFromFullSymbol(str: string) {
+  let res = 0
+
+  // 遍历到的分隔符位置
+  let spacersCnt = 0
+  // 遍历符文名称每个字符
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charAt(i)
+    // 当期字符为分隔符时, 计算整数值
+    if (char === '•') {
+      res += 1 << (i - 1 - spacersCnt)
+      spacersCnt++
+    }
+  }
+  return res
+}
+```
+
+分隔符的位置由 `Tag` 枚举中的 `Spacers` 成员指定。
+
+## Runestone
+
+`Runestone` 是一种用于构建和解析比特币交易中 `OP_RETURN` 数据的中间数据结构。再解析交易时, 如果交易满足符文协议, 则会构建 `Runestone` 结构。并依据 `Runestone` 结构中的数据存储数据到数据库中。
+
+```rust
+pub struct Runestone {
+  pub edicts: Vec<Edict>,
+  pub etching: Option<Etching>,
+  pub mint: Option<RuneId>,
+  pub pointer: Option<u32>,
+}
+```
+
+- `edicts` - 交易中的转账数据
+- `etching` - 交易中的部署符文数据
+- `mint` - 交易中的铸造符文数据
+- `pointer` - 符文分配的到的输出索引
+
+<RunestoneDecipher />
+
+## 交易
+
+为了防止抢跑, 符文的交易同样需要分为两笔交易:
+
+- `commit` 交易
+- `reveal` 交易
+
+### 部署
+
+部署符文时, 首先需要用特定的脚本生成 `Taproot` 地址, 作为 `Commit` 交易的接收地址, 其次花费发送给 `Taproot` 地址的 `UTXO` 并输出包含部署符文数据的 `OP_RETURN` 类型的 `UTXO`。
+
+生成 `Taproot` 地址使用的脚本树中只有一个花费脚本, 其内容根据是否包括符文 LOGO 分为两种情况:
+
+**不包含符文LOGO**
+
+```ts
+OP_PUSHBYTES_32 InternalPubKey
+OP_CHECKSIG
+OP_0
+OP_IF
+  <LE(Base26(RuneName))> // 不含分隔符的符文名称 Base26 编码后的小端序16进制格式
+OP_ENDIF
+```
+
+**包含符文LOGO**
+
+包含符文的 LOGO 图片时, 图片数据以铭文的形式存储在见证数据中。
+
+```ts
+OP_PUSHBYTES_32 InternalPubKey
+OP_CHECKSIG
+OP_0
+OP_IF
+  OP_PUSHBYTES_3 ord
+  OP_PUSHBYTES_1 01
+  OP_PUSHBYTES_9 image/png
+  OP_PUSHBYTES_1 0d
+  OP_PUSHBYTES_9 <LE(Base26(RuneName))>
+  OP_0
+  <IMAGE DATA>
+OP_ENDIF
+```
+
+通过脚本树生成 `Taproot` 地址后, 发送 `Commit` 交易, 用来向 `Taproot` 地址转账并生成 `UTXO`。
+
+`Reveal` 交易则采用**脚本路径花费**发送给 `Taproot` 地址的 `UTXO`, 并构建符合要求的 `witness` 数据, 同时输出包含部署符文信息 `OP_RETURN` 类型的 `UTXO`。
+
+例如: 符文 [CHATGPT•CATS](https://unisat.io/runes/detail/CHATGPT%E2%80%A2CATS), 其 `Reveal` 交易中的 `OP_RETURN` 数据为
+
+```text
+6a5d22020304b6a9fc9abea06a034005b1e8070680c684ce82020ac0de810a08ac9e041602
+```
+
+去除开头的 `6a5d` 表示 `OP_RETURN OP_13`, 剩余数据可以根据 `Tag` 枚举中的成员值进行分组
+
+```text
+22  0203  04b6a9fc9abea06a  0340  05b1e807  0680c684ce8202  0ac0de810a  08ac9e04  1602
+```
+
+22 转成10进制为 34, 表示后续数据的字节长度, 剩余每一组都可以组成以 `Tag` 枚举中成员为 `Key` 结构。
+
+```json
+{
+  "2": [3], // Flags
+  "4": [467309141365942], // Rune Name
+  "3": [64], // Spacers
+  "5": [128049], // Symbol
+  "6": [69420000000], // Premine
+  "10": [21000000], // Amount
+  "8": [69420], // Cap
+  "22": [2] // Pointer
+}
+```
+
+### 铸造
+
+铸造符文时由于不需要在 `Witness` 中存放数据, 通常 `Commit` 交易不再需要 `Taproot` 地址。而改用相对简单的 `P2WPKH` 地址, 当然也可以继续使用 `Taproot` 地址。
+
+随机生成临时的 `P2WPKH` 地址, 用于接收 `Commit` 交易的 `UTXO`。之后花费此 `UTXO` 并输出包含铸造符文信息的 `OP_RETURN` 类型的 `UTXO`。
+
+`OP_RETURN` 数据中只需要包含以 `Mint` 为 `Key`, 部署符文所在的区块和交易序号为 `Value` 的数据即可。
+
+例如: 铸造符文 [CHATGPT•CATS](https://unisat.io/runes/detail/CHATGPT%E2%80%A2CATS), 其 `RuneId` 为
+
+```ts
+{
+  "block": 877767,
+  "tx": 2718
+}
+```
+
+用户地址 `bc1pt0ld200lnevf97mmscfkp0l96pkj3hurxcxr93q8lc80tz0m2pdqxz4htr` 首先发送一笔 [Commit](https://mempool.space/tx/c875d469db70e1d5db5620f37c38c4f31208fca672ccaa01fc1e65efe4541524) 交易到临时生成的 `P2WPKH` 地址
+
+之后发送 [Reveal](38abbca8c6e470ed2373b0f0c14925e262545e2d6ac2a17d1811153183a43a06) 交易用来花费发送给 `P2WPKH` 地址的 `UTXO` 并输出包含铸造符文信息的 `OP_RETURN` 类型的 `UTXO`。`OP_RETURN` 数据为
+
+```text
+6a5d 07 14c7c935 149e15
+```
+
+- 6a5d - 表示 `OP_RETURN OP_13`
+- 07 - 表示后续数据的字节长度
+- 14 - 十进制值为20, 表示Tag 枚举中 `Mint` 的值
+- c7c935 - 877767 的 `LEB128` 编码结果
+- 14 - 十进制值为20, 表示Tag 枚举中 `Mint` 的值
+- 9e15 - 2718 的 `LEB128` 编码结果
+
+<LEB128Encoder initValue={877767n} />
+
+### 转账
+
+由于转账不再有抢跑等问题, 所以不再需要发送两笔交易。只需要以绑定符文的 `UTXO` 作为输入, 并输出包含转账数据的 `OP_RETURN` 类型的 `UTXO`
+
+`OP_RETURN` 数据结构如下:
+
+```text
+6a5d <len> 00 <RuneId> <Amount> <Output>
+```
+
+```rust
+pub struct Edict {
+  pub id: RuneId,
+  pub amount: u128,
+  pub output: u32,
+}
+```
+
+同样以 [CHATGPT•CATS](https://unisat.io/runes/detail/CHATGPT%E2%80%A2CATS) 符文为例
+
+其中有一笔 [转账交易](https://ordiscan.com/tx/5973267bdab40942f10a16665a912471df27f13b93eb23630cd9fc78151a0e30) 中, 包含两个 `UTXO` 输入 和 三个 `UTXO` 输出
+
+- 第 0 个 `UTXO` 输入绑定了 504M 数量的符文
+- 第 0 个 `UTXO` 输出绑定了 84M 数量的符文
+- 第 1 个 `UTXO` 输出绑定了 420M 数量的符文。
+
+`OP_RETURN` 数据为:
+
+```text
+6a5d 0c 00 c7c935 9e15 80e2a2c801 01
+```
+
+- 6a5d - 表示 `OP_RETURN OP_13`
+- 0c - 表示后续数据的字节长度
+- 00 - 表示Tag 枚举中 `Body` 的值
+- c7c935 - 符文 ID 中 区块高度 877767 的 `LEB128` 编码结果
+- 9e15 - 符文 ID 中 区块内交易索引 2718 的 `LEB128` 编码结果
+- 80e2a2c801 - 420M `LEB128` 编码结果, 需注意的是符文部署的精度值 `divisibility` 字段, 实际转账数量需要乘以该字段值, 由于示例符文的精度值为 0, 可忽略。
+- 01 - 接收 420M 符文输出索引
+
+因此该笔交易的作用就是将 504M 数量的符文转出 420M 给别人, 剩下 84M 找零给自己。
+
+## 参考
+
+- [ord](https://github.com/ordinals/ord)
+- [js-wallet-sdk](https://github.com/okx/js-wallet-sdk)
