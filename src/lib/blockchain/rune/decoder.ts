@@ -166,5 +166,3 @@ const decodeIssueData = (buffer: Buffer) => {
 const decoded = decodeRuneScript(
   Buffer.from('6a0152060001e0f4061403906a00', 'hex')
 )
-
-console.log(decoded)

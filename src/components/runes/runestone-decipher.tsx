@@ -41,15 +41,11 @@ export default function RunestoneDecipher() {
   }, [rawTx])
 
   useEffect(() => {
-    console.log(tx)
-
     if (!tx) return
     try {
       let runestone = new RuneStone()
       const t = Transaction.fromHex(tx)
       runestone.decipher(t)
-
-      console.log(runestone)
 
       setRunestone(runestone)
       setError('')

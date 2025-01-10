@@ -17,8 +17,6 @@ describe('RuneStone Decipher', () => {
     runestone = new RuneStone()
     const tx = Transaction.fromHex(etchTxhex)
     runestone.decipher(tx)
-
-    console.log(runestone)
   })
 
   test('decipher etching', () => {

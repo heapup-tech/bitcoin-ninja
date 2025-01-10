@@ -23,9 +23,6 @@ export default function RunestoneEncipher() {
   runestone.etching = etching
 
   let fileds = runestone.encipher()
-  console.log(fileds.toString('hex'))
-
-  // 6a5d4c71020304be050101055806ffffffffffffffffffffffffffffffffffff030affffffffffffffffffffffffffffffffffff0308ffffffffffffffffffffffffffffffffffff030cffffffffffffffffff010effffffffffffffffff0110ffffffffffffffffff0112ffffffffffffffffff01
 
   return (
     <div>

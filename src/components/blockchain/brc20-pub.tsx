@@ -95,8 +95,6 @@ export default function Brc20Pub() {
       network: NETWORKS[network].network
     })
 
-    console.log('output:', output!.toString('hex'))
-
     setCommitToAddress(address!)
 
     setTaprootPubKey(output?.subarray(2, 34).toString('hex') || '')

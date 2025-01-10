@@ -30,7 +30,6 @@ export default class RuneStone {
       transaction,
       integers
     )
-    console.log(JSON.stringify(Object.fromEntries(fields)))
 
     const flags = fields.get(BigInt(Tag.Flags))
 
@@ -144,8 +143,6 @@ export default class RuneStone {
       }
     }
 
-    console.log(fields)
-
     let buffArr: Buffer[] = []
     // Serialize fields.
     for (const [tag, vals] of fields) {
@@ -178,8 +175,6 @@ export default class RuneStone {
     } else {
       throw new Error('runestone too big!')
     }
-
-    console.log(msgBuff.toString('hex'))
 
     return script.compile(Buffer.concat([prefix, pushNum, msgBuff]))
   }

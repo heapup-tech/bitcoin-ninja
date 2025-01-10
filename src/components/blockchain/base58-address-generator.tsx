@@ -68,8 +68,6 @@ export default function Base58AddressGenerator() {
       hash160Res = ripemd160(sha256(publicKeyBuffer))
       setHash160Res(hash160Res.toString('hex'))
     } else if (addressType === 'p2sh') {
-      console.log(`redeemScript: ${redeemScript}`)
-
       const redeemScriptBuffer = Buffer.from(redeemScript, 'hex')
       hash160Res = ripemd160(sha256(redeemScriptBuffer))
       setHash160Res(hash160Res.toString('hex'))

@@ -54,7 +54,6 @@ export default function RunesName() {
     const rune = new Rune(runesInteger)
 
     const s = rune.displayWithSpacers(Number(e.target.value))
-    console.log(s)
 
     setRunesStr(s)
   }

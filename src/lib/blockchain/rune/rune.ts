@@ -48,8 +48,6 @@ export default class Rune {
     let str = symbol.toUpperCase()
     str = str.replace(/[.•]+/g, '')
 
-    console.log(`str: ${str}`)
-
     let n = 0n
     for (let i = 0; i < str.length; i++) {
       n =
