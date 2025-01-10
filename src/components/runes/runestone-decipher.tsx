@@ -6,13 +6,24 @@ import { getRawTransaction } from '@/server-actions/raw-transaction'
 import { useQuery } from '@tanstack/react-query'
 import { Transaction } from 'bitcoinjs-lib/src/transaction'
 import { Loader } from 'lucide-react'
+import dynamic from 'next/dynamic'
 import { useEffect, useState } from 'react'
-import CodeBlock from '../code-block'
 import InteractionCard from '../interaction-card'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import { Textarea } from '../ui/textarea'
 
+const CodeBlock = dynamic(() => import('@/components/code-block'), {
+  ssr: false
+})
+
+const replacer = (key: any, value: any) => {
+  // 处理 BigInt 类型
+  if (typeof value === 'bigint') {
+    return value.toString()
+  }
+  return value
+}
 export default function RunestoneDecipher() {
   const [txid, setTxid] = useState(
     '621d1f47f6624946d208437477e2f575087dba5172371114f0c8087788efe46f'
@@ -30,6 +41,7 @@ export default function RunestoneDecipher() {
     queryFn: async () => {
       if (!txid) return ''
       const rawTx = await getRawTransaction({ txid })
+
       return rawTx
     },
     enabled: isHexadecimal(txid || '', 64),
@@ -54,13 +66,6 @@ export default function RunestoneDecipher() {
     }
   }, [tx])
 
-  const replacer = (key: any, value: any) => {
-    // 处理 BigInt 类型
-    if (typeof value === 'bigint') {
-      return value.toString()
-    }
-    return value
-  }
   return (
     <InteractionCard title='交易解密'>
       <div className='flex items-center space-x-2 mt-4'>
@@ -96,10 +101,14 @@ export default function RunestoneDecipher() {
       {error ? (
         <div className='text-destructive'>解析失败</div>
       ) : (
-        <CodeBlock
-          code={(runestone && JSON.stringify(runestone, replacer, 2)) || '...'}
-          language='json'
-        />
+        tx && (
+          <CodeBlock
+            code={
+              (runestone && JSON.stringify(runestone, replacer, 2)) || '...'
+            }
+            language='json'
+          />
+        )
       )}
     </InteractionCard>
   )
