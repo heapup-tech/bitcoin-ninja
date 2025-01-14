@@ -13,8 +13,8 @@ export const supplementSidebar: SidebarNavItem[] = [
         href: '/supplement/ordinals/brc20'
       },
       {
-        title: 'Rune',
-        href: '/supplement/ordinals/rune'
+        title: 'Runes',
+        href: '/supplement/ordinals/runes'
       }
     ]
   },
