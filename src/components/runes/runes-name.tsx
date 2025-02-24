@@ -63,7 +63,7 @@ export default function RunesName() {
         <Input
           onChange={handleStrChange}
           value={runesStr}
-          className='bg-white'
+          className='bg-background text-base'
         />
       </ContentCard>
 
@@ -72,7 +72,7 @@ export default function RunesName() {
           onChange={handleIntegerChange}
           type='number'
           value={runesInteger.toString()}
-          className='bg-white'
+          className='bg-background text-base'
         />
       </ContentCard>
 
@@ -81,7 +81,7 @@ export default function RunesName() {
           onChange={handleSpacerChange}
           type='number'
           value={spacer.toString()}
-          className='bg-white'
+          className='bg-background text-base'
         />
       </ContentCard>
     </InteractionCard>

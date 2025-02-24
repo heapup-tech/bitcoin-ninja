@@ -19,7 +19,7 @@ export default function LEB128Encoder({ initValue }: { initValue?: bigint }) {
         <Input
           onChange={(e) => setValue(BigInt(e.target.value))}
           value={value.toString()}
-          className='bg-white'
+          className='bg-background text-base'
           type='number'
         />
       </ContentCard>
