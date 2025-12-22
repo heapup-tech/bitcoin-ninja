@@ -108,9 +108,6 @@
     "vitest": "^2.1.9"
   },
   "packageManager": "pnpm@10.4.1",
-  "engines": {
-    "node": "24.12.0"
-  },
   "pnpm": {
     "onlyBuiltDependencies": [
       "@parcel/watcher",
