@@ -29,8 +29,6 @@ export async function generateStaticParams(): Promise<
 export default async function DocPage({ params }: DocPageProps) {
   const resolvedParams = await params
 
-  console.log(resolvedParams)
-
   const doc = await getDocFromParams({ params: resolvedParams })
 
   if (!doc) notFound()

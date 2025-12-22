@@ -1,4 +1,3 @@
-import { rpcClient } from '@/lib/rpc-client'
 import { cn } from '@/lib/utils'
 import Link from 'next/link'
 import InteractionCard from '../interaction-card'
@@ -6,7 +5,7 @@ import InteractionCard from '../interaction-card'
 export const revalidate = 'force-cache'
 
 export default async function BlockTransaction({ height }: { height: number }) {
-  const blockhash = await rpcClient.call('getblockhash', [height])
+  // const blockhash = await rpcClient.call('getblockhash', [height])
 
   // const block = await rpcClient.call('getblock', [blockhash, 1])
 

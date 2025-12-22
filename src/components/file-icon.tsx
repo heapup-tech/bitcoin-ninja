@@ -6,7 +6,10 @@ import Image from 'next/image'
 export default function FileIcon({
   extension,
   ...props
-}: { extension: string } & SVGProps<SVGSVGElement>) {
+}: { extension: string } & Omit<
+  React.ComponentProps<typeof Image>,
+  'src' | 'alt'
+>) {
   const [iconSrc, setIconSrc] = useState<string | null>(null)
 
   useEffect(() => {
@@ -28,8 +31,6 @@ export default function FileIcon({
     <Image
       src={iconSrc}
       alt={`${extension} icon`}
-      width={(props.width as number) || 16}
-      height={(props.height as number) || 16}
       {...props}
     />
   )
