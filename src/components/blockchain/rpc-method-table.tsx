@@ -11,10 +11,11 @@ import { cn } from '@/lib/utils'
 import { Check, X } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
+import CodeBlock from '@/components/code-block'
 
-const CodeBlock = dynamic(() => import('@/components/code-block'), {
-  ssr: false
-})
+// const CodeBlock = dynamic(() => import('@/components/code-block'), {
+//   ssr: false
+// })
 
 export default function RpcMethodTable({
   method,

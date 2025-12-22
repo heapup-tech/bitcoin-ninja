@@ -22,12 +22,10 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang='en'>
-      <Script
-        defer
-        src='https://umami.heapup.tech/script.js'
-        data-website-id='be9eda04-dfa9-4d40-8e5b-dc5f98ea10db'
-      />
+    <html
+      lang='en'
+      suppressHydrationWarning
+    >
       <body className={inter.className}>
         <Providers>
           <div className='flex flex-col justify-between min-h-screen'>

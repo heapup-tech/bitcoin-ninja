@@ -9,7 +9,8 @@ import { Icons } from './icons'
 import { MainNav } from './main-nav'
 import { MobileNav } from './mobile-nav'
 import { buttonVariants } from './ui/button'
-const ModeToggle = dynamic(() => import('./mode-toggle'), { ssr: false })
+import ModeToggle from './mode-toggle'
+// const ModeToggle = dynamic(() => import('./mode-toggle'), { ssr: false })
 
 export default function AppHeader() {
   return (

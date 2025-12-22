@@ -62,49 +62,50 @@ export function MobileNav() {
             )}
           </div>
           <div className='flex flex-col space-y-2'>
-            {sidebarNav.map((item, index) => (
-              <div
-                key={index}
-                className='flex flex-col space-y-3 pt-6'
-              >
-                <h4 className='font-medium'>{item.title}</h4>
-                {item.items?.map((item) =>
-                  !item.disabled && item.href ? (
-                    <MobileLink
-                      key={item.href}
-                      href={item.href}
-                      onOpenChange={setOpen}
-                      className={cn(
-                        'text-muted-foreground',
-                        item.disabled && 'cursor-not-allowed opacity-60'
-                      )}
-                    >
-                      {item.title}
-                      {item.label && (
-                        <span className='ml-2 rounded-md bg-[#FFBD7A] px-1.5 py-0.5 text-xs leading-none text-[#000000] no-underline group-hover:no-underline'>
-                          {item.label}
-                        </span>
-                      )}
-                    </MobileLink>
-                  ) : (
-                    <span
-                      key={index}
-                      className={cn(
-                        'text-muted-foreground',
-                        item.disabled && 'cursor-not-allowed opacity-60'
-                      )}
-                    >
-                      {item.title}
-                      {item.label && (
-                        <span className='ml-2 rounded-md bg-muted px-1.5 py-0.5 text-xs leading-none text-muted-foreground no-underline group-hover:no-underline'>
-                          {item.label}
-                        </span>
-                      )}
-                    </span>
-                  )
-                )}
-              </div>
-            ))}
+            {sidebarNav &&
+              sidebarNav.map((item, index) => (
+                <div
+                  key={index}
+                  className='flex flex-col space-y-3 pt-6'
+                >
+                  <h4 className='font-medium'>{item.title}</h4>
+                  {item.items?.map((item) =>
+                    !item.disabled && item.href ? (
+                      <MobileLink
+                        key={item.href}
+                        href={item.href}
+                        onOpenChange={setOpen}
+                        className={cn(
+                          'text-muted-foreground',
+                          item.disabled && 'cursor-not-allowed opacity-60'
+                        )}
+                      >
+                        {item.title}
+                        {item.label && (
+                          <span className='ml-2 rounded-md bg-[#FFBD7A] px-1.5 py-0.5 text-xs leading-none text-[#000000] no-underline group-hover:no-underline'>
+                            {item.label}
+                          </span>
+                        )}
+                      </MobileLink>
+                    ) : (
+                      <span
+                        key={index}
+                        className={cn(
+                          'text-muted-foreground',
+                          item.disabled && 'cursor-not-allowed opacity-60'
+                        )}
+                      >
+                        {item.title}
+                        {item.label && (
+                          <span className='ml-2 rounded-md bg-muted px-1.5 py-0.5 text-xs leading-none text-muted-foreground no-underline group-hover:no-underline'>
+                            {item.label}
+                          </span>
+                        )}
+                      </span>
+                    )
+                  )}
+                </div>
+              ))}
           </div>
         </ScrollArea>
       </SheetContent>

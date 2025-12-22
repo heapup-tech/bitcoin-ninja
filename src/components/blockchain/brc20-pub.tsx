@@ -12,10 +12,10 @@ import { Button } from '../ui/button'
 import { Label } from '../ui/label'
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group'
 import PublicKeyViewer from './public-key-viewer'
-
-const CodeBlock = dynamic(() => import('@/components/code-block'), {
-  ssr: false
-})
+import CodeBlock from '@/components/code-block'
+// const CodeBlock = dynamic(() => import('@/components/code-block'), {
+//   ssr: false
+// })
 export default function Brc20Pub() {
   const [network, setNetwork] = useState<keyof typeof NETWORKS>('testnet')
 
@@ -150,7 +150,9 @@ export default function Brc20Pub() {
 
       <ContentCard title='花费脚本明文'>
         <CodeBlock
-          code={`OP_PUSHBYTES_32 ${internalPubKey.toString('hex')} \nOP_CHECKSIG \nOP_0 \nOP_IF \n OP_PUSHBYTES_3 ord \n OP_PUSHBYTES_1 01 \n OP_PUSHBYTES_24 text/plain;charset=utf-8 \n OP_0 \n OP_PUSHBYTES_51 {"p":"brc-20","op":"mint","tick":"sats","amt":"10"} \nOP_ENDIF`}
+          code={`OP_PUSHBYTES_32 ${internalPubKey.toString(
+            'hex'
+          )} \nOP_CHECKSIG \nOP_0 \nOP_IF \n OP_PUSHBYTES_3 ord \n OP_PUSHBYTES_1 01 \n OP_PUSHBYTES_24 text/plain;charset=utf-8 \n OP_0 \n OP_PUSHBYTES_51 {"p":"brc-20","op":"mint","tick":"sats","amt":"10"} \nOP_ENDIF`}
           language='shell'
         />
       </ContentCard>

@@ -3,10 +3,11 @@ import { script } from 'bitcoinjs-lib'
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import ScriptAsm from './script-asm'
+import CodeBlock from '@/components/code-block'
 
-const CodeBlock = dynamic(() => import('@/components/code-block'), {
-  ssr: false
-})
+// const CodeBlock = dynamic(() => import('@/components/code-block'), {
+//   ssr: false
+// })
 
 export default function ScriptAsmTab({
   txid,

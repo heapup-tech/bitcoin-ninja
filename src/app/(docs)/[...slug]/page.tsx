@@ -27,7 +27,11 @@ export async function generateStaticParams(): Promise<
 }
 
 export default async function DocPage({ params }: DocPageProps) {
-  const doc = await getDocFromParams({ params })
+  const resolvedParams = await params
+
+  console.log(resolvedParams)
+
+  const doc = await getDocFromParams({ params: resolvedParams })
 
   if (!doc) notFound()
 
@@ -36,9 +40,9 @@ export default async function DocPage({ params }: DocPageProps) {
   let currentNav = mainNav[0]
   mainNav.forEach((item) => {
     if (
-      params &&
-      Array.isArray(params.slug) &&
-      item.href?.split('/').includes(params.slug[0])
+      resolvedParams &&
+      Array.isArray(resolvedParams.slug) &&
+      item.href?.split('/').includes(resolvedParams.slug[0])
     ) {
       currentNav = item
     }
